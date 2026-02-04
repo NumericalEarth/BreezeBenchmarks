@@ -512,8 +512,7 @@
                       callback: function (value, index, values) {
                         // Format as regular numbers with appropriate precision
                         if (value === 0) return "0";
-                        if (value < 0.001) return value.toExponential(2);
-                        return value.toFixed(4);
+                        return value.toExponential(2);
                       },
                     },
                   },
