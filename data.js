@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770248934907,
+  "lastUpdate": 1770249084357,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -99,6 +99,41 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/NumericalEarth/Breeze.jl/pull/426/commits/e5174648b341bd02acf5d3ce83753ba5ea31280e"
         },
         "date": 1770248934670,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 135643854.76080582,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 119020587.05830374,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 103074322.66358446,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "committer": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "id": "e5174648b341bd02acf5d3ce83753ba5ea31280e",
+          "message": "Add a benchmarking subpackage",
+          "timestamp": "2026-02-04T19:40:43Z",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/pull/426/commits/e5174648b341bd02acf5d3ce83753ba5ea31280e"
+        },
+        "date": 1770249083815,
         "tool": "customBiggerIsBetter",
         "benches": [
           {
