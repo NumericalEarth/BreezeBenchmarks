@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770252264000,
+  "lastUpdate": 1770252999319,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -254,6 +254,41 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 101520406.50374022,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "committer": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "id": "3181869ddbc59e908fdd3a3cae67af66db2be445",
+          "message": "Add a benchmarking subpackage",
+          "timestamp": "2026-02-04T19:40:43Z",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/pull/426/commits/3181869ddbc59e908fdd3a3cae67af66db2be445"
+        },
+        "date": 1770252998993,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 134758688.96421483,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 118607887.40652752,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 104630894.71382974,
             "unit": "points/s"
           }
         ]
