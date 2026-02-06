@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770333990423,
+  "lastUpdate": 1770398614027,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -77,6 +77,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 102552287.20045123,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "78b2717c7436906138bd9f7998d31c06533a6f8d",
+          "message": "Add dew point calculation (#446)\n\n* dew point calculation\n\n* Update src/Thermodynamics/vapor_saturation.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/Thermodynamics/vapor_saturation.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* notation\n\n* solver parameter\n\n* fix\n\n* docstring\n\n* jldoctest\n\n---------\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-02-06T12:12:21-05:00",
+          "tree_id": "4c05a582697dc2801f510220d0e9c48caf222609",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/78b2717c7436906138bd9f7998d31c06533a6f8d"
+        },
+        "date": 1770398613553,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 133557289.21354066,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 117868381.21839444,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 104492355.61695772,
             "unit": "points/s"
           }
         ]
