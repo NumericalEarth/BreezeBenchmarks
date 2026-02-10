@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770682077124,
+  "lastUpdate": 1770687336637,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -233,6 +233,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 104583493.51879,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danielkytezable@gmail.com",
+            "name": "dkytezab",
+            "username": "dkytezab"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bde730f667e330e4c46166e56d5b7cf002156fb2",
+          "message": "Change kernel launching to `:xyz` to support further Reactant integration (#461)\n\n* Change kernel launching to support Reactant integration\n\n* Comment out stale imports\n\n* Update update_atmosphere_model_state.jl\n\n---------\n\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
+          "timestamp": "2026-02-09T17:28:42-08:00",
+          "tree_id": "a69efc7e5cf378235ad1e5103ed662c602bdc9bc",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/bde730f667e330e4c46166e56d5b7cf002156fb2"
+        },
+        "date": 1770687336167,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 134517483.22989073,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 118585561.16742489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 102415650.41449913,
             "unit": "points/s"
           }
         ]
