@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770687336637,
+  "lastUpdate": 1770818507861,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -272,6 +272,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 102415650.41449913,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "509910dd1d884dfec78fec9e8a163748467a8e8a",
+          "message": "[examples] Tropical Cyclone World via Cronin and Chavas (2019) (#100)\n\n* draw up a basic script\n\n* Update examples/tropical_cyclone_world.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* continued work on example\n\n* plotting dir changes\n\n* piecewiese radiative forcing\n\n* use temperature in radiative forcing\n\n* added a sponge\n\n* runs for 12hrs on GPU\n\n* 48hr overnight run config, remove paper from repo\n\n- Update simulation to 48hr stop time with adjusted output intervals\n- Remove paper markdown from git (kept locally, added to .gitignore)\n- Output schedules: surface 30min, profiles 1hr, 3D fields 6hr, checkpoints 6hr\n\n* fix: match paper configuration exactly for TC world example\n\n- Implement paper-exact stretched vertical grid:\n  - 64 levels in lowest 1 km (Δz = 15.625 m)\n  - 500 m spacing above 3.5 km\n  - Linear transition from 1-3.5 km\n  - Total 133 levels\n\n- Add full SAM-like sponge layer damping all fields:\n  - ρu, ρv, ρw relax toward zero\n  - ρθ relaxes toward initial ρ(z) × θ(z) profile\n  - Prevents heat accumulation at model top\n\n- Use SmagorinskyLilly closure for scale-aware LES\n\n- Fix notation: Cₖ → Cᵀ (following notation.md)\n\n- Fix GPU→CPU array conversion for profile plotting\n\n- Delete redundant tropical_cyclone_world.jl (keep only v2)\n\nAddresses PR #100 review comments.\n\n* wip: forcings\n\n* wip: initialization fix\n\n* added perturbations\n\n* working moist tc-world\n\n* Cleanup whitespace\n\n* rename example without _v2\n\n* add tropical cyclone world case to docs\n\n* Fix inline comments in Literate example\n\n* add citation\n\n* Add PiecewiseStretchedDiscretization and rewrite TC world example\n\nAdd a new PiecewiseStretchedDiscretization utility (src/VerticalGrids.jl) that\nconstructs stretched vertical grids with piecewise-linear spacing transitions\nbetween breakpoints. The type subtypes AbstractVector{Float64} so it can be\npassed directly to RectilinearGrid as a coordinate argument.\n\nRewrite the tropical_cyclone_world.jl example to use the new utility, adopt\nliterate tutorial style matching BOMEX/RICO examples, use analytical Exner\nfunction initialization (no Array conversion), simplify visualization, and\nremove experiment directory / config file machinery.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Simplify!\n\n* comment out examples except TC world\n\n* clean up and cheapen\n\n* address scope issue\n\n* clean up\n\n* fix docs bug\n\n* use F64?\n\n* [CI] Increase timeout for docs building job\n\n* Revert \"[CI] Increase timeout for docs building job\"\n\nThis reverts commit d071d2566f71d93533855f23f170ae681d9ab6c3.\n\n* add potential temperature sponge and run with f32\n\n* Fix citation style\n\n* Improve Float32 stability for tall-domain anelastic simulations\n\n- Rewrite anelastic buoyancy as ρᵣ(RᵐᵣTᵣ/(RᵐT) - 1) to avoid catastrophic\n  cancellation when subtracting large, nearly-equal densities\n- Extend ReferenceState with temperature and moisture fields; add\n  compute_reference_state! for recomputing reference profiles from T/q data\n- Default moisture fields to ZeroField (no allocation for dry setups);\n  pass =0 to get actual Fields for moist reference states\n- Add BulkSensibleHeatFlux formulation dispatch (PotentialTemperatureFlux\n  vs StaticEnergyFlux) with automatic ρe→ρθ BC conversion\n- Add set_to_mean! for runtime reference state updates via callbacks\n- Return BinaryOperation from DCMIP2016 liquid_mass_fraction (not tuple)\n- Update TC World example with compute_reference_state!, Float32, sponge\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Update TC World example descriptions and parameters\n\nSimplify sponge layer (remove θ sponge, keep only ρw Rayleigh damping),\nfix domain/grid comments to match actual parameters (288 km, 3 km resolution,\n62.5 m vertical spacing), update stop time to 8 days, and streamline\ndiscussion section to be self-contained.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add .claude/ and benchmark JSON to .gitignore\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Ignore all *.json files\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Fix prek link in contributing docs to avoid linkcheck timeout\n\nThe prek.j178.dev site times out in CI, causing the docs build to fail.\nPoint to the GitHub repository instead.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Revert \"Fix prek link in contributing docs to avoid linkcheck timeout\"\n\nThis reverts commit fc63a7402d593e674d785e8de313fce7ac3a5506.\n\n* Add trailing slash to CloudMicrophysics docs link\n\nFixes 301 redirect warning in linkcheck.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* run 6 days not 8 days\n\n* Update src/Thermodynamics/reference_states.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update src/Thermodynamics/reference_states.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update src/Thermodynamics/reference_states.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Add tests for ReferenceState and compute_reference_state!\n\nTests cover:\n- Default constructor produces ZeroField moisture\n- Constructor with moisture=0 allocates actual Field\n- Constructor with moisture function profile\n- surface_density(ref::ReferenceState)\n- compute_reference_state! with dry isothermal atmosphere (analytical verification)\n- compute_reference_state! with moist isothermal atmosphere (analytical verification)\n- compute_reference_state! 5-argument form with individual mass fractions\n- compute_reference_state! with function profiles (monotonicity checks)\n- compute_reference_state! overwrites previous state\n\nAll tests pass for both Float32 and Float64.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* export BoundaryConditionOperation\n\n* export BoundaryConditionOperation\n\n* try new resolution\n\n* updates\n\n* uncomment\n\n* Use weno5 for theta and qt\n\n* final tweaks\n\n* Shorten sim and add other examples\n\n* Include set_to_mean! in AtmosphereModels and add tests\n\n- Add `using Statistics: mean!` to set_to_mean.jl (was missing)\n- Include set_to_mean.jl in AtmosphereModels module\n- Export set_to_mean!\n- Add tests for vapor/liquid/ice_mass_fraction accessors\n  (both Nothing and SaturationAdjustment microphysics)\n- Add tests for set_to_mean! with dry and moist reference states\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Increase timeout of docs build\n\n---------\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\nCo-authored-by: Nawibot <tobias.bischoff@pm.me>\nCo-authored-by: Mosè Giordano <mose@gnu.org>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-11T06:49:40-07:00",
+          "tree_id": "18558cc306c0c9c1a3f4404be643fc9c6eba7ff2",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/509910dd1d884dfec78fec9e8a163748467a8e8a"
+        },
+        "date": 1770818507366,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 134772651.56799644,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 118362741.4363519,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 104196269.04662728,
             "unit": "points/s"
           }
         ]
