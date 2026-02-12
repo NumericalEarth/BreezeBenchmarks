@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1770818507861,
+  "lastUpdate": 1770935531284,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -311,6 +311,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 104196269.04662728,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "12664448+bischtob@users.noreply.github.com",
+            "name": "Nawibot",
+            "username": "bischtob"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4db7a2701e1e76ec3076a6fadb40ec6b88b61d4f",
+          "message": "Show forcing and thermodynamic constants in AtmosphereModel display (#469)\n\n* Show AtmosphereModel forcing and thermodynamic constants\n\n* Adjust forcing display default summary per review\n\n* Fix AtmosphereModel doctest forcing field order",
+          "timestamp": "2026-02-12T14:20:53-08:00",
+          "tree_id": "3509e781f34988d6c848227097027b6e9bc5e7ef",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/4db7a2701e1e76ec3076a6fadb40ec6b88b61d4f"
+        },
+        "date": 1770935531050,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 135486553.63506183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 118566965.53655043,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 103471970.05394395,
             "unit": "points/s"
           }
         ]
