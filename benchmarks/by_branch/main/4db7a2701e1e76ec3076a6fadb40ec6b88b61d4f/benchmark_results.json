@@ -1,0 +1,86 @@
+[
+  {
+    "name": "CBL_128x128x128_F32_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "grid_size": [
+      128,
+      128,
+      128
+    ],
+    "time_steps": 100,
+    "Δt": 0.5,
+    "total_time_seconds": 1.547867256,
+    "time_per_step_seconds": 0.01547867256,
+    "steps_per_second": 64.60502321007817,
+    "grid_points_per_second": 1.3548655363506183e8,
+    "gpu_memory_used": 281930804,
+    "metadata": {
+      "julia_version": "1.12.4",
+      "oceananigans_version": "0.104.4",
+      "breeze_version": "0.3.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "f2099f8b3a22",
+      "timestamp": "2026-02-12T22:27:57.432"
+    }
+  },
+  {
+    "name": "CBL_384x384x256_F32_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "grid_size": [
+      384,
+      384,
+      256
+    ],
+    "time_steps": 100,
+    "Δt": 0.5,
+    "total_time_seconds": 31.837481738,
+    "time_per_step_seconds": 0.31837481738,
+    "steps_per_second": 3.140951939067587,
+    "grid_points_per_second": 1.1856696553655043e8,
+    "gpu_memory_used": 4824171356,
+    "metadata": {
+      "julia_version": "1.12.4",
+      "oceananigans_version": "0.104.4",
+      "breeze_version": "0.3.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "f2099f8b3a22",
+      "timestamp": "2026-02-12T22:28:52.670"
+    }
+  },
+  {
+    "name": "CBL_768x768x256_F32_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "grid_size": [
+      768,
+      768,
+      256
+    ],
+    "time_steps": 100,
+    "Δt": 0.5,
+    "total_time_seconds": 145.928355207,
+    "time_per_step_seconds": 1.45928355207,
+    "steps_per_second": 0.685267779919465,
+    "grid_points_per_second": 1.0347197005394395e8,
+    "gpu_memory_used": 22626211916,
+    "metadata": {
+      "julia_version": "1.12.4",
+      "oceananigans_version": "0.104.4",
+      "breeze_version": "0.3.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "f2099f8b3a22",
+      "timestamp": "2026-02-12T22:31:53.271"
+    }
+  }
+]
