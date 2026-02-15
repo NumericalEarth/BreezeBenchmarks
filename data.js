@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771048053970,
+  "lastUpdate": 1771169539273,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -428,6 +428,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 103225541.46345888,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b764d2ef4ba887def0d4c5724e1c5b411afd948b",
+          "message": "Some small fixes detected by JETLS (#477)\n\n* Add JETLS configuration\n\n* Resolve some `UndefVarError`s\n\n* Some cleanup in `test/forcing_and_boundary_conditions.jl`\n\n* [jetls] Disable flaky unused import check\n\n`ExplicitImports` is a lot more reliable anyway.\n\n* Remove execution permissions from `src/AtmosphereModels/update_atmosphere_model_state.jl`",
+          "timestamp": "2026-02-15T15:20:57Z",
+          "tree_id": "8d1421ca00a70f7774abbf5a72feefe473ac8d04",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b764d2ef4ba887def0d4c5724e1c5b411afd948b"
+        },
+        "date": 1771169538824,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 133233597.88003747,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 117448252.68234724,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 102178557.70134503,
             "unit": "points/s"
           }
         ]
