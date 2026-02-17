@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771355691327,
+  "lastUpdate": 1771368863255,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -545,6 +545,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 101429418.52021563,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6b4bd3c9192f86a45f2efa3032883531a3b71d3d",
+          "message": "Bump version from 0.3.2 to 0.3.3 (#481)",
+          "timestamp": "2026-02-17T15:40:55-07:00",
+          "tree_id": "e5d896f836429a39090311f0a40d7676fc7e7ca6",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/6b4bd3c9192f86a45f2efa3032883531a3b71d3d"
+        },
+        "date": 1771368863009,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 132855012.16073412,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 116877567.60049823,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 101354384.30257797,
             "unit": "points/s"
           }
         ]
