@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771169539273,
+  "lastUpdate": 1771291664484,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -467,6 +467,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 102178557.70134503,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1a61f48066332a09d590a6bd05ad386351e9dd5a",
+          "message": "[CI] Bump minimum Julia version to v1.11.9 (#470)\n\n* [CI] Run tests with Julia v1.11\n\n* Upgrade v1.12 series to v1.12.5\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Bump minimum version to Julia v1.11.9\n\n---------\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>",
+          "timestamp": "2026-02-17T01:17:00Z",
+          "tree_id": "57c7f18e0b79706453acec83c921e93aca469930",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/1a61f48066332a09d590a6bd05ad386351e9dd5a"
+        },
+        "date": 1771291664356,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 131629142.31044206,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 115931921.47183064,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 98682717.9587039,
             "unit": "points/s"
           }
         ]
