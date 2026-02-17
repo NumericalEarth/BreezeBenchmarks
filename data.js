@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771291664484,
+  "lastUpdate": 1771355691327,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -506,6 +506,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 98682717.9587039,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e705b7f63c08525f1a93f0d20acd0a35eb53162",
+          "message": "Replace DefaultStabilityFunction with Li et al. (2010) fitted stability correction (#479)\n\nImplement physically-based stability corrections for bulk transfer coefficients\nusing the Li et al. (2010) non-iterative Ri_B → ζ mapping with Hogström (1996)\nand Beljaars & Holtslag (1991) integrated stability functions.\n\nKey changes:\n- Add FittedStabilityFunction with RichardsonNumberMapping and\n  StabilityFunctionParameters structs (all coefficients parameterized)\n- Remove DefaultStabilityFunction\n- Apply structurally correct corrections: [α/(α-Ψᴰ)]² for momentum,\n  [α/(α-Ψᴰ)][βh/(βh-Ψᵀ)] for scalars\n- Add transfer_type field to PolynomialCoefficient (Val(:momentum) or Val(:scalar))\n- Use Oceananigans.defaults.FloatType for default precision\n- Standardize notation: Ψᴰ/Ψᵀ, Cᴰ/Cᵀ, Riᴮ, γᴰ/γᵀ per notation.md\n- Use unicode subscripts for mapping coefficients (aᵘ₁₁, bʷ₁₂, aˢ₁₁, etc.)\n- Use sqrt(sqrt(x)) instead of x^(1/4) for GPU performance\n\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-17T12:03:45-07:00",
+          "tree_id": "9526926cc0730a3b31d20b21c3809d87185d33cb",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/8e705b7f63c08525f1a93f0d20acd0a35eb53162"
+        },
+        "date": 1771355691102,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 134152913.12544344,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 118530471.84948044,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 101429418.52021563,
             "unit": "points/s"
           }
         ]
