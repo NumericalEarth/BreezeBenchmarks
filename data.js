@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771368863255,
+  "lastUpdate": 1771389161994,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -584,6 +584,45 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
             "value": 101354384.30257797,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "navidcy@users.noreply.github.com",
+            "name": "Navid C. Constantinou",
+            "username": "navidcy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7647c9339326894b792d97eb76c32fa4bdb48b15",
+          "message": "Add some refs + fix latex rendering in docstrings (#487)\n\n* fix latex rendering\n\n* add refs",
+          "timestamp": "2026-02-18T15:24:43+11:00",
+          "tree_id": "92ef5f10b591af6588400bdb3bfb383333541b2a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/7647c9339326894b792d97eb76c32fa4bdb48b15"
+        },
+        "date": 1771389161483,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/128x128x128",
+            "value": 134671793.19265485,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/384x384x256",
+            "value": 117954523.19742209,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL_F32/WENO5/NVIDIA L4/768x768x256",
+            "value": 101332575.92680794,
             "unit": "points/s"
           }
         ]
