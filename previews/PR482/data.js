@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771534995261,
+  "lastUpdate": 1771538649236,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -174,6 +174,61 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14991907.262120161,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "committer": {
+            "name": "NumericalEarth",
+            "username": "NumericalEarth"
+          },
+          "id": "2545889911a040d38c396505151a5f14873d7dee",
+          "message": "Add dynamics and microphysics benchmark suites",
+          "timestamp": "2026-02-19T04:35:43Z",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/pull/482/commits/2545889911a040d38c396505151a5f14873d7dee"
+        },
+        "date": 1771538648889,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: MixedPhaseEquilibrium [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 113201601.3089596,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: 1M_MixedEquilibrium [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111577114.56418183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: 1M_MixedNonEquilibrium [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 110786517.9646452,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 133634271.87429966,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 112959251.2997834,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 104902501.52481563,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14986576.63660328,
             "unit": "points/s"
           }
         ]
