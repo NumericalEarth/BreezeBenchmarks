@@ -538,7 +538,7 @@
                     const commit = result.commit;
                     return (
                       "\n" +
-                      commit.message.slice(0, input.indexOf("\n")) +
+                      commit.message.split('\n')[0] +
                       "\n\n" +
                       commit.timestamp +
                       " committed by @" +
