@@ -650,21 +650,6 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 111552624.02543901,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 109587795.85011466,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 108068022.9187796,
-            "unit": "points/s"
-          },
-          {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 131334860.64935237,
             "unit": "points/s"
@@ -713,21 +698,6 @@ window.BENCHMARK_DATA = {
         "date": 1771553751216,
         "tool": "customBiggerIsBetter",
         "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 111916392.6756252,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 109645347.6748213,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 108682450.40156119,
-            "unit": "points/s"
-          },
           {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 130734762.57124475,
