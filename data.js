@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771553751712,
+  "lastUpdate": 1771592795172,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -721,6 +721,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15351498.419958966,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a59773cb0148a5c8c0be6b5bbb22404448407a22",
+          "message": "[benchmarks] Actually use microphysics (#496)\n\n* [benchmarks] Actually use microphysics\n\n* [CI] Also trigger benchmarks when editing the `benchmarking` directory\n\n* Fix Float64/Float32 mismatch in microphysics constructors\n\nSet Oceananigans.defaults.FloatType at the top of the benchmark loop\nso microphysics constructors pick up the correct precision. Previously\nthe default was still Float64 when make_microphysics was called,\nbecause convective_boundary_layer (which sets the default) runs later.\n\nAlso simplify constructors to use bare defaults instead of threading FT\nexplicitly, and fix WarmPhaseEquilibrium(FT) calls (it's a singleton).\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* [benchmarkings] Also default closure to `nothing`\n\n* [benchmarking] Record advection, closure, dynamics, and microphysics in results\n\n* [benchmarkings] Allow other `AbstractString`s as input\n\n* [CI] Read advection, closure, dynamics, float type, and microphysics from results file\n\n* [CI] Don't push Markdown files to BreezeBenchmarks\n\n* [benchmarks] Simplify benchmark name\n\n* [CI] Push only single merged file\n\n* DROP ME: test\n\n* [CI] Why oh Python why you can't handle UTF-8 out-of-the-box\n\n* Revert \"DROP ME: test\"\n\nThis reverts commit 16950904f8f280ff17b9bfe1002a19bec97bf5f1.\n\n---------\n\nCo-authored-by: Gregory Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-20T13:51:44+01:00",
+          "tree_id": "6750e2aac7157a0384244898c791894d01c9bd10",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/a59773cb0148a5c8c0be6b5bbb22404448407a22"
+        },
+        "date": 1771592794624,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 108877582.29197611,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 79327420.66645117,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 61628136.15874003,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 134317798.06915206,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 110521270.83369052,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 110521270.83369052,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 96214360.72326364,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14632589.437341904,
             "unit": "points/s"
           }
         ]
