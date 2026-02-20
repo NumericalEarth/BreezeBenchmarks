@@ -1,0 +1,30 @@
+[
+  {
+    "name": "CBL;grid:512x512x256;float-type:F32;dynamics:compressible_splitexplicit;advection:WENO5;closure:nothing;microphysics:nothing",
+    "float_type": "Float32",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 100,
+    "Δt": 0.5,
+    "total_time_seconds": 437.148623308,
+    "time_per_step_seconds": 4.371486233080001,
+    "steps_per_second": 0.22875515252290618,
+    "grid_points_per_second": 1.5351498419958966e7,
+    "gpu_memory_used": 12967128776,
+    "metadata": {
+      "julia_version": "1.12.4",
+      "oceananigans_version": "0.104.5",
+      "breeze_version": "0.3.3",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "839b68ac1984",
+      "timestamp": "2026-02-20T02:15:31.238"
+    }
+  }
+]
