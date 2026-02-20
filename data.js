@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771552420530,
+  "lastUpdate": 1771553751712,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -687,6 +687,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15007340.357742371,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d01bab1c1417b66712ef0b2c4f25a7da20ee6304",
+          "message": "Update CloudMicrophysics requirement from 0.29.0, 0.30 to 0.31.4 (#459)\n\n* Update CloudMicrophysics requirement from 0.29.0, 0.30 to 0.29.0, 0.30, 0.31\n\nUpdates the requirements on [CloudMicrophysics](https://github.com/CliMA/CloudMicrophysics.jl) to permit the latest version.\n- [Release notes](https://github.com/CliMA/CloudMicrophysics.jl/releases)\n- [Commits](https://github.com/CliMA/CloudMicrophysics.jl/commits/v0.31.4)\n\n---\nupdated-dependencies:\n- dependency-name: CloudMicrophysics\n  dependency-version: 0.31.4\n  dependency-type: direct:production\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Manually update compat bounds in other projects of the workspace\n\n* Fix import of `ϵ_numerics` from `CloudMicrophysics`\n\n* Remove `using Breeze`\n\n* Require CloudMicrophysics v0.31.4 everywhere\n\nThere was a breaking change in a patch version.  Again.  Sigh.\n\n* One more environment\n\n* Set value of `N_0` for `CloudLiquid`\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-02-20T01:58:37Z",
+          "tree_id": "ca79470cff45ab146a625d99c7b629fc253f1b13",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/d01bab1c1417b66712ef0b2c4f25a7da20ee6304"
+        },
+        "date": 1771553751216,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 111916392.6756252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 109645347.6748213,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 108682450.40156119,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 130734762.57124475,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 111032860.99593434,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111032860.99593434,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 99488403.68119709,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 15351498.419958966,
             "unit": "points/s"
           }
         ]
