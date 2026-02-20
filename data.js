@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771609165138,
+  "lastUpdate": 1771620872550,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -849,6 +849,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14897004.180354066,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eff4eac1e245cb9681d40a8ddc8b184d8daff5f6",
+          "message": "Add 2D idealized squall line example (#504)\n\n* Add 2D idealized squall line example\n\nImplement a 2D (x-z) squall line simulation following the Rotunno-Klemp-Weisman\nframework. Uses the Weisman-Klemp thermodynamic sounding with unidirectional\nlow-level shear (Us=20 m/s over 2.5 km) and DCMIP2016 Kessler microphysics.\nThis case stress-tests rain evaporation numerics in the dry rear-inflow jet.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Use Float64 for squall line example\n\nFloat32 causes spurious stratospheric cooling from WENO9 truncation\nerror in this 2D configuration, leading to NaN after ~12 minutes.\nFloat64 eliminates the issue; full 4-hour run completes cleanly.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Fix domain errors in aerosol activation for extreme atmospheric conditions\n\nGuard sqrt and fractional power operations in compute_smax and\naerosol_activated_fraction against negative arguments that arise in\nsubsaturated/stratospheric conditions (e.g. deep convection cases with\na dry upper atmosphere). The ARG2000 activation parameterization is\nonly valid for updrafts near saturation, but was being evaluated at\nall grid points including the dry stratosphere.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Warn when microphysical tracers lack bounds-preserving advection\n\nNon-negative quantities like mass and number concentrations can develop\nunphysical negative values without bounds-preserving WENO advection.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Apply suggestion from @giordano\n\n---------\n\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-02-20T13:39:39-07:00",
+          "tree_id": "f321d4804dcba18832d8324f12805c43a952ba2f",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/eff4eac1e245cb9681d40a8ddc8b184d8daff5f6"
+        },
+        "date": 1771620872003,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 107491897.9176837,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 78016081.36720172,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 60033970.13908102,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 134237570.50367758,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 111915435.13606934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111915435.13606934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 99406210.84181051,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14750877.712733878,
             "unit": "points/s"
           }
         ]
