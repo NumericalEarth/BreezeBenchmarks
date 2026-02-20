@@ -26,17 +26,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 133764848.08011279,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117276968.35235105,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 99892583.22570062,
             "unit": "points/s"
           }
@@ -65,17 +65,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 136197243.66902915,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 119559779.98916125,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 102552287.20045123,
             "unit": "points/s"
           }
@@ -104,17 +104,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 133557289.21354066,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117868381.21839444,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 104492355.61695772,
             "unit": "points/s"
           }
@@ -143,17 +143,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 133866478.72366744,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117865116.16364688,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 102934622.27832063,
             "unit": "points/s"
           }
@@ -182,17 +182,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 132623235.38136367,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 116397793.81684497,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 101676501.11484714,
             "unit": "points/s"
           }
@@ -221,17 +221,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134167053.21133572,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117918869.13385643,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 104583493.51879,
             "unit": "points/s"
           }
@@ -260,17 +260,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134517483.22989073,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 118585561.16742489,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 102415650.41449913,
             "unit": "points/s"
           }
@@ -299,17 +299,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134772651.56799644,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 118362741.4363519,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 104196269.04662728,
             "unit": "points/s"
           }
@@ -338,17 +338,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 135486553.63506183,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 118566965.53655043,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 103471970.05394395,
             "unit": "points/s"
           }
@@ -377,17 +377,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 132747379.70617078,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117573913.86882886,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 100857159.93068862,
             "unit": "points/s"
           }
@@ -416,17 +416,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134449557.41426387,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117937694.96188429,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 103225541.46345888,
             "unit": "points/s"
           }
@@ -455,17 +455,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 133233597.88003747,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117448252.68234724,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 102178557.70134503,
             "unit": "points/s"
           }
@@ -494,17 +494,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 131629142.31044206,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 115931921.47183064,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 98682717.9587039,
             "unit": "points/s"
           }
@@ -533,17 +533,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134152913.12544344,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 118530471.84948044,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 101429418.52021563,
             "unit": "points/s"
           }
@@ -572,17 +572,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 132855012.16073412,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 116877567.60049823,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 101354384.30257797,
             "unit": "points/s"
           }
@@ -611,17 +611,17 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 134671793.19265485,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/384x384x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
             "value": 117954523.19742209,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 101332575.92680794,
             "unit": "points/s"
           }
@@ -650,27 +650,27 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 131334860.64935237,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/nothing",
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
             "value": 112319658.87270217,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 112319658.87270217,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 103368479.64954484,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15007340.357742371,
             "unit": "points/s"
           }
@@ -699,27 +699,27 @@ window.BENCHMARK_DATA = {
         "tool": "customBiggerIsBetter",
         "benches": [
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
             "value": 130734762.57124475,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [F32]/Advection: WENO5/NVIDIA L4/nothing",
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
             "value": 111032860.99593434,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 111032860.99593434,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
             "value": 99488403.68119709,
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [F32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15351498.419958966,
             "unit": "points/s"
           }
