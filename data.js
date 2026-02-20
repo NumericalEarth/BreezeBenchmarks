@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771592795172,
+  "lastUpdate": 1771609165138,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -785,6 +785,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14632589.437341904,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6cb33b911b743a610d0b4b19ebfff0dcbecb41fa",
+          "message": "Bump the per-dependency/Oceananigans group across 5 directories with 1 update (#499)\n\n* Bump the per-dependency/Oceananigans group across 5 directories with 1 update\n\nUpdates the requirements on  and [Oceananigans](https://github.com/CliMA/Oceananigans.jl) to permit the latest version.\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\n---\nupdated-dependencies:\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Rename `compute_diffusivities!` -> `compute_closure_fields!`\n\n* Drop compat with Oceananigans v0.104\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
+          "timestamp": "2026-02-20T18:23:49+01:00",
+          "tree_id": "c31fc2b76c59aa8cfdb00f58e045d9e01743f2e7",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/6cb33b911b743a610d0b4b19ebfff0dcbecb41fa"
+        },
+        "date": 1771609164652,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 107968484.30466616,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 78766682.44653562,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 61704853.44791824,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 134853914.82859537,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 111994254.55843528,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111994254.55843528,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 102637971.62702903,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14897004.180354066,
             "unit": "points/s"
           }
         ]
