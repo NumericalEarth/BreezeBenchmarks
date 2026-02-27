@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772132401962,
+  "lastUpdate": 1772164001995,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -1233,6 +1233,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14845339.012931334,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "264aad68791ffd05e863b44534ca5448a25b7558",
+          "message": "Bump actions/upload-artifact from 6 to 7 (#524)\n\nBumps [actions/upload-artifact](https://github.com/actions/upload-artifact) from 6 to 7.\n- [Release notes](https://github.com/actions/upload-artifact/releases)\n- [Commits](https://github.com/actions/upload-artifact/compare/v6...v7)\n\n---\nupdated-dependencies:\n- dependency-name: actions/upload-artifact\n  dependency-version: '7'\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-02-27T03:31:27Z",
+          "tree_id": "bb838b1606b093049a04e2a04446e2abbed95f71",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/264aad68791ffd05e863b44534ca5448a25b7558"
+        },
+        "date": 1772164001463,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 106974745.2890235,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 76937891.35348466,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 59391415.0110376,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 135897957.73814395,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 113170553.63399787,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 113170553.63399787,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 99716191.11752008,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14798972.479187077,
             "unit": "points/s"
           }
         ]
