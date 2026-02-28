@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772215573710,
+  "lastUpdate": 1772218328098,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -1496,59 +1496,63 @@ window.BENCHMARK_DATA = {
       {
         "commit": {
           "author": {
-            "name": "NumericalEarth",
-            "username": "NumericalEarth"
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
           },
           "committer": {
-            "name": "NumericalEarth",
-            "username": "NumericalEarth"
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
           },
-          "id": "d8518ff04b618525daaa868e8baa41f41246e4dd",
-          "message": "[CI] Set `benchmark-data-dir-path` for pull requests",
-          "timestamp": "2026-02-27T15:15:26Z",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/pull/528/commits/d8518ff04b618525daaa868e8baa41f41246e4dd"
+          "distinct": true,
+          "id": "b6c3a2e8a8c6e0b49195894d369713155151c7a9",
+          "message": "[CI] Set `benchmark-data-dir-path` for pull requests (#528)",
+          "timestamp": "2026-02-27T18:37:33Z",
+          "tree_id": "2489126cf550cad2e3169578ec2ef14c3d5d7908",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b6c3a2e8a8c6e0b49195894d369713155151c7a9"
         },
-        "date": 1772215573402,
+        "date": 1772218327950,
         "tool": "customBiggerIsBetter",
         "benches": [
           {
             "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 108268823.06085704,
+            "value": 107730062.1534281,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 79377733.42180246,
+            "value": 78520451.21124008,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 61461554.56305882,
+            "value": 60470916.89824227,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
-            "value": 134211093.03303595,
+            "value": 132926505.36371297,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 111771109.62632488,
+            "value": 113208489.31256011,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 111771109.62632488,
+            "value": 113208489.31256011,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 100817910.65359268,
+            "value": 105290059.95149162,
             "unit": "points/s"
           },
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14883242.765250655,
+            "value": 15096799.330513632,
             "unit": "points/s"
           }
         ]
