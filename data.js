@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772218328098,
+  "lastUpdate": 1772318239651,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -1553,6 +1553,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15096799.330513632,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9eba4fab8bbc43c4765354ce7687e9f038c24e15",
+          "message": "Restrict `SSPRungeKutta3` time steppers to `AtmosphereModel` (#512)\n\n* Restrict `SSPRungeKutta3` time steppers to `AtmosphereModel`\n\n* Further restrict `first_time_step!` to `CompressibleDynamics`\n\n* Revert \"Further restrict `first_time_step!` to `CompressibleDynamics`\"\n\nThis reverts commit 0c245f32b910387bd3398dc1ea1e940cb6c22e1a.\n\n* Restrict parcel dynamics time stepper to SSPRungeKutta3\n\n* Remove stale import\n\n* Remove stale import also in extension",
+          "timestamp": "2026-02-28T22:22:22Z",
+          "tree_id": "869b00a35a01a212bc4fbee41a637274bae48d27",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/9eba4fab8bbc43c4765354ce7687e9f038c24e15"
+        },
+        "date": 1772318239184,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 105306965.00901316,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 74607384.36417119,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 57239088.25407854,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 135228490.38719055,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 111851946.68753977,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111851946.68753977,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 102691896.25793476,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14674804.700545063,
             "unit": "points/s"
           }
         ]
