@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772362679306,
+  "lastUpdate": 1772574898719,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -1681,6 +1681,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14801859.288546117,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "5d2686ab3cb34df0f897b255bcc2f60c4ca103b3",
+          "message": "Add buoyancy-driven updraft to ParcelDynamics (#515)\n\n* bouyancy-driven rising\n\n* refactor: rename updraft types to vertical velocity formulations\n\nAddress PR #515 review comments: SpecifiedUpdraft → PrescribedVerticalVelocity,\nBuoyancyDrivenUpdraft → PrognosticVerticalVelocity, updraft field →\nvertical_velocity_formulation, compute_updraft_tendencies! →\ncompute_vertical_velocity_tendencies!. Parcels can also sink, so the more\ngeneral naming is appropriate.\n\n* update\n\n* clean up\n\n* update\n\n* fix\n\n* fix: address critical and high review issues in parcel dynamics\n\n- Replace isnothing branch in compute_parcel_tendencies! with dispatch\n  (existing ::Nothing fallbacks handle the adiabatic case)\n- Remove @inline from check_domain_bounds! (error() is GPU-incompatible)\n- Replace deepcopy(μ::NamedTuple) with plain assignment (immutable value type)\n- Switch ParcelTendencies and ParcelInitialState docstrings to $(TYPEDFIELDS)\n- Document state.ρ as environmental density and state.w role in ParcelState\n- Tighten neutral buoyancy test tolerance from 0.1 to 0.01 m/s²\n- Add quantitative buoyancy magnitude check (B ≈ g ΔT/T) for warm parcel test\n\n* fix: remove stale `temperature` import from ParcelModels\n\nExplicitImports check correctly identified `temperature` as unused\nin this module after the isnothing refactor.\n\n* update\n\n* Apply suggestion from @glwagner\n\n* Apply suggestion from @glwagner\n\n---------\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-03-03T16:37:33-05:00",
+          "tree_id": "a71c2a161d5d336969c468a9be91f778571fe460",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/5d2686ab3cb34df0f897b255bcc2f60c4ca103b3"
+        },
+        "date": 1772574898170,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 107996840.03357539,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 78928820.54889807,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 60974697.3899767,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 134829846.8757055,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 112081727.34213243,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 112081727.34213243,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 101010490.44631886,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 15077271.928983022,
             "unit": "points/s"
           }
         ]
