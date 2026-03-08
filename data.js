@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772624076274,
+  "lastUpdate": 1773008962094,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -1873,6 +1873,70 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 15186376.834142525,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "941d207cc6cfed8e6cdd2be8cfc895e95a7d6bb9",
+          "message": "[CI] Update Docker images to Julia v1.12.5 (#548)\n\n* [CI] Update Docker images to Julia v1.12.5\n\n* [CI] Prevent Reactant from squatting all GPU memory",
+          "timestamp": "2026-03-08T22:13:28Z",
+          "tree_id": "9ec9192b255192c94d8fc3224c82130ce45661bc",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/941d207cc6cfed8e6cdd2be8cfc895e95a7d6bb9"
+        },
+        "date": 1773008961569,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 105902416.44184443,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 74793242.75352608,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 57631643.74175675,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
+            "value": 131744896.03160246,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 110297205.43460546,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 110297205.43460546,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 96743713.69403923,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 15039986.582011834,
             "unit": "points/s"
           }
         ]
