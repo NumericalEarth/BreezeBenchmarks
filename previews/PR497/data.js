@@ -162,11 +162,6 @@ window.BENCHMARK_DATA = {
             "unit": "points/s"
           },
           {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 111319671.49589369,
-            "unit": "points/s"
-          },
-          {
             "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 111319671.49589369,
             "unit": "points/s"
