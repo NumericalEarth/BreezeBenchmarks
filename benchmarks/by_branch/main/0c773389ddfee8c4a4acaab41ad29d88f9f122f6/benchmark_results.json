@@ -1,0 +1,322 @@
+[
+  {
+    "name": "CBL_512x512x256_F32_anelastic_WENO5_nothing_MixedPhaseEquilibrium",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "MixedPhaseEquilibrium",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 50.494693662,
+    "time_per_step_seconds": 0.631183670775,
+    "steps_per_second": 1.584324890363764,
+    "grid_points_per_second": 106322243.59923674,
+    "gpu_memory_used": 8863061412,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "d0d0c7805a13",
+      "timestamp": "2026-03-12T02:25:42.628"
+    }
+  },
+  {
+    "name": "CBL_512x512x256_F32_anelastic_WENO5_nothing_1M_MixedEquilibrium",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "1M_MixedEquilibrium",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 71.432046806,
+    "time_per_step_seconds": 0.892900585075,
+    "steps_per_second": 1.119945508733208,
+    "grid_points_per_second": 75158270.83298767,
+    "gpu_memory_used": 12053304084,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "d0d0c7805a13",
+      "timestamp": "2026-03-12T02:27:26.759"
+    }
+  },
+  {
+    "name": "CBL_512x512x256_F32_anelastic_WENO5_nothing_1M_MixedNonEquilibrium",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "1M_MixedNonEquilibrium",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 93.101959235,
+    "time_per_step_seconds": 1.1637744904375,
+    "steps_per_second": 0.8592730019576801,
+    "grid_points_per_second": 57664835.02724968,
+    "gpu_memory_used": 13502918964,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "d0d0c7805a13",
+      "timestamp": "2026-03-12T02:29:33.216"
+    }
+  },
+  {
+    "name": "CBL_128x128x128_F32_anelastic_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      128,
+      128,
+      128
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 1.276490869,
+    "time_per_step_seconds": 0.015956135862500002,
+    "steps_per_second": 62.67181532028648,
+    "grid_points_per_second": 131432322.84256941,
+    "gpu_memory_used": 281941144,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:24:56.820"
+    }
+  },
+  {
+    "name": "CBL_512x512x256_F32_anelastic_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 47.89152552,
+    "time_per_step_seconds": 0.598644069,
+    "steps_per_second": 1.6704416727462807,
+    "grid_points_per_second": 112101443.03626268,
+    "gpu_memory_used": 7993314104,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:26:13.435"
+    }
+  },
+  {
+    "name": "CBL_768x768x256_F32_anelastic_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      768,
+      768,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 119.991697237,
+    "time_per_step_seconds": 1.4998962154625,
+    "steps_per_second": 0.6667127963194742,
+    "grid_points_per_second": 100670261.34434243,
+    "gpu_memory_used": 17802069700,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:28:49.226"
+    }
+  },
+  {
+    "name": "CBL_128x128x128_F32_anelastic_WENO9_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO9",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      128,
+      128,
+      128
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 2.035675931,
+    "time_per_step_seconds": 0.0254459491375,
+    "steps_per_second": 39.29898604278384,
+    "grid_points_per_second": 82415947.17759621,
+    "gpu_memory_used": 18083981712,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:29:07.064"
+    }
+  },
+  {
+    "name": "CBL_512x512x256_F32_anelastic_WENO9_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO9",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 72.620456953,
+    "time_per_step_seconds": 0.9077557119125,
+    "steps_per_second": 1.101617964918288,
+    "grid_points_per_second": 73928330.18765816,
+    "gpu_memory_used": 7993295304,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:30:41.988"
+    }
+  },
+  {
+    "name": "CBL_768x768x256_F32_anelastic_WENO9_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO9",
+    "closure": "nothing",
+    "dynamics": "anelastic",
+    "microphysics": "nothing",
+    "grid_size": [
+      768,
+      768,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 187.04759446,
+    "time_per_step_seconds": 2.33809493075,
+    "steps_per_second": 0.4276986305595496,
+    "grid_points_per_second": 64580330.770215884,
+    "gpu_memory_used": 17802069700,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "dd6d6f7d912e",
+      "timestamp": "2026-03-12T02:34:22.983"
+    }
+  },
+  {
+    "name": "CBL_512x512x256_F32_compressible_splitexplicit_WENO5_nothing_nothing",
+    "float_type": "Float32",
+    "advection": "WENO5",
+    "closure": "nothing",
+    "dynamics": "compressible_splitexplicit",
+    "microphysics": "nothing",
+    "grid_size": [
+      512,
+      512,
+      256
+    ],
+    "time_steps": 80,
+    "Δt": 0.5,
+    "total_time_seconds": 362.472435766,
+    "time_per_step_seconds": 4.530905447075,
+    "steps_per_second": 0.22070643752797056,
+    "grid_points_per_second": 14811358.299989073,
+    "gpu_memory_used": 12967128776,
+    "metadata": {
+      "julia_version": "1.12.5",
+      "oceananigans_version": "0.105.4",
+      "breeze_version": "0.4.1",
+      "architecture": "GPU{CUDA.CUDAKernels.CUDABackend}",
+      "gpu_name": "NVIDIA L4",
+      "cuda_version": "13.0.0",
+      "cpu_model": "AMD EPYC 7R13 Processor (znver3)",
+      "num_threads": 1,
+      "hostname": "3edc1e7c1727",
+      "timestamp": "2026-03-12T02:26:47.441"
+    }
+  }
+]
