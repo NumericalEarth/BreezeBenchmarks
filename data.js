@@ -1,47 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774554628750,
+  "lastUpdate": 1774564350052,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "gregory.leclaire.wagner@gmail.com",
-            "name": "Gregory L. Wagner",
-            "username": "glwagner"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "8d43b2219d5849024f2934429a46cbd8e2356802",
-          "message": "Add a benchmarking subpackage (#426)",
-          "timestamp": "2026-02-05T02:11:08Z",
-          "tree_id": "b6cd687e79d2c94ca4d71b0f1e43cf5b1550dd51",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/8d43b2219d5849024f2934429a46cbd8e2356802"
-        },
-        "date": 1770258115341,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
-            "value": 133764848.08011279,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
-            "value": 117276968.35235105,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 99892583.22570062,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -3354,6 +3315,115 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14866962.421415519,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f3536905d08b216543d991ab4ea537a0e10523ce",
+          "message": "Fix water conservation in 1M and 2M microphysics and numerical stability in 2M microphysics (#547)\n\n* Eliminate excess depletion of water vapor\n\n* Add vapor mass tendency methods and numerical stability guards\n\nImplement microphysical_tendency for Val{:ρqᵛ} in warm-phase and\nmixed-phase 1M and 2M schemes, ensuring vapor is conserved across\ncondensation, deposition, and rain evaporation. Add max(0,...) and\nmax(eps,...) guards in the ARG 2000 activation parameterization to\nprevent NaN/Inf in unphysical transient states.\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* Refactor NE microphysics to bundle pattern for discrete conservation\n\nReplace independent Val{:ρqᵛ}/Val{:ρqᶜˡ}/Val{:ρqʳ} methods for non-equilibrium\nschemes with _*_tendencies() bundle functions that compute all phase-change rates\nonce and return them as a NamedTuple. Individual methods extract from the bundle,\nstructurally guaranteeing that the same rate value is used as source for one\ntracer and sink for another — discrete conservation by construction.\n\nAddresses reviewer request: \"I would like to have a design that _guarantees_\ndiscretely that the sources of one tracer are sinks of another.\"\n\nSchemes covered:\n- WPNE1M: _wp_ne1m_tendencies returns (ρqᵛ, ρqᶜˡ, ρqʳ)\n- MPNE1M: _mp_ne1m_tendencies returns (ρqᵛ, ρqᶜˡ, ρqᶜⁱ, ρqʳ)\n- WPNE2M: _wp_ne2m_tendencies returns (ρqᵛ, ρqᶜˡ, ρqʳ)\n\nAll 62 1M and 70 2M tests pass.\n\n* rename functions\n\n* update\n\n* Add per-reservoir tendency limiting for 2M microphysics\n\nImplement timescale-based per-reservoir limiting (α ∈ [0,1]) that caps\nthe aggregate drain from each reservoir (vapor, cloud, rain) to q/τ.\nThis prevents microphysics from overdrawing any reservoir in a single\ntimestep without requiring access to Δt.\n\nChanges:\n- Add `tendency_limiter_timescale` field to TwoMomentCategories (default 10s)\n- Apply per-reservoir α-limiting to mass tendencies (vapor, cloud, rain)\n- Apply per-reservoir α-limiting to number tendencies (cloud, rain, aerosol)\n- Fix function name mismatch: wp_ne2m_tendencies → wpne2m_tendencies\n- Fix GPU Float32 hazard: literal `0` → `zero(ρ)` in activation ifelse\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Unify numerical timescales in 2M microphysics: merge τⁿᵘᵐ_2m into τⁿᵘᵐ\n\nReplace the hardcoded `const τⁿᵘᵐ_2m = 10` and the verbose\n`tendency_limiter_timescale` field/keyword with a single configurable\n`τⁿᵘᵐ` used for both proactive sink limiting and reactive\nnegative-value relaxation.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add negative moisture correction with vertical borrowing\n\nFixes negative moisture mixing ratios produced by the advection operator\nusing same-level borrowing (heaviest → lightest hydrometeor → vapor) and\ncolumn-wise vertical redistribution. Includes number concentration\nconsistency for 2M microphysics (zero number when mass is zeroed).\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* clamp negative number concentration\n\n* Clamp number density floor in 2M terminal velocity to prevent CFL violation\n\nAdvection can transport ρqᶜˡ to grid points where ρnᶜˡ ≈ 0, producing\nunphysically large mean droplet mass and extreme terminal velocities.\nEnforce Nᶜˡ ≥ ρqᶜˡ/xc_max (and Nʳ ≥ ρqʳ/xr_max) so the mean particle\nmass never exceeds the SB2006 upper bound.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Coupled sink limiting for 2M microphysics: unify mass and number tendency computation\n\nMerge all six tendency calculations (ρqᵛ, ρqᶜˡ, ρqʳ, ρnᶜˡ, ρnʳ, ρnᵃ) into a\nsingle wpne2m_tendencies function. For each reservoir (cloud, rain), the limiting\nfactor is now min(α_mass, α_number) — the most restrictive of the two — applied\nto both mass and number sinks. This prevents microphysics from depleting mass\nfaster than number or vice versa.\n\nAlso scales rain autoconversion number source (au.dN_rai_dt) by α_cloud for\nconsistency with the mass transfer, and eliminates duplicate CM2 calls that\nwere previously computed separately in mass and number tendency paths.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Replace `if Nz >= 2` branch with ifelse in moisture correction kernel\n\nThe kernel rule requires ifelse instead of short-circuiting if/else\nfor GPU compatibility. Use safe index clamping (k_top = max(2, Nz))\nand fold the Nz >= 2 condition into the can_borrow predicate.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Rename `_mp_ne1m_tendencies` to `mpne1m_tendencies` for naming consistency\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Make negative moisture correction optional in BulkMicrophysics\n\nAdd `negative_moisture_correction` boolean field to `BulkMicrophysics`\n(default `false`) so the post-advection moisture borrowing can be toggled\nper-scheme rather than running unconditionally.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Fix BulkMicrophysics positional constructor calls in extensions\n\nPass the new `negative_moisture_correction` argument in\nOneMomentCloudMicrophysics, TwoMomentCloudMicrophysics, and\nZeroMomentCloudMicrophysics constructors.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Use VerticalBorrowing type instead of Bool for negative moisture correction\n\nReplace the Bool field with a type parameter so that dispatch can be used\ninstead of runtime conditionals.  The user interface is now:\n\n    BulkMicrophysics(; negative_moisture_correction = VerticalBorrowing())\n\nDefault remains `nothing` (no correction).  All BulkMicrophysics type\naliases updated to include the fourth type parameter.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Fix cross-module @ref for correct_negative_moisture! in VerticalBorrowing docstring\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Remove unnecessary trailing `<:Any` type parameters from type aliases\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/one_moment_microphysics.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Rename correct_negative_moisture! to fix_negative_moisture!\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* Simplify clamp_negative_numbers! with a loop over fields\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* Update src/AtmosphereModels/negative_moisture_correction.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/AtmosphereModels/negative_moisture_correction.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Refactor negative moisture correction: decouple species and vertical borrowing\n\n- Add SpeciesBorrowing{VB} with optional VerticalBorrowing() component\n- Add AbstractNegativeMoistureCorrection type hierarchy\n- Add AbstractNumberConcentrationCategories for microphysics with aerosols\n- TwoMomentCategories now subtypes AbstractNumberConcentrationCategories\n- Extract vertical borrowing into @inline dispatched helper for compile-time elimination\n- Change negative_moisture_correction() to return scheme object instead of boolean\n- Fix trailing backslash bug in zero_orphaned_numbers!\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Reorder argument\n\n* explanation\n\n* subtype\n\n* Make VerticalBorrowing work independently\n\n---------\n\nCo-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-03-26T18:17:23-04:00",
+          "tree_id": "3c2d40054ad17adfd6436ed522463076308fa85b",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/f3536905d08b216543d991ab4ea537a0e10523ce"
+        },
+        "date": 1774564349870,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 106587214.77032775,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 76971835.63637494,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 54127090.30845711,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 118666907.56415421,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 118666907.56415421,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 111698615.16016291,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 111698615.16016291,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 111698615.16016291,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 102114962.49316262,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 102114962.49316262,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 77793536.65880641,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 77793536.65880641,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 74149054.70725577,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 74149054.70725577,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 65391618.76975251,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 65391618.76975251,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 15032783.040948832,
             "unit": "points/s"
           }
         ]
