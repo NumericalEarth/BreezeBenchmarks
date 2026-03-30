@@ -1,47 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774665828139,
+  "lastUpdate": 1774903235681,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
-            "name": "kaiyuan-cheng",
-            "username": "kaiyuan-cheng"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "78b2717c7436906138bd9f7998d31c06533a6f8d",
-          "message": "Add dew point calculation (#446)\n\n* dew point calculation\n\n* Update src/Thermodynamics/vapor_saturation.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/Thermodynamics/vapor_saturation.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* notation\n\n* solver parameter\n\n* fix\n\n* docstring\n\n* jldoctest\n\n---------\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
-          "timestamp": "2026-02-06T12:12:21-05:00",
-          "tree_id": "4c05a582697dc2801f510220d0e9c48caf222609",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/78b2717c7436906138bd9f7998d31c06533a6f8d"
-        },
-        "date": 1770398613553,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
-            "value": 133557289.21354066,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
-            "value": 117868381.21839444,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 104492355.61695772,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -3494,6 +3455,115 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14894910.037808215,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "821a379c1c035c7650b165b4de0762784dc3eabd",
+          "message": "Terrain-following coordinates for compressible dynamics (#506)\n\n* Add TerrainFollowingDiscretization module with follow_terrain!\n\nImplements basic terrain-following (Gal-Chen/BTF) coordinate support:\n\n- `follow_terrain!(grid, topography)` sets sigma and eta on a\n  MutableVerticalDiscretization grid\n- `TerrainMetrics` struct stores pre-computed terrain slopes\n- `terrain_slope_x/y` compute height-dependent metric terms\n- BasicTerrainFollowing smoothing (linear decay to model top)\n\nIncludes tests for sigma/eta computation, terrain slopes, and\nmodel construction on terrain-following grids.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add terrain-following physics for compressible dynamics\n\nImplement contravariant vertical velocity (Ω̃) and momentum (ρΩ̃),\nterrain-corrected pressure gradient, and terrain-aware density tendency\nfor CompressibleDynamics with terrain-following coordinates.\n\nAdds transport_velocities/transport_momentum dispatch hooks so the\nmomentum and scalar tendency machinery uses Ω̃/ρΩ̃ for vertical\ntransport when terrain_metrics is present.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add terrain-following mountain wave example\n\nDemonstrates fully compressible dynamics with a Gaussian ridge using\nfollow_terrain! and TerrainMetrics for coordinate corrections.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add terrain-following coordinate documentation and bibliography\n\nSelf-contained documentation page covering the Gal-Chen coordinate\ntransformation, metric corrections (contravariant velocity, pressure\ngradient, continuity), and API reference. Designed to be portable\nto Oceananigans.\n\nAdds bib entries: Gal-Chen & Somerville 1975, Schär et al 2002,\nQueney 1948, Durran 2010, Klemp 2011, Simmons & Burridge 1981,\nSullivan et al 1994.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Interpolate sigma to staggered locations and add Adapt for GPU\n\nProperly compute σᶠᶜ, σᶜᶠ, σᶠᶠ by interpolating terrain height to\nface locations before computing sigma, rather than using the center\nvalue at all stagger points. Add Adapt.adapt_structure for\nTerrainMetrics for GPU compatibility.\n\nAlso adds tests for staggered sigma values, z-node correctness,\nand contravariant velocity physics. Registers the terrain example\nin the docs build.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Fix bounds error in contravariant velocity for Flat topologies\n\nUse Oceananigans interpolation operators instead of manual averaging\nto handle Flat topology dimensions correctly. Pkg.test runs with\nbounds checking enabled, catching the out-of-bounds j+1 access.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Add 3D terrain reference state, perturbation PG, and PG stencil options\n\nMajor improvements to terrain-following compressible dynamics:\n\n- Add per-column discrete Exner integration for 3D reference pressure\n  and density fields, ensuring discrete hydrostatic balance at every\n  grid face. This eliminates the truncation error from the\n  near-cancellation of ∂p/∂z and -gρ in the vertical momentum equation.\n\n- Compute horizontal pressure gradient using perturbation pressure\n  p' = p - p_ref, reducing terrain-following PGF errors since the true\n  horizontal gradient of p_ref is exactly zero.\n\n- Add perturbation buoyancy: -g(ρ - ρ_ref) instead of -gρ.\n\n- Add SlopeOutsideInterpolation (default) and SlopeInsideInterpolation\n  types to control the terrain-corrected horizontal PG stencil. The\n  former evaluates slope at the target point after interpolation; the\n  latter multiplies slope at each stencil point before averaging\n  (closer to the CM1 approach).\n\n- Enforce Ω̃ = 0 at the terrain surface to prevent spurious mass flux\n  through the bottom boundary.\n\n- Update mountain wave example with discrete Exner initialization,\n  WENO advection, sponge layer, and reference potential temperature.\n\n- Use 3D terrain reference pressure for acoustic substepping Exner\n  reference when available.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* fix: Use basic operators for terrain PG and update tick! API\n\nFix double-correction bug in terrain pressure gradient: on\nMutableVerticalDiscretization grids, Oceananigans' generalized ∂x/∂y\nalready include the chain-rule correction (∂z/∂x · ∂ϕ/∂z), so using\nthem in the terrain PG formula applied the terrain correction twice.\nReplace with basic δx·Δx⁻¹ / δy·Δy⁻¹ operators to get the correct\ncomputational-coordinate derivatives (∂p/∂x)_ζ.\n\nAlso:\n- Fix terrain slope kernel BoundsError (same generalized vs basic issue)\n- Fix halo ordering in compute_contravariant_velocity! (zero bottom\n  face before fill_halo_regions!, not after)\n- Update tick!(clock, Δt; stage=true) to tick_stage!(clock, Δt) for\n  Oceananigans 0.105+ API compatibility\n- Remove stale imports (hydrostatic_pressure, ZFaceField, halo_size,\n  topology)\n- Fix docs build errors (duplicate @docs, unresolvable @ref)\n\n* fix: Remove stale tick! import from ParcelModels\n\n* fix: Interpolate u, v to (Center, Center, Face) in contravariant velocity kernel\n\nThe old code only interpolated horizontally (ℑx/ℑy), leaving velocities\nand momenta at (Center, Center, Center) instead of the required\n(Center, Center, Face) location. This caused an O(Δz) grid-location\nmismatch with w in the Ω̃ = w - slope·u - slope·v formula. Add vertical\ninterpolation via compound ℑz(ℑx(...)) to correctly collocate all terms.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* update\n\n* fix\n\n* Fix terrain-following acoustic substepping: terrain corrections and specific_moisture bug\n\n- Replace model.specific_moisture (nonexistent field) with specific_prognostic_moisture(model)\n  in compute_auxiliary_dynamics_variables! for TerrainCompressibleModel\n- Add terrain-aware dispatch helpers to acoustic_substepping.jl (Section 0):\n  terrain PGF chain-rule corrections, kinematic bottom BC, slope divergence\n- Refactor convert_slow_tendencies! into _convert_slow_tendencies_impl! to support\n  Ω̃ as vertical transport velocity for terrain grids\n- Pass terrain_metrics through acoustic substep kernels (horizontal forward step,\n  π' forcing, implicit w solve, tridiagonal build, w back-solve)\n- Implement kinematic terrain bottom BC: w_bottom = u·∂h/∂x + v·∂h/∂y in\n  _acoustic_w_bottom (replaces _zero_bottom_face! hack)\n- Add slope divergence correction ∂(u·sx + v·sy)/∂ζ to acoustic pressure equation\n- Override convert_slow_tendencies! for TerrainCompressibleModel to use Ω̃\n- Add terrain implementations for _acoustic_*_pgf_correction, _acoustic_w_bottom,\n  _acoustic_slope_div, _acoustic_terrain_metrics in terrain_compressible_physics.jl\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\n\n* Fix terrain-following coordinate correctness and performance issues\n\n- Fix stencil asymmetry in _acoustic_w_bottom to match contravariant velocity kernel\n- Fix slow π tendency to use full π = πᵣ + π' for horizontal derivatives (πᵣ varies horizontally on terrain grids)\n- Pre-allocate π′_forcing in AcousticSubstepper to eliminate per-RK-stage allocation\n- Kernelize compute_terrain_reference_state! replacing @allowscalar loop with :xy kernel for GPU compatibility\n- Replace grid.architecture with architecture(grid) for grid wrapper compatibility\n- Fix type instability: ::Nothing fallbacks now return zero(grid) instead of Int(0)\n- Add terrain-specific _set_exner_reference! dispatch using 3D terrain_reference_pressure\n- Pass w_bottom to _acoustic_slope_div to avoid redundant computation in acoustic hot loop\n- Add tests: resting atmosphere PGF, SplitExplicit+terrain, terrain reference state, SlopeInsideInterpolation\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* GPU compatibility\n\n* Revert \"GPU compatibility\"\n\nThis reverts commit 36325869108c0725f85f77b2276c8a1c9dc3c06a.\n\n* Revert \"Fix terrain-following coordinate correctness and performance issues\"\n\nThis reverts commit 3463f375839d1944c1197dd609000cc11cf4fd24.\n\n* Revert \"Fix terrain-following acoustic substepping: terrain corrections and specific_moisture bug\"\n\nThis reverts commit 6f29c6ee09706f73dc7690f2c891a101c9d1ce6e.\n\n* Reuse Oceananigans v0.105.3 generalized derivatives for terrain PG\n\nReplace manual chain-rule implementation in SlopeOutsideInterpolation\nwith Oceananigans' ∂xᶠᶜᶜ/∂yᶜᶠᶜ operators, which now correctly apply\nthe terrain-following coordinate correction on AbstractMutableGrid.\n\nAlso fix pre-existing bug: model.specific_moisture → specific_prognostic_moisture(model)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* GPU compatability\n\n* Fix terrain-following discretization bugs\n\n- Use transport_momentum/transport_velocities in acoustic timestepper\n  for correct contravariant advection on terrain-following grids\n- Replace grid.architecture with architecture(grid) for wrapped grids\n- Fix type promotion: return `false` instead of `0` from ::Nothing\n  fallbacks to preserve Float32 stability in GPU kernels\n- Convert follow_terrain! docstring from plain julia to jldoctest\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Address Oceananigans design review notes for terrain PR\n\n- Extract shared `evaluate_profile` helper in Thermodynamics to replace\n  duplicated `_reference_theta` dispatch in terrain physics (Design Note 1)\n- Document why `_set_topography!` uses manual `copyto!` instead of\n  Oceananigans' `set!` — required for non-GPU-compatible user functions\n  (Design Note 2)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* fix\n\n* Fix terrain reference state to use local physical height instead of sea-level pressure\n\nThe reference state initialization forced sea-level Exner pressure (π_surface)\nat k=1 for every column, regardless of terrain height. On terrain-following\ngrids where z_phys at k=1 varies by column, this created O(ρgh) spurious\nhorizontal pressure gradients in p_ref, defeating the perturbation PG approach\nand introducing artificial buoyancy sources over terrain.\n\nNow evaluates the continuous hydrostatic pressure at each column's actual\nphysical height via hydrostatic_pressure(), which dispatches to closed-form\n(constant θ) or numerical integration (θ(z) profile).\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Remove trailing blank line in terrain_compressible_physics.jl\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* Remove stale imports\n\n* Use `DocStringExtensions` utils in more places\n\n* refactor: Compute Ω̃ from ρΩ̃/ρ for discrete mass consistency\n\nInstead of computing contravariant velocity and momentum independently,\ncompute ρΩ̃ from prognostic momentum fields first, then diagnose\nΩ̃ = ρΩ̃ / ρ_face. This ensures ρ_face · Ω̃ ≡ ρΩ̃ on the discrete grid,\npreventing spurious tracer sources from interpolation non-commutativity.\n\n* fix\n\n* fix: Remove unresolvable @ref links to Oceananigans types in mountain wave example\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* fix: Remove stale `tick!` import from TimeSteppers\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* update example\n\n* CI fix\n\n* fix and clean up\n\n* fix and clean up\n\n* CI fix\n\n---------\n\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
+          "timestamp": "2026-03-30T21:22:20+01:00",
+          "tree_id": "b7dbedb13135df05326be1530b59916ca0a883f8",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/821a379c1c035c7650b165b4de0762784dc3eabd"
+        },
+        "date": 1774903235317,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 108785680.26534455,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 78532152.6238281,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 55604300.240071625,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 114642965.11972798,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 114642965.11972798,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 112739767.38943326,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 112739767.38943326,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 112739767.38943326,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 100315491.08664177,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 100315491.08664177,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 79334924.38531055,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 79334924.38531055,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 74108264.65678346,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 74108264.65678346,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 64185156.11152674,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 64185156.11152674,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14957227.505051248,
             "unit": "points/s"
           }
         ]
