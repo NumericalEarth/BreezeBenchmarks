@@ -1,47 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775620821518,
+  "lastUpdate": 1775657053774,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
-            "name": "kaiyuan-cheng",
-            "username": "kaiyuan-cheng"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "dfe46d1217129779010d19844f8aaf6a4ca439a2",
-          "message": "CCN activation for 2M microphysics (#420)\n\n* Refactor microphysics interface\n\n* implement parcel dynamics\n\n* clean up\n\n* restructure\n\n* fix exdmaple\n\n* actually use AtmosphereModel in example\n\n* fix example\n\n* fix\n\n* interpolate\n\n* work towards the implementation we want\n\n* Remove stale imports\n\n* Remove undefined exports\n\n* Clean up whitespaces\n\n* canonicalize parcel dynamics further\n\n* clean up\n\n* fix docstrings\n\n* Update README.md\n\n* Revise wording for clarity in roadmap section\n\n* Clarify description of Breeze library features\n\n* Fix typo in AtmosphereModel description\n\n* refine microphysics interface\n\n* vastly simplify microphysics interface\n\n* update docs for microphysics interface\n\n* Fix formatting issue in README.md\n\n* Clarify introduction in example microphysics documentation\n\nReworded the introduction for clarity.\n\n* Clarify summary for implementing microphysics scheme\n\n* Update future_improvements.md\n\n* fix docs\n\n* support setting potential temperature\n\n* eliminate code duplications\n\n* fix tests\n\n* fix docs errors\n\n* fix broken refs\n\n* ignore build/\n\n* rm trailing whitespace\n\n* rm trailing whitespace\n\n* delete unused file\n\n* revert\n\n* Update README.md\n\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/future_improvements.md\n\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\n\n* evolve specific quantities rather than densities (easier for Lagrangian frame)\n\n* clean up literate example\n\n* make example more interesting\n\n* improve tests\n\n* fix citation\n\n* more exports to fix example\n\n* Update docs/make.jl\n\n* clean up\n\n* Apply suggestions from code review\n\n* fix discussion\n\n* update visualization\n\n* ccn activation\n\n* fix\n\n* fix\n\n* clean up\n\n* prognostic aerosol\n\n* rename function\n\n* notation\n\n* restore\n\n* blank lines\n\n* clean up\n\n* remove aerosol activation timescale\n\n* refactor\n\n* notation\n\n* clean up\n\n* trailing newline\n\n* docstring\n\n* aerosol activate tendency\n\n* unit test\n\n* unit test\n\n* unit test\n\n* bibliography\n\n* grid-based CCN activation\n\n* notation.md\n\n* Update ext/BreezeCloudMicrophysicsExt/two_moment_microphysics.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/two_moment_microphysics.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/two_moment_microphysics.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/two_moment_microphysics.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* fix\n\n* rename\n\n* update\n\n* fix\n\n* ifelse\n\n* activation radius\n\n* whtespace\n\n* aerosol activation mass\n\n* remove optional arguments\n\n* clean up\n\n* fix\n\n* fix and clean up\n\n* Revert \"fix and clean up\"\n\nThis reverts commit 250d3598ff2ac7604ae61e09412c667b37aba114.\n\n* fix\n\n* clean up\n\n* fix activated radius\n\n* notation\n\n* update\n\n* eliminate timestep dependecy from microphysics interface\n\n* index name\n\n* succinct arguments\n\n* Avoid pow\n\n* fix\n\n* function dispatch\n\n* function dispatch\n\n* fix\n\n* clean up\n\n* fix\n\n* fix\n\n* pass a tuple of velocities\n\n* notation\n\n* delete test file\n\n* notation\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* nucleation timescale\n\n* Update ext/BreezeCloudMicrophysicsExt/two_moment_microphysics.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update ext/BreezeCloudMicrophysicsExt/cloud_microphysics_translations.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/AtmosphereModels/microphysics_interface.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/AtmosphereModels/microphysics_interface.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* velocities argument consistency\n\n* notation\n\n* pretty math expression\n\n* notation\n\n* prettier math\n\n* notation\n\n* automatic ccn initialization\n\n* whitespace\n\n* Reactant weekdeps\n\n* update\n\n* fix\n\n* fix\n\n* fix\n\n* notation update\n\n* CI fix\n\n* add 2M microphysics to example\n\n---------\n\nCo-authored-by: Gregory Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
-          "timestamp": "2026-02-13T16:27:27-05:00",
-          "tree_id": "fc3f16e3c44da16641ce0c365aafde6b489b09ab",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/dfe46d1217129779010d19844f8aaf6a4ca439a2"
-        },
-        "date": 1771018866179,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
-            "value": 132747379.70617078,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/384x384x256",
-            "value": 117573913.86882886,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 100857159.93068862,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -3984,6 +3945,115 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14860517.662495375,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "df3ba496523fb067770feca3d657626f2dc4644e",
+          "message": "Add closure prognostic hooks for LASD support (#618)\n\n* Add closure prognostic hooks for LASD (DynamicSmagorinsky) support\n\nDynamicSmagorinsky with LagrangianAveraging requires two Oceananigans hooks\nthat Breeze was not calling:\n\n- initialize_closure_fields!: seeds the Lagrangian averages (𝒥ᴸᴹ, 𝒥ᴹᴹ)\n  from the initial velocity field after set!. Without this, the relaxation\n  time scale T → ∞ and the blending weight ϵ → 0, so the averages can\n  never pick up instantaneous values.\n\n- step_closure_prognostics!: advances the Lagrangian averages each time\n  step (back-track, interpolate, blend). For LASD, compute_coefficient_fields!\n  is explicitly a no-op — all work happens here.\n\nBoth hooks are no-ops for non-LASD closures (constant Smagorinsky, AMD, etc.),\nso existing simulations are unaffected.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Add DynamicSmagorinsky to turbulence closure tests\n\nTest that DynamicSmagorinsky produces non-zero eddy viscosity after one\ntime step with a velocity gradient. This would have caught the missing\nstep_closure_prognostics! and initialize_closure_fields! hooks.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>\n\n* Bump patch version\n\n---------\n\nCo-authored-by: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-04-08T07:42:27-06:00",
+          "tree_id": "584fbcc63245812c3be5a2a5798fd30c136ae15b",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/df3ba496523fb067770feca3d657626f2dc4644e"
+        },
+        "date": 1775657053413,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 108829153.37141581,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 77713812.42368074,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 48787496.16689854,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 119978251.38464558,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 119978251.38464558,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 112593483.74840541,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 112593483.74840541,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 112593483.74840541,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 103418830.2908255,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 103418830.2908255,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 78695004.3219105,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 78695004.3219105,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 74241067.82859983,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 74241067.82859983,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 64456560.973033436,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 64456560.973033436,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14582950.045058087,
             "unit": "points/s"
           }
         ]
