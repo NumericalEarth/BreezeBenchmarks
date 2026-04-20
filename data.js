@@ -1,72 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776684042254,
+  "lastUpdate": 1776698583842,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "49699333+dependabot[bot]@users.noreply.github.com",
-            "name": "dependabot[bot]",
-            "username": "dependabot[bot]"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "6cb33b911b743a610d0b4b19ebfff0dcbecb41fa",
-          "message": "Bump the per-dependency/Oceananigans group across 5 directories with 1 update (#499)\n\n* Bump the per-dependency/Oceananigans group across 5 directories with 1 update\n\nUpdates the requirements on  and [Oceananigans](https://github.com/CliMA/Oceananigans.jl) to permit the latest version.\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\nUpdates `Oceananigans` to 0.105.0\n- [Release notes](https://github.com/CliMA/Oceananigans.jl/releases)\n- [Commits](https://github.com/CliMA/Oceananigans.jl/compare/v0.104.2...v0.105.0)\n\n---\nupdated-dependencies:\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: Oceananigans\n  dependency-version: 0.105.0\n  dependency-type: direct:production\n  dependency-group: julia\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Rename `compute_diffusivities!` -> `compute_closure_fields!`\n\n* Drop compat with Oceananigans v0.104\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
-          "timestamp": "2026-02-20T18:23:49+01:00",
-          "tree_id": "c31fc2b76c59aa8cfdb00f58e045d9e01743f2e7",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/6cb33b911b743a610d0b4b19ebfff0dcbecb41fa"
-        },
-        "date": 1771609164652,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 107968484.30466616,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 78766682.44653562,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 61704853.44791824,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x128",
-            "value": 134853914.82859537,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 111994254.55843528,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 111994254.55843528,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 102637971.62702903,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14897004.180354066,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -4639,6 +4575,115 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 14800896.613708684,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "de2fd4868d79131913428f95d721cf9394518d30",
+          "message": "Avoid use of at-doc macro inside structs (#642)\n\nIn Julia v1.13, using at-doc inside struct to attach the docstring to an inner\nconstructor causes an extra hidden field to be added to the struct itself, due\nto macro expansion rules.  Doesn't look like this is going to be changed\nupstream, so we have to work around it: luckily the fix is backward compatible,\nwe only lose the convenience of having the docstring right above the constructor\ndefinition.",
+          "timestamp": "2026-04-20T17:06:00+02:00",
+          "tree_id": "eb320d4c27f44e58e2bb6316037ca1325cab027a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/de2fd4868d79131913428f95d721cf9394518d30"
+        },
+        "date": 1776698583277,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 107025034.2134877,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 75464708.097063,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 46573311.63014996,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 123861422.9854942,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 123861422.9854942,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 114786612.85577664,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 114786612.85577664,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 114786612.85577664,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 102966363.0703411,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 102966363.0703411,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 80635934.80971353,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 80635934.80971353,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 74756809.33076945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 74756809.33076945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 64153137.79876256,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 64153137.79876256,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 14581322.132660698,
             "unit": "points/s"
           }
         ]
