@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778274532558,
+  "lastUpdate": 1778330069444,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "765740+giordano@users.noreply.github.com",
-            "name": "Mosè Giordano",
-            "username": "giordano"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "752247cc0357fdbf265019c1f09a1c316c3a60d0",
-          "message": "[benchmark] Use a slightly larger small grid (#570)",
-          "timestamp": "2026-03-18T16:24:44Z",
-          "tree_id": "596a705ddf5c99e1ed73bd18044a5f3cde8f5c7e",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/752247cc0357fdbf265019c1f09a1c316c3a60d0"
-        },
-        "date": 1773851953041,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 107609018.78628795,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 77325677.07986714,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 59438464.48077051,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 121332155.0708301,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 121332155.0708301,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 112984550.74492542,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 112984550.74492542,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 112984550.74492542,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 103042780.73924385,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 103042780.73924385,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 80118857.05060953,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 80118857.05060953,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 75171195.77562124,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 75171195.77562124,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 65064986.64424209,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 65064986.64424209,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 15006511.174308628,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5449,6 +5340,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 20478567.386080384,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danielkytezable@gmail.com",
+            "name": "dkytezab",
+            "username": "dkytezab"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa50373bf840843dd4364b5d6f4c2999621c3130",
+          "message": "Adds benchmarking for Reactant vs. Vanilla `AtmosphereModel` (#677)\n\n* Add Reactant vs vanilla GPU benchmarking path\n\nWires a Reactant execution path into BreezeBenchmarks alongside the existing\neager (CUDA / KA) path so the two can be compared head-to-head on GPU.\n\n- `convective_boundary_layer` accepts a `topology` kwarg (default PPB\n  preserves the existing CI matrix; PBB is exercised by the new row).\n- `BenchmarkResult` gains `backend` and `compile_time_seconds` fields. JSON\n  output and the markdown report surface both columns.\n- `benchmark_time_stepping` branches on `arch isa ReactantState`: the Reactant\n  path compiles `time_step!(model, Δt)` once with `Reactant.@compile sync=true`\n  (compile time recorded separately) and then drives the timed loop through a\n  new `many_compiled_time_steps!`.\n- `synchronize_device(::ReactantState)` is a no-op since `sync=true` blocks\n  per call. `BenchmarkMetadata` records GPU info under ReactantState too.\n- `run_benchmarks.jl` adds `--backend vanilla,reactant` and `--topology PPB,PBB`\n  flags and iterates over backend × topology in `Iterators.product`.\n- Reactant pinned to 0.2.203 (matching the root project) in\n  benchmarking/Project.toml.\n- Benchmarks.yml grows a matrix row: compressible_explicit + WENO5 +\n  1M_MixedNonEquilibrium + PBB across 128x128x64, 256x256x128, 384x384x192\n  with both backends, on aws-linux-nvidia-gpu-l4.\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Compile the full stepping loop with raise=true via @trace\n\nReplaces the per-step Reactant compile with a single program that traces\nthrough all `time_steps` iterations, matching the recipe used by\ntest/reactant_weno_compilation.jl:\n\n- Adds `step_loop!(model, Δt, Nsteps)` decorated with\n  `@trace mincut=true checkpointing=true track_numbers=false for ... end`\n  so Reactant lowers the entire loop into one XLA program.\n- `benchmark_time_stepping` compiles `step_loop!` with\n  `Reactant.@compile raise=true raise_first=true sync=true` and records the\n  compile cost separately. Warmup and the timed phase each consist of a\n  single execution of the compiled program (which itself runs `time_steps`\n  iterations). `--warmup_steps` continues to control the vanilla eager loop\n  but is not used by the Reactant path.\n- Imports `@trace` in BreezeBenchmarks so `step_loop!` parses outside an\n  active compile (where it expands to an eager loop).\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Load Reactant before CUDA so ReactantCUDAExt activates correctly\n\nThe Reactant ecosystem convention (mirrored by test/reactant_weno_compilation.jl)\nis `using Reactant` before `using CUDA` so that Reactant's CUDA extension\nregisters its kernel-compilation hooks before CUDA initializes its own\nGPUCompiler pipeline. Reorders imports in BreezeBenchmarks.jl and\nrun_benchmarks.jl accordingly.\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Add --simplified to skip GeostrophicForcing and drag BCs on Reactant\n\nThe CBL benchmark builds a `GeostrophicForcing` and field-dependent surface\ndrag boundary conditions; both fail to materialize on `ReactantState`\n(`set!(::Nothing, ::BinaryOperation)` from `materialize_atmosphere_model_forcing`).\nThis is an upstream gap — the existing Reactant tests in the repo\n(`reactant_correctness.jl`, `reactant_weno_compilation.jl`) avoid forcings\nentirely.\n\nAdds a `simplified::Bool=false` kwarg to `convective_boundary_layer` that\nskips the geostrophic body forcing and the drag BCs (keeps the constant\nheat-flux BC and Coriolis). Wires through a `--simplified` CLI flag and\nthreads it into the new Reactant-vs-vanilla CI matrix row via a per-row\n`extra_flags` field. Existing matrix rows pass `extra_flags: ''` so their\nbehavior is unchanged.\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Run Reactant-vs-vanilla benchmark in Float64\n\nThe @trace stepping loop fails to lower with a Float32 grid because the\nClock fields stay Float64, producing an MLIR while-body return-type\nmismatch. Force Float64 on this matrix row only; other rows keep the\nscript default of Float32.\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Group Reactant-vs-vanilla benchmark in dashboard aggregator\n\n* Pass FT to make_dynamics in benchmark loop\n\n* Add forward+backward AD benchmark via Enzyme + Reactant\n\nTrims the Reactant-vs-vanilla forward sweep to the largest grid\n(384x384x192) and adds a fifth matrix entry that benchmarks reverse-mode\nAD through the same @trace checkpointed step loop. The AD path is gated\nto the Reactant backend, no microphysics, single small grid, and a\nsmall Nsteps so the gradient compile + memory stay bounded.\n\n* Drop AD benchmark to Nsteps=4 to fit MLIR compile RAM\n\n* Shrink AD benchmark grid to 64x64x32\n\n* Drop mincut=true from AD trace (host-RAM cost during MLIR compile)\n\n* Drop Reactant-vs-vanilla forward grid to 256x256x128\n\n* Drop AD benchmark to single timestep (matches test pattern)\n\n* Fix Float64 Δt leak in stepping calls; dedup metadata GPU branch\n\nThe Reactant restructuring of benchmark_time_stepping in c2a42efd had\nits own version of the warmup/run dispatch, so the merge from main took\nthe \"ours\" side and dropped #680's Δt_FT fix from the eager\nmany_time_steps! path. compressible_splitexplicit + Float32 was\nstepping with a Float64 Δt again, promoting acoustic substepper\narithmetic to Float64 and regressing ~33%. Pass Δt_FT consistently to\nall stepping entry points (vanilla many_time_steps!, Reactant\ncompiled_loop!, and grad_loss!).\n\nAlso dedup metadata.jl per giordano: the ReactantState+CUDA branch was\nidentical to the GPU{CUDABackend} branch, fold into one condition.\n\n* DROP ME: Push preview\n\n* Revert \"DROP ME: Push preview\"\n\nThis reverts commit f3073cd2c511d74fa5fc6e863220f062e90d4722.\n\n---------\n\nCo-authored-by: Claude Opus 4.7 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
+          "timestamp": "2026-05-09T13:06:01+01:00",
+          "tree_id": "f00d8cd3ef647427916edf6d7490662fdc7d4f81",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/fa50373bf840843dd4364b5d6f4c2999621c3130"
+        },
+        "date": 1778330069209,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 124050544.24038777,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 85989410.72248508,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 46271532.26876713,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133204863.84394643,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133204863.84394643,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128418696.20499809,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128418696.20499809,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128418696.20499809,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114960040.97318533,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114960040.97318533,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92618047.1281409,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92618047.1281409,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85908845.54007488,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85908845.54007488,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75768870.82984956,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75768870.82984956,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 4014149.4161605644,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 5052493.600698293,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 2519234.553399212,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 20638518.019812588,
             "unit": "points/s"
           }
         ]
