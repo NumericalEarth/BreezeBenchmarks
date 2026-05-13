@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778698325465,
+  "lastUpdate": 1778700097117,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "765740+giordano@users.noreply.github.com",
-            "name": "Mosè Giordano",
-            "username": "giordano"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "f80e322ada04a8cdde2000eea11684b86b1fce11",
-          "message": "Run Reactant tests with Julia v1.12 as well (#577)\n\n* Run Reactant tests with Julia v1.12 as well\n\n* [CI] Run Julia v1.12 tests with `--check-bounds=auto`\n\n* Remove Reactant from test sources\n\n* Move comment around\n\n* Load Reactant also for quality assurance tests in v1.12",
-          "timestamp": "2026-03-23T00:11:15Z",
-          "tree_id": "68f2c8f5191de676472fc1b44cee823755aa1385",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/f80e322ada04a8cdde2000eea11684b86b1fce11"
-        },
-        "date": 1774225705338,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 107448846.34690067,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 77989091.5992351,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 60466023.68583432,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 121317423.44829985,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 121317423.44829985,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 113790722.50604878,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 113790722.50604878,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 113790722.50604878,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 105071779.54856588,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 105071779.54856588,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 81666054.86649725,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 81666054.86649725,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 76993829.5045033,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 76993829.5045033,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 67816758.75708961,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 67816758.75708961,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 15076823.018525794,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5509,6 +5400,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25121890.11513472,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "674ddcecd6c4781a8476363ed8b099d907c9d16c",
+          "message": "Add `AbstractSolarPosition` for unified solar-zenith control (#692)\n\n* Add AbstractSolarPosition for unified solar-zenith control\n\nReplace the orthogonal `coordinate`/`epoch` keywords on\n`RadiativeTransferModel` with a single `solar_position` keyword whose\nvalue is a subtype of the new `AbstractSolarPosition`:\n\n  • `ApparentSolarPosition(; coordinate=nothing, epoch=nothing)` — the\n    time-varying case (today's default behavior). `coordinate` and\n    `epoch` move from top-level kwargs to fields of this type, which is\n    where they were always semantically scoped.\n\n  • `FixedCosineZenith(cos_zenith)` — constant cos(θ_z). Appropriate for\n    idealized radiative-convective equilibrium and forcing-shape\n    studies; works with numeric clocks without requiring an epoch.\n\nThe cosine-zenith BC array is filled at construction by dispatch on the\nsolar position, so per-step `update_solar_zenith_angle!` is a no-op when\nthe sun is fixed.\n\nThree improvements come from the typed lattice:\n\n  1. The previously broken combination of `coordinate`/`epoch=nothing`\n     with a floating-point clock now raises an actionable\n     `ArgumentError` pointing users at the three legal alternatives.\n\n  2. The \"epoch only matters when sun is apparent\" implicit contract is\n     made structural — `FixedCosineZenith` literally has no `epoch`\n     field, so the irrelevant-epoch state is unrepresentable.\n\n  3. The `RadiativeTransferModel` struct drops two fields and two type\n     parameters in favor of one `solar_position` field.\n\nDocs: Substantially expanded the \"Solar zenith angle\" section of\n`docs/src/radiative_transfer.md` with a comparison table of the\nsubtypes, worked examples covering all three modes (DateTime clock,\nnumeric clock + epoch, fixed cos(θ_z)), guidance on choosing\ncos(θ_z) values for idealized work, and an explicit note that scaling\n`solar_constant` is *not* equivalent to scaling cos(θ_z) for the SW\nheating-rate profile because of slant-path absorption. Also updated the\n`RadiativeTransferModel` constructor docstring to document the new\nkeyword and show its `Base.show` rendering in the doctest.\n\nMigrated the two existing callers of `coordinate`/`epoch`\n(`test/radiation_scheduling.jl`, `examples/radiative_convection.jl`)\nto `ApparentSolarPosition(coordinate=…, epoch=…)`. Added tests for the\nnew type lattice and for the three radiation-update paths, including\nthat the previously-silent failure now produces an actionable error.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix @test_throws scope: AtmosphereModel construction fires first radiation update\n\nThe actionable-error testset wrapped only `set!` in `@test_throws`, but\n`AtmosphereModel(...)` itself triggers a first-iteration radiation\nupdate via `update_state!`. The `ArgumentError` was raised during\nconstruction and escaped the test, registering as \"Got exception\noutside of a @test\" rather than a successful assertion.\n\nWrap both `AtmosphereModel(...)` and `set!` together so whichever call\nraises is caught.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Stabilize solar_position show output across Float32/Float64\n\nThe macOS doctest job runs `radiation_interface.jl`'s constructor\nexample with `Oceananigans.defaults.FloatType = Float32` (state\ninherited from a prior test). The grid's inferred `(λ, φ)` then becomes\n`(0.0f0, 45.0f0)`, which `Base.show` on a tuple renders with the `f0`\nsuffix — breaking the doctest's Float64-formatted expected output.\n\nSwitch `ApparentSolarPosition`/`FixedCosineZenith` show methods to use\n`Oceananigans.Utils.prettysummary` for numeric fields, which strips the\n`f0` suffix. The displayed string is now identical for Float32 and\nFloat64 grids, matching the convention used elsewhere in the codebase\n(`ConstantField(300.0)` and friends).\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Add DiurnalSolarPosition for idealized diurnal-cycle simulations\n\nA third concrete subtype of `AbstractSolarPosition` covering the case\nbetween the calendar-driven `ApparentSolarPosition` and the constant\n`FixedCosineZenith`: an analytical diurnal cycle parameterized by a\nfixed latitude, fixed declination, day length, and an optional noon\noffset.\n\n  cos(θ_z) = sin(φ) sin(δ) + cos(φ) cos(δ) cos(ω),\n  ω        = 2π (t - t_noon) / day_length\n\nCommon parameter choices (paper-language):\n\n  • Perpetual equinox at 30°N:\n        DiurnalSolarPosition(latitude = 30)\n  • Perpetual June-solstice analog at 45°N:\n        DiurnalSolarPosition(latitude = 45, declination = 23.5)\n  • 10-hour fast rotator starting at sunrise:\n        DiurnalSolarPosition(latitude    = 0,\n                             day_length  = 10 * 3600,\n                             noon_offset = 5  * 3600)\n\nImplementation:\n\n  • New `DiurnalSolarPosition{FT}` struct (no <:Number constraint —\n    keeps Reactant / non-Number AD types working). Integer inputs are\n    promoted to floats so physical quantities behave sensibly; mixed\n    inputs (e.g. `latitude = 45, declination = 23.5`) promote to a\n    common type via `promote(float.(args)...)`.\n  • `update_solar_zenith_angle!(_, ::DiurnalSolarPosition, _, clock)`\n    computes the analytical formula. `cos` is periodic so no `mod`\n    over the day length is needed.\n  • DateTime clocks are rejected with an actionable `ArgumentError`\n    — pairing a calendar clock with this idealized cycle is\n    semantically ambiguous.\n  • Gray-optics latitude reads from `DiurnalSolarPosition.latitude`\n    (not the grid), so the τ_e/τ_p latitude weighting stays\n    consistent with the diurnal cos(θ_z) calculation.\n  • Clear-sky / all-sky longitude falls back to grid coordinates\n    (longitude doesn't appear in the diurnal formula, but RRTMGP\n    still needs per-column λ for gas-state bookkeeping).\n  • Also removed the existing `FT<:Number` constraint from\n    `FixedCosineZenith` for consistency.\n\nDocs: a new \"Idealized diurnal cycle\" subsection in\n`docs/src/radiative_transfer.md` with worked examples, the math, and\nexplicit notes on the numeric-clock requirement, `noon_offset` choices,\nand gray-optics latitude handling. The subtype comparison table now\nlists all three modes.\n\nTests: four new testsets covering construction (including Float32\npreservation and mixed-type promotion), the noon/midnight/periodicity\nphysics, perpetual-solstice declination, and the DateTime-clock\nrejection.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Add direct show-method coverage for AbstractSolarPosition subtypes\n\nA small `@testset` invokes `repr(...)` on each subtype variant (default\nApparentSolarPosition, ApparentSolarPosition with explicit coordinate,\nApparentSolarPosition with explicit epoch, FixedCosineZenith, and\nDiurnalSolarPosition). This covers the `Base.show` methods plus the\n`_show_coordinate` / `_show_epoch` helpers — paths previously exercised\nonly through docstring jldoctests, and thus invisible to coverage on\nplatforms that skip doctests. Doubles as a regression guard for the\ndisplay format.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Anchor DiurnalSolarPosition precision to typeof(latitude)\n\nThe previous constructor promoted via `promote(float.(args)...)`. With\ninteger defaults, `DiurnalSolarPosition(latitude = Float32(30))` produced\nall-Float64 fields because the Float32 latitude got promoted up to match\nthe Float64-from-`float(0)` defaults — the opposite of what a user\nworking in Float32 expects.\n\nSwitch to anchoring precision on `FT = float(typeof(latitude))` and\nconverting each field (or its default) to that type. Now:\n\n  • Int latitude         → Float64 throughout (unchanged)\n  • Float32 latitude     → Float32 throughout (was Float64)\n  • Float64 latitude     → Float64 throughout (unchanged)\n  • Mixed types          → all converted to the latitude-derived type\n\nThe corresponding Float32-preservation test now passes; the show\ndoctests continue to render `30.0°`, `23.5°`, etc. as before.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Switch DiurnalSolarPosition to FT-positional constructor pattern\n\nMatch the established Breeze convention (`IdealGas`, `TetensFormula`,\n`StabilityFunctionParameters`, …) where precision is selected by a\npositional `FT::DataType = Oceananigans.defaults.FloatType` argument\ninstead of inferred from one of the inputs:\n\n    DiurnalSolarPosition(latitude = 30)            # FT = defaults.FloatType\n    DiurnalSolarPosition(Float32, latitude = 30)   # explicit Float32\n\nDefaults (declination, day_length, noon_offset) become plain numeric\nliterals — they're routed through `convert(FT, ...)` like every other\nfield, so they automatically adopt the requested precision.\n\nTest updated to:\n  • Use `Oceananigans.defaults.FloatType = FT` (the convention from\n    test_float_types()) for the default-precision case.\n  • Exercise the positional Float32 override explicitly.\n\nThis replaces the earlier `float(typeof(latitude))` heuristic, which had\nthe right intent but didn't match the rest of the codebase and made the\n\"what precision do I get?\" question depend on argument type rather than\non an explicit, copy-pasteable knob.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-05-13T12:56:40-06:00",
+          "tree_id": "f5aebaccd1595fd2e70962a9ff4fb391166ec55a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/674ddcecd6c4781a8476363ed8b099d907c9d16c"
+        },
+        "date": 1778700096723,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 120929946.391437,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83901200.79763764,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 45574900.43608815,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 132279702.80974776,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 132279702.80974776,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129009824.6063415,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129009824.6063415,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129009824.6063415,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 117217933.44828764,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 117217933.44828764,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92795777.4277851,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92795777.4277851,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87879350.71869673,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87879350.71869673,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78442410.20574965,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78442410.20574965,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 4022991.1550602596,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 4793924.73849946,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 2494991.4386951486,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25231599.155029885,
             "unit": "points/s"
           }
         ]
