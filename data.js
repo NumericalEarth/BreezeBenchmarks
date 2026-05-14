@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778778296168,
+  "lastUpdate": 1778793515487,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "danielkytezable@gmail.com",
-            "name": "dkytezab",
-            "username": "dkytezab"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "678baf3cdf2e2f511cd03807c56d7a02c88eb80a",
-          "message": "Support Oceanigans `0.106.3` (#583)\n\n* change to maybe_prepare_first_time_step!\n\n* Update Project.toml",
-          "timestamp": "2026-03-26T19:28:40Z",
-          "tree_id": "a1fdfed92593bac2ebcadf1f4badfe2c619d7b91",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/678baf3cdf2e2f511cd03807c56d7a02c88eb80a"
-        },
-        "date": 1774554628438,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 107190570.55869977,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 76687673.43080561,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 59060752.29889749,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 121172233.49353322,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 121172233.49353322,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 112422638.8502215,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 112422638.8502215,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 112422638.8502215,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 102590822.74991946,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 102590822.74991946,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 79712503.93833175,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 79712503.93833175,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 76200482.12641731,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 76200482.12641731,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 66650989.96280789,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 66650989.96280789,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14866962.421415519,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5554,6 +5445,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25350626.579997286,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cfda0eef5c47a3ed6f61b2b785c6221c09fcf4a1",
+          "message": "Fuse multi-output microphysical tendencies for GPU performance (#676)\n\n* Fuse multi-output microphysical tendencies for GPU performance\n\nThe MPNE1M and WPNE2M schemes both have a single bundle function\n(`mpne1m_tendencies`, `wpne2m_tendencies`) that returns all prognostic\ntendencies, plus per-tracer `microphysical_tendency` dispatchers that each\ncall the bundle and extract one field. With one tendency-kernel launch per\nprognostic field, the bundle was being recomputed once per tracer per RK\nstage — five times per cell for MPNE1M, six times for WPNE2M — even though\neach call returns identical values.\n\nThis change adds a `compute_microphysical_tendencies!(model)` interface\n(no-op by default) that schemes can override to write all bundled tendency\ncontributions in one fused launch. MPNE1M and WPNE2M now override\n`grid_microphysical_tendency` to zero (so per-tracer kernels skip the\nmicrophysics term) and provide a fused kernel that computes the bundle\nonce per cell and `+=`s every output into the corresponding `Gⁿ` field.\n\nOn H100, splitting_supercell.jl (Float32, 168×168×40, AcousticSSPRungeKutta3)\nshows a 1.26× steady-state speedup for MPNE1M and 1.52× for WPNE2M. The 2M\ncase benefits more because (a) one extra tracer in the bundle, (b) coupled\nα-limiters cross-couple every process rate so the compiler has very little\nto prune via DCE, (c) the Abdul-Razzak–Ghan aerosol activation contains\nexpensive transcendentals (`erf`, `log`).\n\nSwitches `examples/splitting_supercell.jl` from Kessler to WPNE2M to\ndemonstrate the fused path on a non-trivial 2M scheme; the animation is\nextended to 5 panels (w, qᶜˡ, nᶜˡ, qʳ, nʳ).\n\nTests: cloud_microphysics_1M and cloud_microphysics_1M_warm_ice_deposition\ntest sets pass with the fused implementation.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Update src/AtmosphereModels/microphysics_interface.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Unify microphysics interface around compute_microphysical_tendencies!\n\nReplace the dual `grid_microphysical_tendency` + `compute_microphysical_tendencies!`\ninterface with a single entry point. The model now invokes microphysics solely via\n`compute_microphysical_tendencies!`, called after the per-tracer dynamics kernels\nhave written advection + diffusion + forcing to `Gⁿ`.\n\nSchemes plug in by extending one of two methods:\n\n* `microphysical_tendency` (state-based, per-name) for schemes whose tendencies\n  factor naturally per-prognostic. The default `compute_microphysical_tendencies!`\n  launches a single fused kernel that builds the microphysical and thermodynamic\n  states once per cell and `+=`s `microphysical_tendency` for each prognostic name\n  into the corresponding `G` field.\n\n* `compute_microphysical_tendencies!(microphysics, model)` directly, for bundle\n  schemes (MPNE1M, WPNE2M) that compute many process rates feeding multiple\n  prognostic tendencies in one pass.\n\nRemoves `grid_microphysical_tendency` from the dynamics tendency kernels\n(`scalar_tendency`, `potential_temperature_tendency`, `static_energy_tendency`)\nand from the public API. The MPNE1M/WPNE2M zero-overrides on\n`grid_microphysical_tendency` are no longer needed.\n\nZMCM's `:ρqᵉ` precipitation-removal tendency moves from the grid-indexed\noverride to the state-based `microphysical_tendency`.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Revert splitting_supercell example to main\n\nDrop the MPNE1M/2M experiments from the example file. The microphysics\nrefactor work belongs in the source modules; the example remains on the\nKessler scheme used by DCMIP2016 on main.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Document fused-kernel microphysics override path\n\nAdds a walkthrough page (`developer/microphysics/fused_example.md`)\nthat re-implements example.md's `ExplicitMicrophysics` via the override\npath so the two extension points can be compared on identical physics.\nCloses the doc gap flagged in PR #676 review.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update docs/src/developer/microphysics/fused_example.md\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Remove `import`s from docs\n\n* Align fused-kernel walkthrough with existing developer microphysics docs\n\nBrings the new page in line with example.md and overview.md without\nundoing the reviewer's earlier style choices (plain `julia` code\nfences, qualified `AtmosphereModels.foo(...) = ...` definitions):\n\n- Title Case headings to match the other two pages\n- Per-step H2 sections for the auxiliary/moisture/saturation hooks\n- Named `τᵛˡ` / `τᵛⁱ` timescale variables matching example.md's\n  per-name tendencies\n- Reuse the already-loaded `qᵛ` in the kernel instead of redundantly\n  re-reading `ρqᵛ / ρ` into a shadowed `qᵛˢ`\n- Replace `\\ge` with unicode `≥` per the docs unicode-in-math rule\n- Soften the stale claim about `temperature` evaluation count\n\nCross-links example.md and overview.md to the new page so the two\nextension points are reachable from both directions.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix factual and stylistic inconsistencies in developer microphysics docs\n\n- Rename `qᵗ` → `qᵛᵉ` for the `moisture_fractions` /\n  `grid_moisture_fractions` / `maybe_adjust_thermodynamic_state`\n  argument across all three pages, matching the source docstring\n  nomenclature (vapor for non-eq, equilibrium for sat-adj — not\n  total moisture).\n- Split the single misattributed `*` footnote in overview.md's\n  scheme-implementation summary table into three footnotes:\n  † bundle/fused-kernel override, ‡ saturation-adjustment overrides,\n  § sedimentation-only velocity hook. Previously all three opt-in\n  rows shared the saturation-adjustment caveat.\n- Migrate example.md from `import Breeze.AtmosphereModels: foo` +\n  unqualified-def pattern to `using Breeze.AtmosphereModels:\n  AtmosphereModels` + `AtmosphereModels.foo(...) = ...` qualified-def\n  pattern, matching the style enforced on fused_example.md by the\n  earlier \"Remove `import`s from docs\" reviewer commit.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Simplify developer microphysics docs\n\n`fused_example.md` had grown to mostly verbatim copies of `example.md`:\nthe struct, materialization, state, and `microphysical_state` blocks\nwere repeated wholesale, and the auxiliary / moisture / saturation\nhooks at the bottom were re-printed under headings that announced\nthey were \"unchanged from the per-name walkthrough\". Replace those\nsections with one-line pointers, leaving only the parts that actually\ndiffer from the per-name path: the bundled-rate helper, the kernel,\nand the `compute_microphysical_tendencies!` override.\n\nOther reductions:\n- Move the decision matrix to the top of the page (it's the question\n  every reader arrives with) and drop the redundant Summary + bottom\n  decision section.\n- Hoist the non-public-internals caveat into a `!!! warning` block\n  above the kernel rather than buried in a numbered list below.\n- Replace the stale \"evaluates `temperature` three times per cell\"\n  redundancy claim with the correct one: `saturation_specific_humidity`\n  is the duplicated work, and the vapor method re-invokes the other\n  two dispatches.\n- Drop the two redundant per-name wrapper stubs; one is enough.\n\nIn `example.md`, strip the narrative comments that just restate what\nthe dispatch signatures already say (`# Tendency for liquid water\ndensity` over `microphysical_tendency(..., ::Val{:ρqˡ}, ...)`),\nkeeping the physics-context comments. Shorten the trailing cross-link\nto `fused_example.md` and add a one-line pointer for the `qᵛᵉ`\nargument convention.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Replace references to file names with anchors refs\n\n* Add exercise\n\n* Add KernelAbstractions to docs environment\n\n* \"Example Microphysics Implementation\" -> \"Per-name Implementation\"\n\n* Move \"which path\" section to overview\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-05-14T21:55:33+01:00",
+          "tree_id": "53749f523ad66fd47c2aff8dbafe8253f65311b1",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/cfda0eef5c47a3ed6f61b2b785c6221c09fcf4a1"
+        },
+        "date": 1778793515141,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 118211442.954334,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83024904.51392077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 64850344.89202361,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 130582360.65267342,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 130582360.65267342,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 126908628.74915251,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 126908628.74915251,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 126908628.74915251,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114520013.41602246,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114520013.41602246,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 90784545.08661592,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 90784545.08661592,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85216367.07356857,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85216367.07356857,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74947770.03521618,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74947770.03521618,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7044034.17065216,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 4773131.009188054,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 2492456.047576489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25490183.28797223,
             "unit": "points/s"
           }
         ]
