@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779206853388,
+  "lastUpdate": 1779381172594,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "danielkytezable@gmail.com",
-            "name": "dkytezab",
-            "username": "dkytezab"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "350d1553a25d5c53fd5b250cd5decbe318b96382",
-          "message": "Delete warning (#599)",
-          "timestamp": "2026-03-31T12:42:41-06:00",
-          "tree_id": "4f02086dcfc37aa4b60e91c40ac27544612f13f7",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/350d1553a25d5c53fd5b250cd5decbe318b96382"
-        },
-        "date": 1774983643897,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 107779596.06625974,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 77284302.51887327,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 54799758.17167779,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 120567389.28962651,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 120567389.28962651,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 109760111.21778157,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 109760111.21778157,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 109760111.21778157,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 95887539.45719376,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 95887539.45719376,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 77824701.27351913,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 77824701.27351913,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 70818780.84866573,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 70818780.84866573,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 62399494.0444486,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 62399494.0444486,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14707348.964792749,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5629,6 +5520,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25230680.052052487,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b84cd7c4e3a59432a4ab034ef7281bedce428bbb",
+          "message": "Propagate momentum open boundary conditions to derived velocities (#722)\n\n* Propagate momentum open boundary conditions to derived velocities\n\n`materialize_momentum_and_velocities` constructed `model.velocities.u/v/w`\nwith default impenetrable BCs that ignored the user's momentum BCs, so\n`fill_halo_regions!(model.velocities)` overwrote each boundary face with\nzero even when the user had set a nonzero `OpenBoundaryCondition` on the\ncorresponding momentum component. The mismatch between `ρu` and `u` at\nthe wall drove an instability that NaN'd both anelastic and compressible\nexplicit-time-stepping runs within ~100 iterations.\n\nFix:\n- Override velocity BCs to `nothing` on the normal-component face of each\n  `Bounded` direction, so `fill_halo_regions!` does not clobber the\n  kernel-computed boundary face. The default impenetrable behavior is\n  preserved because the corresponding `OpenBoundaryCondition(0)` on\n  momentum yields `u = ρu/ρ = 0` at the wall.\n- Launch `compute_velocities!` over the full Face range with\n  `KernelParameters`, so the east/north/top boundary faces are written.\n\nFixes #721\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Expand OBC-on-momentum test coverage\n\nAdds:\n- v south/north and w bottom/top variants (all-Bounded grid)\n- Periodic-direction assertion: u and v on Periodic y get\n  PeriodicBoundaryCondition, confirming the narrow override didn't\n  strip periodic halo filling\n- Direct regression: fill_halo_regions!(model.velocities) leaves the\n  boundary face unchanged after compute_velocities!\n- Compressible SSP-RK3 stability at CFL≈0.05\n- Tightened boundary-value checks: u ≈ U_bg within 10% (replaces the\n  loose `> 0.5·U_bg`)\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Address review: drop velocity-BC helper, fuse compute_velocities! kernel\n\nPer @glwagner review on #722:\n\n- Drop the per-side `nothing` override entirely. `model.velocities` are\n  diagnostic/auxiliary fields, so `XFaceField(grid)` (with no\n  `boundary_conditions=` kwarg) picks up the auxiliary defaults —\n  `nothing` on Bounded-Face sides, Periodic on Periodic sides — which is\n  exactly what we need. Avoids routing through\n  `regularize_field_boundary_conditions`, which would re-install\n  ImpenetrableBoundaryCondition via the prognostic path.\n\n- Fuse `_compute_u!` / `_compute_v!` / `_compute_w!` into a single\n  `_compute_velocities!` kernel that writes all three components per\n  thread, launched once over `(1:Nx+1, 1:Ny+1, 1:Nz+1)`. For Periodic\n  directions the extra face writes to a halo cell that is refilled by\n  the trailing `fill_halo_regions!(model.velocities)`. Drops the\n  topology-conditional `if`s and `Bounded`/`topology` imports.\n\n- Remove unused `diagnostic_indices` helper.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Don't launch i=N+1 on Flat dimensions\n\nThe fused `compute_velocities!` launch unconditionally used `1:N+1` per\ndim, which OOB'd on Flat directions: Flat dims have no Face and no halo\n(typically Ny=1 with array size 1), so j=2 is out of bounds.\n\nAdd a small dispatch helper `_face_extent` that returns `N` for Flat and\n`N+1` otherwise. No `if`-statement; Greg's \"1:N+1 if possible\" intent\npreserved.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix CI: stale imports + GPU-incompatible test reductions\n\n- Drop unused `FieldBoundaryConditions` and `regularize_field_boundary_conditions`\n  from CompressibleEquations.jl imports — flagged by\n  ExplicitImports.check_no_stale_explicit_imports after the velocity-BC\n  helper was removed.\n\n- Wrap `interior(...)` views in `Array(...)` (via a small `boundary_slice`\n  helper) for boundary-face slices used in `all(f, ...)` reductions. On\n  GPU, `all(f, ::SubArray{CuArray})` runs as a `mapreduce` whose output\n  element type can't be inferred from a closure predicate; pulling to CPU\n  with `Array(...)` lets `all` run as a plain CPU reduction. The\n  `maximum(abs, interior(...))` calls (which work on GPU) are unchanged.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix CI: drop stale imports from AnelasticEquations\n\nSame fix as the prior commit applied to CompressibleEquations.\n`AnelasticEquations.jl` still imported `FieldBoundaryConditions` and\n`regularize_field_boundary_conditions` but the simplified\n`materialize_momentum_and_velocities` no longer uses them.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Address review: use existing length(Face(), topo, N) over local helper\n\nPer @glwagner review on #722: replace the ad-hoc `face_extent` dispatch\nhelper with the existing `Base.length(::Face, ::AbstractTopology, N)`\noverloads from `Oceananigans.Grids`. Same semantics for Bounded (N+1)\nand Flat (N); for Periodic, drops one halo-cell write per kernel\ninvocation (N instead of N+1) since the trailing\n`fill_halo_regions!(model.velocities)` already refills the periodic\nhalo.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-05-21T10:09:12-06:00",
+          "tree_id": "768ed06b8676a2f21c52cdf8dd117029f9992e62",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b84cd7c4e3a59432a4ab034ef7281bedce428bbb"
+        },
+        "date": 1779381171998,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 120894174.82244845,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84620117.94694588,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 66276016.32999915,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133414243.09572949,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133414243.09572949,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128499639.80201425,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128499639.80201425,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128499639.80201425,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114395645.25949511,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114395645.25949511,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92193465.41061613,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92193465.41061613,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84830446.41260104,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84830446.41260104,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74068329.13656491,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74068329.13656491,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7041888.689338276,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 4889504.646342105,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 135302.23004020282,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25332536.94359512,
             "unit": "points/s"
           }
         ]
