@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779381172594,
+  "lastUpdate": 1779403071989,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "gregory.leclaire.wagner@gmail.com",
-            "name": "Gregory L. Wagner",
-            "username": "glwagner"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "b1aa907105e7a779b3a65288316dfa8f44147351",
-          "message": "Bump version from 0.4.4 to 0.4.5 (#605)",
-          "timestamp": "2026-04-02T20:35:47-06:00",
-          "tree_id": "914dc4613aaa3c481d3144e9d27f8c0370456bfd",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b1aa907105e7a779b3a65288316dfa8f44147351"
-        },
-        "date": 1775184765196,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 108838864.21206297,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 78214589.5612705,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 51229141.556586675,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 113792330.75779563,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 113792330.75779563,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 112950866.52656378,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 112950866.52656378,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 112950866.52656378,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 101574379.35943343,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 101574379.35943343,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 79575461.69303259,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 79575461.69303259,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 74802188.20507699,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 74802188.20507699,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 65594621.56168656,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 65594621.56168656,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14884559.152664382,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5644,6 +5535,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25332536.94359512,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b20d657c8b4d2ef0a30f474d152ea17373e702fa",
+          "message": "Strip nonzero OBC values from acoustic perturbation halos (#724)\n\n* Strip nonzero OBC values from acoustic perturbation halos\n\nInheriting prognostic-momentum boundary conditions verbatim onto the\nsubstepper's perturbation face fields silently misinterprets a nonzero\n`OpenBoundaryCondition` value as a perturbation: `fill_halo_regions!`\nwrites the full-state wall target into the halo while the interior is\nzero at stage entry, and the linearized acoustic dynamics amplifies the\nresulting wall jump into a runaway transient that crashes within the\nfirst outer step.\n\nPer-side strip in the `AcousticSubstepper` constructor: sides whose BC\nis an `OpenBoundaryCondition` with a non-`nothing`, non-numerically-zero\ncondition are replaced with `nothing` on the perturbation field, so the\nhalo fill there is a no-op. Impenetrability defaults, periodic wraps,\nzero-valued OBCs, and `OBC(nothing)` pass through unchanged. The wall\ntarget still re-enters the prognostic state through the prognostic\nmomentum's own BC after `accumulate_momentum_perturbations!`.\n\nCloses #716.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Move OBC strip helpers to module level to avoid Core.Box\n\nThe first revision nested `is_passive`, `strip_open`, and `strip_bcs`\ninside the `AcousticSubstepper` constructor to mirror the local\n`xface`/`yface`/`zface` helpers in the same function. That pattern works\nfor single-method one-liners but not for multi-method dispatch: Julia\n1.12 treats method addition as reassignment of the captured local and\nboxes the closure, which the `No Core.Box` quality-assurance test\nrejects (CI failure on Julia 1.12.6 ubuntu/macOS).\n\nMove the three helpers back to module level and rename for clarity\n(`is_passive_open_value`, `strip_nonzero_open`, `strip_nonzero_open_bcs`).\nBehavior is unchanged; only the scope and names move.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Drop BC inheritance for perturbation field; use topology defaults\n\nThe per-side strip introduced in the prior commits is more machinery\nthan the problem warrants. Per @glwagner on #716: \"an alternative to\n'impenetrable' is just to use `nothing` as the bc.\" That literal reading\nis the simpler and more physically appropriate fix.\n\nBuild the substepper's perturbation face fields and substep-averaged\nvelocities with bare `XFaceField(grid)` / `YFaceField(grid)` /\n`ZFaceField(grid)` — topology-derived defaults give periodic wrap on\n`Periodic` dims and impenetrability on `Bounded` dims, which is exactly\nwhat the linearized acoustic substep needs. The user's prognostic\nmomentum BCs are no longer consulted by the substepper at all; the wall\ntarget re-enters only through the prognostic's own BC after\n`accumulate_momentum_perturbations!`.\n\nSide benefits:\n- Removes the `is_passive_open_value`/`strip_nonzero_open`/`strip_nonzero_open_bcs`\n  helpers and the BoundaryCondition/Open/FieldBoundaryConditions imports.\n- Fixes a latent dimensional inconsistency: `time_averaged_velocities`\n  used to inherit `ρu`/`ρv`/`ρw` BCs (momentum BCs on velocity face\n  fields), which was masked by the topology bits being the only sides\n  that mattered. Now those fields use velocity-appropriate defaults.\n- `prognostic_momentum` keyword retained for backward compatibility but\n  is no longer consulted.\n\nIntegration test (no NaN/DomainError under nonzero `OpenBoundaryCondition`\non `ρu`) passes on CPU Float64 and GPU{Metal} Float32. Net diff: -50 lines\nin the source.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Update test/acoustic_substepping.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-05-21T16:15:13-06:00",
+          "tree_id": "11b2051623eca731efe73927e64672755b579867",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b20d657c8b4d2ef0a30f474d152ea17373e702fa"
+        },
+        "date": 1779403071756,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 117753917.6008714,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 82791059.8892207,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 63330935.939539164,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 134791496.47270012,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 134791496.47270012,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129402201.01788191,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129402201.01788191,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129402201.01788191,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115527948.78373413,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115527948.78373413,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93371699.54175681,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93371699.54175681,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87108563.49586226,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87108563.49586226,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75701821.73652947,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75701821.73652947,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7043110.832589169,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 4823950.932227155,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 362238454.1190972,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25298660.10222517,
             "unit": "points/s"
           }
         ]
