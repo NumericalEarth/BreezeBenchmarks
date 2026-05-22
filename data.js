@@ -1,117 +1,8 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779403071989,
+  "lastUpdate": 1779424008198,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
-      {
-        "commit": {
-          "author": {
-            "email": "9022843+fergu@users.noreply.github.com",
-            "name": "Kevin",
-            "username": "fergu"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
-          "id": "ba2ba152fb86346b4e4188b8d72053218efb54a6",
-          "message": "Add error message when required keyword arguments to BulkDrag are missing (#603)\n\n* Added error message when required keyword arguments to BulkDrag are missing\n\n* Update if statement for style recommendations\r\n\r\nUpdate if statement to be consistent with Julia style guide and to use a logical and instead of bitwise.\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Changed error() to throw(ArgumentError()) and made error message more specific to BulkDrag\n\n* Added test to make sure BulkDrag throws an error when misconfigured\n\n---------\n\nCo-authored-by: Kevin Ferguson <kjferguson@ucar.edu>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
-          "timestamp": "2026-04-03T11:36:29-06:00",
-          "tree_id": "f1bb7ee053cd27787ef83d5bbcab39f44a95b2f0",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/ba2ba152fb86346b4e4188b8d72053218efb54a6"
-        },
-        "date": 1775238849677,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 108461843.40130568,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 77573209.37499402,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 50361159.77607605,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 121322954.20880358,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 121322954.20880358,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 113266324.0653511,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 113266324.0653511,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 113266324.0653511,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 104813698.10653612,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 104813698.10653612,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 80162842.82480001,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 80162842.82480001,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 74512053.01451638,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 74512053.01451638,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 64858439.25972695,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 64858439.25972695,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 14657293.392256241,
-            "unit": "points/s"
-          }
-        ]
-      },
       {
         "commit": {
           "author": {
@@ -5659,6 +5550,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25298660.10222517,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9fa378b21359b306557e76393682fd171f2e449",
+          "message": "Accept specific-quantity keys in AtmosphereModel forcings (#708)\n\n* Add SpecificForcing wrapper for specific-quantity tendencies\n\nIntroduces SpecificForcing{F, D, LZ} in src/Forcings/specific_forcing.jl, a\nwrapper that holds a user-supplied forcing returning a specific (per-unit-mass)\ntendency together with the model density and the vertical location of the\ntarget field. At kernel time the wrapper returns ρ * F, interpolating ρ to the\nvertical face via ℑzᵃᵃᶠ when the target lives at Face (e.g. ρw). The same\nwrapper handles both anelastic ρᵣ(z) and compressible ρ(x,y,z,t).\n\nThe user-facing constructor SpecificForcing(forcing) returns a skeleton with\ndensity and target_z_location unset; materialize_atmosphere_model_forcing\nresolves both from the model context at construction time. This mirrors the\nmaterialization pattern already used by SubsidenceForcing and GeostrophicForcing.\n\nWired into the Forcings module via include + export, and re-exported from the\ntop-level Breeze module alongside SubsidenceForcing.\n\nRefs #703.\n\n* Accept specific-quantity keys in AtmosphereModel forcings\n\nExtends atmosphere_model_forcing(::NamedTuple) to accept user-supplied forcings\nkeyed by specific (per-unit-mass) variable names like θ, u, e, qᵉ in addition to\ntheir density-weighted counterparts ρθ, ρu, ρe, ρqᵉ. Values supplied under a\nspecific key are wrapped in SpecificForcing at construction so the kernel applies\nthe density factor automatically. If the same prognostic receives both keys —\ne.g. forcing = (; ρθ=subsidence, θ=Forcing(radiative_cooling)) — the entries\nare combined and run through the existing MultipleForcings path.\n\nAdds two trait functions to the AtmosphereModels forcing interface:\n\n- is_density_tendency_forcing(value) returns true for forcings that already\n  produce F_{ρϕ} (SubsidenceForcing and GeostrophicForcing are flagged in the\n  Forcings module).\n- wrap_specific_forcing(value, density_name) is implemented in Forcings to\n  construct a SpecificForcing for a user value, recursing into tuples, and\n  throwing a clear ArgumentError when value is a density-tendency forcing so\n  the kernel does not multiply by ρ a second time.\n\nRefs #703.\n\n* Disambiguate _combine_forcing_values method tuple/Nothing cases\n\nThe recently added _combine_forcing_values helper used method signatures that\noverlapped when one argument was a Tuple and the other was Nothing — both the\n(a, ::Nothing) and (a::Tuple, b) methods matched. Adds explicit\n(::Tuple, ::Nothing) and (::Nothing, ::Tuple) methods so resolution is\nunambiguous, and reorders the table from most-specific to most-general for\nreadability.\n\n* Use specific-keyed forcings for prescribed tendencies in BOMEX\n\nThe BOMEX large-scale drying tendency and prescribed radiative-cooling profile\nare now supplied under the specific keys qᵉ and e respectively, and Breeze\napplies the ρ factor automatically at kernel time. This drops the manual\n`set!(field, ρᵣ * field)` boilerplate and the user-side handle on the\nreference-state density.\n\nSubsidenceForcing and geostrophic_forcings remain under their density-weighted\nkeys (ρu, ρv, ρθ, ρqᵉ) because they already produce F_{ρϕ} internally; the\nsingle forcing NamedTuple now mixes both styles, which is intentional\n(see #703).\n\nAlso renames `Fρe_field` to `radiative_cooling` to reflect that it now stores\nthe specific energy tendency rather than a pre-multiplied density tendency.\n\nRefs #703.\n\n* Use specific-keyed forcings for prescribed tendencies in RICO\n\nThe RICO large-scale moisture tendency is now keyed under `qᵉ`, and the\nconstant -2.5 K/day radiative cooling is keyed under `θ` and supplied as\na plain function of (x, y, z, t). Both drop the manual ρᵣ multiply.\n\nSubsidenceForcing, geostrophic_forcings, and the Rayleigh sponge on ρw\nremain under their density-weighted keys because they already produce\nF_{ρϕ}; the single forcing NamedTuple mixes both styles by design.\n\nRefs #703.\n\n* Add tests for SpecificForcing dispatch and kernel\n\nCovers:\n\n- Specific-key dispatch wraps user values in SpecificForcing and stores under\n  the matching ρ-key; ρ-key path is unchanged; user-constructed SpecificForcing\n  under a ρ-key materializes correctly.\n- Mixed θ + ρθ entries merge into a MultipleForcings; tuples under a specific\n  key wrap each element individually.\n- Anelastic Center-located forcing on θ produces Gρθ ≈ ρᵣ * F_θ exactly; the\n  Face-located forcing on w interpolates ρᵣ to face via ℑzᵃᵃᶠ and matches\n  the analytic expression at an interior face.\n- Mixed θ (specific) + ρθ (density) contributions sum to ρᵣ * F_θ + F_ρθ.\n- Compressible dynamics: the specific-key path picks up the live prognostic\n  density (uniform here) and produces the expected tendency.\n- Density-tendency forcings (SubsidenceForcing, GeostrophicForcing) supplied\n  under a specific key throw ArgumentError, both directly and inside tuples;\n  the is_density_tendency_forcing trait sanity-checks both.\n- An unknown user-supplied key still errors with ArgumentError.\n\nRefs #703.\n\n* Update non-existing-field test to use a key with no specific alias\n\nThe existing test asserted that supplying a forcing under :u errors because\n:u was not a prognostic field name. After accepting specific-quantity keys,\n:u is the valid specific alias of :ρu, so the model now constructs\nsuccessfully. The test's intent — that an unrecognized key errors — is\npreserved by switching to :bogus, which is neither a prognostic ρ-name nor\na known specific alias.\n\n* Use instantiated_location for SpecificForcing materialization\n\nSwitches the location-resolution line to Oceananigans' instantiated_location,\nwhich returns the location instances directly rather than a tuple of types\nthat we then construct. Saves the explicit `LZ()` call at the end.\n\nAlso reformats the tuple method of wrap_specific_forcing to function...end\nform for visual symmetry with the scalar method above it.\n\n* Add A/B test comparing specific-key path with manual ρᵣ-multiply pattern\n\nDirectly verifies that the new ergonomic\n\n    forcing = (; θ = Forcing(field))\n\nproduces bit-for-bit identical model evolution to the pre-change idiom\n\n    set!(field, ρᵣ * field); forcing = (; ρθ = Forcing(field))\n\nacross five time steps with a height-varying specific θ-tendency. This guards\nagainst regression: any change that perturbs the kernel-time density factor\nwill diverge the two paths and fail the test.\n\nRefs #703.\n\n* Drop underscore prefix from forcing-dispatch helper functions\n\nRenames `_specific_to_density_pairs` → `specific_to_density_pairs` and\n`_combine_forcing_values` → `combine_forcing_values`. Underscore prefixes are\nreserved for kernels in this codebase; these are plain helpers.\n\n* Fix import\n\n* Fix references in docstrings\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Dispatch SpecificForcing density interpolation on full (LX, LY, LZ) location\n\nReplaces the LZ-only kernel dispatch with dispatch on the full target prognostic\nlocation tuple, with density_at_target methods for the four staggered locations\nthat appear in the Breeze prognostic state:\n\n- (Center, Center, Center) — scalar prognostics, ρ taken directly at the cell center.\n- (Face,   Center, Center) — u, ρ interpolated to x-face via ℑxᶠᵃᵃ.\n- (Center, Face,   Center) — v, ρ interpolated to y-face via ℑyᵃᶠᵃ.\n- (Center, Center, Face)   — w, ρ interpolated to z-face via ℑzᵃᵃᶠ.\n\nThis is a no-op for anelastic dynamics (ρᵣ is uniform in x, y), but it's required\nto give compressible momentum forcings the correct face-located density now that\nSubsidenceForcing and GeostrophicForcing are about to be refactored to return\nspecific tendencies and rely on SpecificForcing for the ρ-multiply.\n\nRenames the struct's target_z_location field to target_location to reflect the\ngeneralization. All existing tests still pass.\n\n* Route SpecificForcing inner through Breeze materializer with specific name\n\nTwo related changes that lift the inner-forcing materialization out of\nOceananigans' default path and into Breeze's atmosphere-model dispatch:\n\n- materialize_atmosphere_model_forcing(::SpecificForcing, ...) now calls\n  materialize_atmosphere_model_forcing on its inner (rather than Oceananigans'\n  materialize_forcing). For Function/Returns/Field/Forcing inputs this falls\n  through to the Oceananigans path and behaves identically. For Breeze forcing\n  types (SubsidenceForcing, GeostrophicForcing — soon to return specific\n  tendencies) it lets their custom materializers fire.\n- The propagated `name` is the specific (un-prefixed) prognostic name. Outer\n  dispatch loops over ρ-prefixed forcing fields, but SpecificForcing's whole\n  job is to lift a specific tendency to ρ-form, so its inner expects the\n  specific name to look up the field it advects or applies at.\n\nNo behavioral change for existing inputs; all 23 tests still pass. This\nunblocks the upcoming refactor of SubsidenceForcing and GeostrophicForcing\nto return specific tendencies under specific keys.\n\n* Refactor SubsidenceForcing and GeostrophicForcing to return specific tendencies\n\nThe two built-in Breeze forcings now return per-unit-mass tendencies under\nspecific prognostic keys instead of pre-multiplying by ρ and storing under\nρ-prefixed keys. SpecificForcing applies the density factor (with correct\nhorizontal interpolation) at kernel time.\n\nChanges:\n\n- SubsidenceForcing: drop the `density` struct field; the kernel returns\n  `-wˢ ∂_z ϕ̄`. The materializer accepts specific names (`u`, `v`, `θ`, `qᵉ`,\n  `qᵛ`, …) directly, no longer needs to strip a ρ-prefix, and errors with a\n  migration message if the user supplies it under a ρ-prefixed key.\n- GeostrophicForcing: drop the `density` struct field; the kernel returns\n  `±f vᵍ` (specific), no internal horizontal interpolation — SpecificForcing\n  now interpolates ρ to the appropriate face. `geostrophic_forcings(uᵍ, vᵍ)`\n  returns `(; u, v)`. The same ρ-prefix migration error applies.\n- Drop the `is_density_tendency_forcing` overrides for both forcings. The\n  trait now correctly identifies user-defined forcings whose kernels already\n  include ρ.\n- Add `compute_forcing!(::SpecificForcing)` that recurses into the inner so\n  SubsidenceForcing's `Average` field gets refreshed each step when wrapped.\n\nTests:\n\n- specific_forcing.jl: replace the \"SubsidenceForcing/GeostrophicForcing under\n  specific key errors\" testset with three new testsets — one that verifies a\n  user-defined density-tendency type errors, one that asserts the built-in\n  Breeze forcings are not density-tendency forcings, and one that verifies\n  supplying them under a ρ-key errors with the migration message.\n- geostrophic_subsidence_forcings.jl: switch all SubsidenceForcing /\n  GeostrophicForcing usages to specific keys, assert that the stored value\n  is a `SpecificForcing` wrapping the Breeze forcing, and parametrize the\n  analytical-gradient test by (specific_name, density_name).\n\nRefs #703.\n\n* BOMEX example: switch forcings to all-specific keys\n\nDrops the mixed-key style (subsidence/geostrophic on ρ-keys, prescribed\ntendencies on specific keys) now that SubsidenceForcing and GeostrophicForcing\nreturn specific tendencies. Subsidence appears as a tuple element on u, v, θ,\nand qᵉ; the prescribed drying joins the qᵉ tuple; radiative cooling stays\nunder `e`.\n\nThe comment on θ-equation tendency-ordering is updated to reflect that the\nuser supplies F_θ and F_e in specific form, with the ρ factor applied by\nBreeze.\n\nRefs #703.\n\n* RICO example: switch forcings to all-specific keys\n\nDrops the remaining ρ-prefixed keys. Subsidence appears as a tuple element on\nu, v, qᵉ, and θ; the Rayleigh sponge damps the velocity w directly. The\nprescribed large-scale moisture and θ tendencies join their tuples.\n\nRefs #703.\n\n* Add equivalence + multi-step tests for refactored Breeze forcings\n\nTwo new testsets in test/geostrophic_subsidence_forcings.jl that pin the\nrefactor to bit-for-bit equivalent behavior, exercising the per-step\nρ-multiply in SpecificForcing across multiple time steps:\n\n- \"GeostrophicForcing equivalence to manual ρᵣ * vᵍ Forcing reference\":\n  Runs two models side by side under anelastic dynamics — one with the new\n  geostrophic_forcings under specific keys (u, v), the other with hand-rolled\n  Forcing(ρu_ref_field) under ρu, ρv where ρu_ref_field stores the exact\n  output of the old GeostrophicForcing kernel, -f * ℑxᶠᵃᵃ(ρᵣ * vᵍ). With\n  identical initial conditions and 10 time steps, ρu and ρv must match to\n  near machine precision.\n\n- \"SubsidenceForcing multi-step linear accumulation\": A constant-gradient\n  profile is preserved under uniform subsidence, so Gρϕ = -ρᵣ wˢ Γ is\n  constant in time. Asserts that ρϕ changes by N * Δt * Gρϕ after N steps\n  for both θ and qᵛ keys. Catches any per-step bug in the SpecificForcing\n  ρ-multiply that wouldn't appear in the existing single-step gradient test.\n\n* Tidy block-header layout around SpecificForcing's compute_forcing!\n\nMove the `compute_forcing!` method below the materialize function and give\nit its own section header, so the file reads top-to-bottom as: struct →\ndocstring → adapt → density-interpolation → kernel callable → materialize\n→ compute_forcing! → show. No behavioral change.\n\n* Address review: clearer naming + dispatch on Nothing in forcing assembly\n\nThree changes prompted by Greg's review of the atmosphere_model_forcing\nNamedTuple path:\n\n- Extract the per-field assembly into a helper, `assemble_field_forcing`,\n  so the main comprehension is a single function call. Drops the `let`\n  block that was hiding intermediate state inside the Tuple generator.\n- Rename the intermediates: `spec_raw` → `raw_specific_forcing`,\n  `spec_value` → `wrapped_specific_forcing`, mirroring `raw_density_forcing`\n  on the other side. The expression `wrap_specific_forcing(raw_specific, …)`\n  now reads as what it does.\n- Replace the two remaining ternaries with dispatch:\n  - `wrap_specific_forcing(::Nothing, _) = nothing` (new method in\n    Forcings.jl) absorbs the \"no specific-keyed forcing supplied\" case.\n  - `materialize_or_default` dispatches on `Nothing` (default forcing) vs.\n    anything else (delegate to materialize_atmosphere_model_forcing).\n\nAlso `Returns(zero(eltype(f)))` → `Returns(zero(target_field.grid))` per\nGreg's suggestion — same value, more idiomatic.\n\n`specific_to_density_pairs` rewritten to reuse the new `specific_name_of`\nhelper, which returns the un-ρ-prefixed name or `nothing` if the input\nwasn't ρ-prefixed.\n\nNo behavior change; all 28 + 29 forcings tests still pass.\n\n* Cleanup: Drop wrap_specific_forcing from AtmosphereModels exports\n\n`wrap_specific_forcing` is dispatch plumbing — only `collect_user_forcings`\ninside `atmosphere_model_forcing` ever calls it, and the Forcings extension\nimports it explicitly. Users have no reason to override or call it directly.\n\n`is_density_tendency_forcing` stays exported: it's a trait that downstream\ncode can override on its own forcing types to opt them into the\n\"density-keyed only\" rejection in the specific-key dispatch.\n\n* Wrap unprefixed-tracer forcings in SpecificForcing\n\nSplits `assemble_field_forcing` into dispatched methods on the result of\n`specific_name_of(density_name)`:\n\n- `::Symbol` — the prognostic name is ρ-prefixed and the symbol is its\n  specific alias. Behavior is unchanged from before: any user entry on the\n  ρ-keyed name is combined with any entry on the specific alias, with the\n  specific-keyed entry wrapped in SpecificForcing.\n\n- `::Nothing` — the prognostic name has no `ρ` prefix (a user tracer like\n  `:c`, `:a`, `:b`). The name is itself in specific form, so any forcing\n  supplied under it is treated as a specific tendency and wrapped in\n  SpecificForcing — the ρ factor is then applied at kernel time, matching\n  the convention used for ρ-prefixed prognostics' specific aliases.\n\nThis eliminates an inconsistency: previously `forcing=(; c=F)` on a\n`tracers=:c` model added F directly to Gρc (treating F as a density\ntendency), while `forcing=(; θ=F)` on the ρθ prognostic wrapped F as\nspecific. The two now behave consistently — the prognostic name's form\n(ρ-weighted vs. specific) determines whether ρ is applied automatically.\n\n* Test that unprefixed-tracer forcing is wrapped in SpecificForcing\n\nAdds a testset that constructs a model with `tracers=:c` and supplies\n`forcing=(; c=Returns(F))`. Asserts:\n\n- `model.forcing.c isa SpecificForcing` — the dispatch wrapped the user\n  value rather than passing it through verbatim.\n- After update_state!, the Gρc tendency equals `ρᵣ * F` to ~floating-point\n  precision — confirming that SpecificForcing applies the ρ multiply at\n  kernel time even for prognostic names that have no ρ alias.\n\nThis guards the new `assemble_field_forcing(_, ::Nothing, ...)` dispatch\nintroduced when option (1) made unprefixed-tracer forcings consistent with\nthe specific-form convention used by ρ-prefixed prognostics' aliases.\n\n* Rename assemble_field_forcing parameters to reflect dispatch invariant\n\nEach method of `assemble_field_forcing` now names its first argument to\nmatch what the dispatch guarantees about it:\n\n- Outer (single-method) `prognostic_name` — generic, since the outer doesn't\n  yet know whether the name is ρ-prefixed.\n- `(_, ::Symbol)` branch keeps `density_name` — this method only fires when\n  `specific_name_of` succeeded, so the name *is* ρ-prefixed.\n- `(_, ::Nothing)` branch uses `tracer_name` — this method only fires when\n  `specific_name_of` returned `nothing`, which only happens for unprefixed\n  user tracers. The previous `density_name` was actively misleading there.\n\nPositional args, so this is documentation only — no behavior change.\n\n* Fix stale geostrophic_forcings API in benchmarks and neutral-ABL example\n\nTwo callers I missed when geostrophic_forcings switched from returning\n(; ρu, ρv) to (; u, v) in the Path 2 refactor:\n\n- benchmarking/src/convective_boundary_layer.jl: CI benchmark failed with\n  `FieldError: type NamedTuple has no field \\`ρu\\`, available fields: \\`u\\`, \\`v\\``.\n- examples/neutral_atmospheric_boundary_layer.jl: same API drift. Also\n  collapsed the per-prognostic intermediate variables into a single forcing\n  NamedTuple.\n\nSubsidence under ρ-keys was already absent from these files; only the\ngeostrophic accessors needed updating.\n\nAlso drops the executable bit from neutral_atmospheric_boundary_layer.jl —\n.jl files have no business being +x.\n\n* Update AtmosphereModel show test for SpecificForcing wrap\n\nAfter the Path 2 refactor, supplying `geostrophic_forcings(uᵍ, vᵍ)` (now\nkeyed under `:u`, `:v`) makes the dispatch wrap each GeostrophicForcing\nin SpecificForcing and store it under `:ρu`, `:ρv`. The model's `show`\ncorrespondingly prints `ρu=>SpecificForcing, ρv=>SpecificForcing` instead\nof the pre-refactor `ρu=>GeostrophicForcing, ρv=>GeostrophicForcing`.\n\nUpdates the assertion in `atmosphere_model_construction.jl` to match.\n\n* Align materialize-time model_fields ordering with fields(model)\n\nContinuousForcing resolves `field_dependencies` to positional indices in the\nmaterialize-time `model_fields` tuple, then dereferences those positions\nagainst the runtime `fields(model)` tuple. The two orderings disagreed:\n\n- Materialize: `merge(prognostic_model_fields, velocities,\n                      microphysical_fields, (; T=temperature))`\n- Runtime:     `merge(prognostic_fields(model), formulation_fields,\n                      velocities, (; T=temperature), microphysical_fields)`\n\nFor a default LiquidIce model, position 6 was `:u` at materialize time but\n`:θ` at runtime — so a `Forcing(...; field_dependencies=(:u,))` would\nsilently read the potential-temperature field instead of the velocity.\n\nAdds `fields(formulation)` to the materialize-time merge and reorders so\nboth tuples share the same key sequence: prognostic → formulation →\nvelocities → T → microphysical.\n\nTest: a forcing that returns its `:u` dependency, applied to `ρθ`. Setting\n`u = 13` while leaving `θ ≈ 288` produces `Gρθ ≈ 13` under the fix and\n`Gρθ ≈ 288` under the previous ordering — a stark, deterministic probe of\nthe discrepancy.\n\n* Fix @ref targets for GeostrophicForcing in docstrings\n\nThe `GeostrophicForcing` struct has no docstring of its own — the documented\nuser-facing entry point is the `geostrophic_forcings(uᵍ, vᵍ)` function, which\nconstructs and returns a pair of them. So Documenter fails to resolve\n`[GeostrophicForcing](@ref)` and `[GeostrophicForcing](@ref Breeze.Forcings.GeostrophicForcing)`\non the auto-generated `docs/src/api.md` page, which terminates the build.\n\nTwo refs needed updating:\n\n- `SpecificForcing` docstring listed `GeostrophicForcing` as an acceptable\n  inner type; rephrased to point at the constructor function instead.\n- `geostrophic_forcings` docstring linked back to `GeostrophicForcing` itself;\n  changed to plain backticks (the surrounding text already makes the type\n  recognizable), and also fully-qualified the sibling `[SpecificForcing]` ref\n  for symmetry with the rest of the docstrings.\n\n---------\n\nCo-authored-by: Mosè Giordano <mose@gnu.org>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-05-21T22:00:44-06:00",
+          "tree_id": "02b95fb27114dda3eeb2fca01a92ae8837cfa82a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/d9fa378b21359b306557e76393682fd171f2e449"
+        },
+        "date": 1779424007638,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 119111102.9796129,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83658764.71558818,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 64527291.8943405,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 122268364.55850609,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 122268364.55850609,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129055240.07641275,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129055240.07641275,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129055240.07641275,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114386010.64014785,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114386010.64014785,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93062942.6629972,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93062942.6629972,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85824025.9762077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85824025.9762077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74610550.40283833,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74610550.40283833,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7043583.250378006,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 4800104.9307682235,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 41604.476602068746,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25457227.353236925,
             "unit": "points/s"
           }
         ]
