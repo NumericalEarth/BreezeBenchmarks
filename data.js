@@ -5325,11 +5325,6 @@ window.BENCHMARK_DATA = {
             "unit": "points/s"
           },
           {
-            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
-            "value": 362238454.1190972,
-            "unit": "points/s"
-          },
-          {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25298660.10222517,
             "unit": "points/s"
