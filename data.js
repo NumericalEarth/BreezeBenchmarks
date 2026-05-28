@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779984421269,
+  "lastUpdate": 1779989095584,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -6101,6 +6101,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 24950280.17082587,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ce837e33e335c9e6a6607c9ac5c717901f6957ae",
+          "message": "Fire model callsites and advance FieldTimeSeries in AtmosphereModel (#719) (#746)\n\n* Fire UpdateStateCallsite and TendencyCallsite in AtmosphereModel\n\nCallbacks registered with `callsite = UpdateStateCallsite()` or\n`TendencyCallsite()` were silently dropped because the dispatch loops were\nmissing from `update_state!` and `compute_tendencies!`. This mirrors the\npattern in Oceananigans `NonhydrostaticModel`\n(`update_nonhydrostatic_model_state.jl:47-49`, `compute_nonhydrostatic_tendencies.jl:36-38`).\n\nFixes NumericalEarth/Breeze.jl#719.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Advance FieldTimeSeries in AtmosphereModel update_state!\n\n`AtmosphereModel` is not in Oceananigans' `OceananigansModels` Union\n(`Models.jl:123`), so calls to `update_model_field_time_series!` hit the\nno-op `::AbstractModel` fallback (`Models.jl:48`). Any `FieldTimeSeries`\nembedded in BCs (e.g. `OpenBoundaryCondition(fts)`) or forcings was\ntherefore frozen at its initial time slice.\n\nExtend the function on `AtmosphereModel`, mirroring the OceananigansModels\nimplementation and walking `(fields(model), model.forcing)`. Invoke it\nat the top of `update_state!` before halo fill so the new time slice is\nvisible to BC consumers.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Test callsite firing and FTS update dispatch for AtmosphereModel\n\nThree @testsets:\n  * UpdateStateCallsite/TendencyCallsite/TimeStepCallsite counters fire as\n    expected when registered with `add_callback!`. Regression guard for #719.\n  * `compute_tendencies!(model)` (no callbacks) remains callable, covering\n    the test-suite consumer in `turbulence_closures.jl`.\n  * `update_model_field_time_series!` resolves to the new\n    `Breeze.AtmosphereModels` method (not the no-op `::AbstractModel`\n    fallback), and the standard `(fields(model), model.forcing)` walk\n    discovers an embedded `FieldTimeSeries`.\n\nEnd-to-end OBC(fts) coverage is left to the manual Lamb-Oseen validation:\nattaching an FTS-backed OpenBoundaryCondition to a prognostic momentum\nfield surfaces a separate pre-existing bug in `compute_velocities!` —\n`fill_halo_regions!(model.momentum)` is called without `model.clock`, so\nFTS BCs fall through to the generic `getbc(::AbstractArray, ...)` path.\nThat's tracked separately; this commit deliberately steers around it.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Cross-reference #717 in test comment\n\nThe skipped OBC(fts) coverage path runs into #717\n(`compute_velocities!` discards clock/fields when refilling momentum halos).\nThe FTS BoundsError and the continuous-callable MethodError are the same\nunderlying bug — surfaced through different `getbc` dispatch fallbacks.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* End-to-end test: chunked FTS Open BC advances through update_state!\n\nReplaces the walk-reachability stand-in with an end-to-end test now that the\n#717 fix (present in this stacked branch) lets an FTS-backed Open BC on\nmomentum dispatch correctly. A partly-in-memory (InMemory(2)) FieldTimeSeries\nis attached as a west Open BC on ρu; stepping the compressible model past the\nin-memory window advances `backend.start`, which only happens because\n`update_state!` calls the AtmosphereModel `update_model_field_time_series!`\nextension — without it the call hits the no-op `::AbstractModel` fallback and\nthe pointer never moves.\n\nBoundary values are not asserted (a memory-only chunked FTS has no parent file\nto reload slices from); the time-pointer advance is the #719 signal.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-05-28T10:58:03-06:00",
+          "tree_id": "3e9db70a79999e48cf95e3b8bd09e20b601dd11a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/ce837e33e335c9e6a6607c9ac5c717901f6957ae"
+        },
+        "date": 1779989095225,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 117560410.42321034,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 82616892.01038083,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 63685285.80027455,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133401391.86413418,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133401391.86413418,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 124053540.97029108,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 124053540.97029108,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 124053540.97029108,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 105740681.35605396,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 105740681.35605396,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 84523301.95670083,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 84523301.95670083,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 80281281.01147653,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 80281281.01147653,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 70345991.2746728,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 70345991.2746728,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7043968.367747185,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 5992690.246964346,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 1647016.6144710977,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25425324.080683216,
             "unit": "points/s"
           }
         ]
