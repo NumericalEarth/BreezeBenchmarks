@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779966941317,
+  "lastUpdate": 1779984421269,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -5977,6 +5977,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25408148.857657693,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d19b490905fa259326731be834e8276a02b6983f",
+          "message": "Thread clock/model_fields through momentum halo fills (#717) (#742)\n\n* Thread clock/model_fields through momentum halo fills (#717)\n\n`compute_velocities!` and the acoustic RK3 substep-loop recovery refilled\nthe density and momentum halos with bare `fill_halo_regions!(field)` calls,\ndropping `model.clock` and `fields(model)`. For a time-dependent Open BC on\nmomentum, Oceananigans' `getbc` then has no signature that can evaluate the\ntime argument:\n  * continuous callables fall through to `getbc(condition, args...) =\n    condition(args...)` → `ContinuousBoundaryFunction ... not callable`;\n  * `FieldTimeSeries` BCs fall through to `getbc(::AbstractArray, i, j, ...)`\n    → `BoundsError` on `condition[i, j]`.\n\nThread `model.clock, fields(model)` through both sites, matching the\nprognostic halo fill in `update_state!`. Velocities are still stale at these\npoints (recomputed immediately after), so momentum BCs with velocity\n`field_dependencies` would observe last-stage values — noted inline.\n\nFixes NumericalEarth/Breeze.jl#717.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Test time-dependent Open BC on momentum (#717 regression)\n\nBuilds a CompressibleDynamics model with a continuous-callable Open BC on\nρu, verifies `set!`/`update_state!` no longer throws, that the west boundary\nface carries the prescribed value at the current time, and that a full\nacoustic-substepped `time_step!` re-evaluates the BC without error.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Test FieldTimeSeries Open BC on momentum (#717 regression)\n\nComplements the continuous-callable test with the array-backed branch:\na FieldTimeSeries Open BC on ρu. Pre-#717 this hit\n`getbc(::AbstractArray, i, j, ...)` → BoundsError during the clock-less\nmomentum halo fill. Verifies the west boundary face equals the first slice\nat t=0 and linearly interpolates to 1.5 at t=5 after a compressible\nacoustic-substepped step.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Use boundary_condition_args helper at fill_halo_regions! call sites\n\nReplace the explicit `model.clock, fields(model)` arg pair at the 7 prognostic\nhalo-fill sites with the `Oceananigans.Models.boundary_condition_args(model)`\nhelper. The method on `AtmosphereModel` already exists in `atmosphere_model.jl`\n(since #296); this commit just adopts it at the call sites for parity with\n`NonhydrostaticModel` / `HydrostaticFreeSurfaceModel` and to centralize the\n\"what to thread into `getbc`\" decision in one method.\n\nPer @glwagner's review on #742.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Apply suggestions from code review\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Drop atol on nonzero-reference @test ≈ assertions\n\nPer @giordano's review on #742: `atol` is the wrong tolerance for a `≈`\nagainst a nonzero reference value (it swamps the natural relative\ntolerance and would mask real drift). Plain `≈` uses Julia's default\nrelative-tolerance comparison, which is appropriate here.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-05-28T09:44:52-06:00",
+          "tree_id": "a1e91e143956e2e451a64ac8587c30a1a1aeba67",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/d19b490905fa259326731be834e8276a02b6983f"
+        },
+        "date": 1779984420939,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 117866165.91451247,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83239368.57790425,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 64052487.64664005,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 125735251.73171695,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 125735251.73171695,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 127183318.76622736,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 127183318.76622736,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 127183318.76622736,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 113799843.54752465,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 113799843.54752465,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91008358.42470478,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91008358.42470478,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86349937.08024992,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86349937.08024992,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75386939.42867406,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75386939.42867406,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7039877.581581893,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 5982655.141548885,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 1654086.5713515768,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 24950280.17082587,
             "unit": "points/s"
           }
         ]
