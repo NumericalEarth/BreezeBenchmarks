@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1779989095584,
+  "lastUpdate": 1780049045026,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -6225,6 +6225,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25425324.080683216,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "navidcy@users.noreply.github.com",
+            "name": "Navid C. Constantinou",
+            "username": "navidcy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "862327f099e4903b06cf2511a1e10d4e92c08b27",
+          "message": "Patch for Oceananigans v0.109 (#740)\n\n* patch for Oceananigans v0.108.1\n\n* import time_discretization from TimeSteppers\n\n* use Oceananigans 0.109\n\n* use Oceananigans 0.109\n\n* use Oceananigans 0.109\n\n* try fix\n\n* Convert Δt to grid eltype before launching kernels for Metal Float32\n\nOceananigans 0.109 stopped coercing Δt at kernel launch sites, so\npassing a Float64 Δt into a Float32 kernel now triggers\n`unsupported use of double value` on Metal. Convert Δt at the kernel\nboundary (parametrize on α::FT in `_ssp_rk3_substep!`, and convert\nahead of `launch!` for the anelastic pressure correction / source term\nand `scalar_rk3_substep!`).\n\nAlso pin the Oceananigans dkz-adapt-all source in each workspace\nsub-project so the docs and GPU CI envs can resolve the v0.109 branch.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Convert Δt at SSP-RK3 launch site, not inside the kernel\n\nMetal cannot load a Float64 kernel argument at all (the kernel signature\nitself triggers `unsupported use of double value` before the body runs),\nso the previous in-kernel `convert(FT, Δt)` still left a Float64 in the\nspecialized signature. Convert ahead of `launch!` instead, matching the\npattern we already use in `scalar_rk3_substep!` and the anelastic\nlaunches.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Pass Δt through unchanged under Reactant tracing\n\nThe Metal Float32 fix converted Δt to `eltype(grid)` at every launch\nsite, but doing so under Reactant tracing materialises the value and\nbreaks the traced gradient path — `centered_compilation`,\n`weno_compilation`, and `advection_diffusion_ad` started returning NaN\nloss and zero gradients.\n\nIntroduce `kernel_time_step(arch, grid, Δt)` as the single dispatch\npoint: the default converts to `eltype(grid)` (needed for Metal), and\n`BreezeReactantExt` overrides it for `ReactantState` to be a no-op.\nWire it through SSP-RK3, the WS-RK3 scalar substep, and the anelastic\npressure-correction / source-term launches.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Re-trigger CI with Oceananigans interpolate fix\n\nCliMA/Oceananigans.jl@281a3d7f9 on the dkz-adapt-all branch (which\nthis PR pins via [sources]) fixes the `_fractional_indices` arity\ndispatch bug behind the `inertia_gravity_wave.jl` docs build's\n`DomainError`. Re-run CI so the docs job picks up that head.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Require Ocenanigans v0.109.1\n\n* Remove Oceananigans source dependency\n\nRemoved Oceananigans source dependency from Project.toml.\n\n* Remove Oceananigans source entry\n\nRemoved Oceananigans source URL from Project.toml.\n\n* Update Project.toml\n\n* Update Project.toml\n\n* Update Project.toml\n\n* Bump version from 0.5.1 to 0.5.2\n\n---------\n\nCo-authored-by: dkytezab <danielkytezable@gmail.com>\nCo-authored-by: Gregory Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-05-29T11:41:16+02:00",
+          "tree_id": "4880bec69a47f5428679165da818549befb98dbc",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/862327f099e4903b06cf2511a1e10d4e92c08b27"
+        },
+        "date": 1780049044729,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 120380364.15388091,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84417590.55333772,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 65850331.446363226,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 132151469.04693681,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 132151469.04693681,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 127786180.89278327,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 127786180.89278327,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 127786180.89278327,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114433670.2035973,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114433670.2035973,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91479614.91682029,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91479614.91682029,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85186250.27676675,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85186250.27676675,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74952475.79462025,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74952475.79462025,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 7043748.566955613,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float64]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 5987852.280990074,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float64]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 1652991.784981928,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25446454.329566404,
             "unit": "points/s"
           }
         ]
