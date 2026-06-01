@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780302910433,
+  "lastUpdate": 1780343577489,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -6721,6 +6721,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25478951.20895824,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9d01365f89e7174eb3bae6d53057a6e54de3022d",
+          "message": "Per-substep open-boundary enforcement for split-explicit substepper (#747)\n\n* Per-substep open-boundary enforcement for split-explicit substepper (#738)\n\nThe acoustic substep loop currently leaves the perturbation scalars ρ′, (ρθ)′\nwith their default zero-gradient halos on Bounded dims, so an open lateral\nboundary acts as a reflecting wall for the linearized acoustic perturbations:\ninterior-generated waves bounce off it, and the boundary mass flux is carried\nonly by the frozen stage-entry slow tendency Gˢ. Over the ~30 substeps in an\nouter step this biases the discrete mass balance, producing several-percent ρ\ndrift when a transient inflow crosses the boundary (worst observed: −27% on\nthe vortex-transit skim_low scenario).\n\nWRF, ERF, MPAS, and FV3-LAM all avoid this by enforcing the specified lateral\nboundary on every acoustic substep. This change adds the same enforcement for\nAcousticRungeKutta3: after each substep's post-solve recovery,\n`apply_open_boundary_relaxation!` relaxes the outermost open-boundary cell of\nρ′, (ρθ)′ toward the prescribed wall value v with factor α. Because\n`update_state!` applied the prognostic `ValueBoundaryCondition` to the base at\nstage entry, ρᴸ[halo] = 2v − ρᴸ[cell], so the target perturbation is\n(ρᴸ[halo] − ρᴸ[cell])/2 — read directly from the base field, no extra BC\nplumbing. The relaxation is boundary-plane (O(N²)) and adds no extra kernel\nlaunches inside the substep loop.\n\nThe factor α is exposed as a programmatic kwarg on\n`SplitExplicitTimeDiscretization(; open_boundary_relaxation = 0.5)`, default\n0.5 (matching FV3-LAM's outermost-blend-row weight ≈ 0.6), validated to be in\n(0, 1]. The relaxation is unconditional and a no-op on any side whose\nprognostic-momentum BC is not an active `OpenBoundaryCondition` (periodic,\nwalls, and `OpenBoundaryCondition(nothing)` all skip it), so the enforcement\nhas zero cost when no open lateral BC is present.\n\nValidation (Nx=128, full stop_time=10000 s, default α=0.5) on the five OBC\nscenarios from the vortex-transit validation study\n(vortex_validation_report.md §5.3): all density drifts collapse from −8% to\n−27% (no fix) → −0.01% to −0.02% (with fix), vortex amplitude ≥ 99% retained,\nmax|w| ≤ 0.32 m/s (vs 0.85–1.5 without the fix). Tracks Breeze.jl #738.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Add tests for per-substep open-boundary enforcement (#738)\n\nThree testsets covering the new code, appended to `test/acoustic_substepping.jl`\nafter the existing #716 regression test:\n\n1. **`open_boundary_relaxation` kwarg propagation** — verifies the new\n   kwarg's default (`0.5`), custom value propagation through\n   `SplitExplicitTimeDiscretization` → `AcousticSubstepper`, and\n   `ArgumentError` validation for α ∉ (0, 1] (zero, > 1, and negative).\n\n2. **No-op without active open BCs** — builds doubly-periodic and\n   all-walls bounded models, takes a step, asserts no NaN. Confirms\n   `is_active_open_bc` correctly skips `Periodic`, `NoFlux`, and default\n   impenetrable sides, so the always-on enforcement has zero behavioral\n   cost when no open lateral BC is present.\n\n3. **Outermost cell tracks prescribed ρ** — builds a Bounded-x model\n   with `OpenBoundaryCondition` on `ρu` and `ValueBoundaryCondition`\n   setting `ρ_wall = 1.05 · ρ_ref` (a 5% jump). After three outer steps\n   the cumulative per-substep pull saturates and ρ at the outermost\n   west/east cells is well past halfway from the interior bulk toward\n   `ρ_wall`, exercising the boundary-plane relaxation kernels end-to-end.\n\nTests pass on CPU/Float64 (16/16, 44 s). The pre-existing #716 Metal\nFloat32 test failure on macOS is unrelated and reproduces on main.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* test: cover ρθ tracking and y-direction kernel in open-boundary relaxation test\n\nExpands the outermost-cell tracking testset to (a) assert the (ρθ)′ field\nalso tracks its prescribed wall value, and (b) exercise the y-direction\nrelaxation kernel by switching the grid to (Bounded, Bounded, Bounded) and\nopening the south/north sides with a ρv inflow symmetric to the existing\nρu inflow on west/east. Closes prior gaps in PR #747 coverage where only\nthe x-kernel writing ρ′ was directly asserted.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* acoustic_substepping: merge per-direction relaxation kernels and rename args\n\nAddresses two review comments from @glwagner on PR #747:\n- Combines `_relax_open_boundary_{x,y}_cell!` into single per-direction kernels\n  that update both ρ′ and (ρθ)′ in one launch (was two launches per active side;\n  now one).\n- Renames kernel args for consistency with notation.md / Oceananigans BC code:\n  `pert`, `base` (linearized), `i_cell`, `i_halo` → `ρ′, ρθ′, ρᴸ, ρθᴸ, iᴮ, iᴴ`,\n  removing the English-math mixing.\n\nBehavior preserved bit-for-bit (verified against the expanded tracking test\nadded in the preceding commit).\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* test: add asymmetric-wall, α-sensitivity, and OpenBC(nothing) coverage\n\nThree additional testsets for the per-substep open-boundary relaxation:\n\n- Asymmetric wall values per side: catches kernel index-transposition bugs\n  that the symmetric `ρ_wall` setup in the prior test would not detect.\n  Each outermost cell must be closer to its own prescribed value than to\n  the opposite side's.\n- α sensitivity (dose-response): two otherwise-identical runs at α = 0.05\n  and α = 1.0; the high-α run must track `ρ_wall` more tightly. Catches\n  bugs where α is ignored or hard-coded downstream of the kwarg.\n- `OpenBoundaryCondition(nothing)` no-op: exercises the `!(bc.condition\n  isa Nothing)` branch of `is_active_open_bc` and verifies the kernel\n  does not fire in that case.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-01T13:30:24-06:00",
+          "tree_id": "10bd3caace43e0c2000f18dbd131c3a8b58e869a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/9d01365f89e7174eb3bae6d53057a6e54de3022d"
+        },
+        "date": 1780343577061,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 116989096.86545987,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 81941141.98368342,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 63115307.93618529,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 132900779.37489012,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 132900779.37489012,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 127624643.49130633,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 127624643.49130633,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 127624643.49130633,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114616587.52574399,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114616587.52574399,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91814086.32548183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91814086.32548183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85520590.70704481,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85520590.70704481,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76345039.02237214,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76345039.02237214,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 78061717.64624807,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 54805032.98057505,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6312462.359742256,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25197195.151003294,
             "unit": "points/s"
           }
         ]
