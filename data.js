@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780983120500,
+  "lastUpdate": 1781119496470,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -7093,6 +7093,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25146808.132920478,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc5723243afe2c8228f90686a1a35a1b3d1a9d6e",
+          "message": "Add `adiabatic_balance!` for compressible and anelastic dynamics (#764)\n\n* Add adiabatic_initialization! (FV3 na_init) for CompressibleDynamics\n\nSymmetric forward/backward excursion + 1/3-2/3 nudge of the slow\nprognostics (ρ, ρu, ρv, ρθ, ρqᵉ); ρw left free to spin up balance.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Generalize adiabatic_initialization! to AnelasticDynamics\n\nMove the routine to a top-level, dynamics-agnostic file; slow_fields gains\na per-dynamics method (CompressibleModel keeps ρ; AnelasticModel drops the\nfixed-reference ρ). Add an anelastic rest-state test that also exercises the\nbackward step. Reframe the docstring around spinning up the vertical field.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Refine adiabatic_initialization! docstring\n\nExplain that nudging keeps the initialization from drifting too far from\nthe initial conditions, simplify the FV3 attribution, and note the\nsymmetric excursion is only nearly reversible.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Potential fix for pull request finding\n\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>\n\n* Remove stale explicit imports in CompressibleEquations\n\n`time_step!` and `update_state!` were imported from\nOceananigans.TimeSteppers but never used (only referenced in comments\nand docstrings), tripping the Stale Explicit Imports QA test.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Update src/adiabatic_initialization.jl\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n* Update src/adiabatic_initialization.jl\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n* Fully reset clock in adiabatic_initialization! via reset!\n\nThe spin-up excursion's time_step!s leave clock.stage and clock.last_Δt\n(and last_stage_Δt) non-initial. Resetting only time/iteration meant the\nfiltered surface state's `isinf(last_Δt)` guard would misfire on the first\nproduction step. Use Oceananigans' reset!(clock), which restores all five\nfields, and assert stage/last_Δt in the tests.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Rename adiabatic_initialization! to adiabatic_balance!\n\nThe routine spins up balanced vertical momentum, so the name now reflects\nthe balancing it performs rather than its use as an initialization step.\nRenames src/adiabatic_initialization.jl and test/adiabatic_initialization.jl\nand updates the export. Prose naming the FV3 na_init technique is unchanged.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Copilot Autofix powered by AI <175728472+Copilot@users.noreply.github.com>\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>",
+          "timestamp": "2026-06-10T15:01:20-04:00",
+          "tree_id": "1b33fbaa3edff0bebd5b02da5096db323840d69a",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/bc5723243afe2c8228f90686a1a35a1b3d1a9d6e"
+        },
+        "date": 1781119496183,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 115989326.79188961,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 81558234.29582208,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 62502873.00608954,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 131002578.24038832,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 131002578.24038832,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 126536600.4396022,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 126536600.4396022,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 126536600.4396022,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114654860.3011701,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114654860.3011701,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91206270.2605975,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91206270.2605975,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86947829.67963094,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86947829.67963094,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76959489.74352945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76959489.74352945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 77414169.41076435,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 52283503.7183632,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6039803.573673328,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25117098.189720545,
             "unit": "points/s"
           }
         ]
