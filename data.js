@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781187937018,
+  "lastUpdate": 1781192151388,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -7341,6 +7341,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25365231.45279042,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "12664448+bischtob@users.noreply.github.com",
+            "name": "Nawibot",
+            "username": "bischtob"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "41d99cf9d51c59857a3c6ed5a8c64f200450edbd",
+          "message": "[Example] Tropical cyclone with stationary stratiform rainband (YD19) (#657)\n\n* Add literate example: Tropical cyclone with stationary stratiform rainband (YD19)\n\nReproduction of the Yu and Didlake (2019, J. Atmos. Sci. 76, 3169–3189)\nidealized tropical-cyclone rainband experiment as a self-contained Breeze\nexample. The simulation asks: given a mature hurricane, what happens when\nyou paint a steady stationary heating pattern in one of its stratiform\nrainbands? YD19's answer — obtained from a full-physics WRF run — is a\nquadrupole of secondary-circulation anomalies and a few-m/s dipole in the\ntangential wind. We get the same pattern here with the Breeze anelastic\ncore.\n\n## Simulation\n\nSingle hardwired configuration, 214² × 75 cells on a 642 km × 642 km × 25 km\nperiodic-in-x-y box at 3 km horizontal resolution (Δz ≈ 333 m). Three\nback-to-back 24 h stages run end-to-end in one script:\n\n  1. Spinup  — balanced vortex IC relaxes under the upper-level sponge only.\n  2. Control — 24 h continuation from the post-spinup state, no heating.\n  3. Heated  — 24 h continuation from the same post-spinup state with the\n               MN10 stratiform heating switched on.\n\nThe response is (heated − control) in the hour 5-7 analysis window (per\nF06 diagnostic; response saturation past that window reflects the absence\nof explicit horizontal diffusivity — documented known limitation).\n\n## Physics\n\n- Environment: Jordan (1958) West Indies mean hurricane-season sounding\n  (tabulated inline; interpolated onto z_centers).\n- Vortex: modified-Rankine (YD19 Eq. 2) with Stern–Nolan (2009) Eq. 4.4\n  RMW(z) slope, tapered outside 250 km for periodic-box compatibility.\n- Initial condition: Picard iteration of the gradient-wind + hydrostatic +\n  ideal-gas fixed point (Nolan 2001 / WRF `em_tropical_cyclone`). Converges\n  in ~15 iterations to gradient-wind residual ~10⁻³ Pa/m and hydrostatic\n  residual ~10⁻⁵ Pa/m — a 10⁴× collapse over a one-shot linearized baseline.\n- Rainband heating: YD19 Eq. 3 — spiral radial centerline\n  r_bs(λ,z) = [60 − 10(λ/(π/4))] km + z, Gaussian radial shape with\n  σ_r = 6 km, sinusoidal vertical shape with σ_zs = 2 km centered at\n  z_bs = 4 km, super-Gaussian azimuthal window at λ = −π/4, and a 1-h\n  linear ramp from zero to full strength.\n- Upper-level sponge: WRF `damp_opt=2` analog. Rayleigh damping of ρu/ρv/ρw\n  toward zero and ρe toward the reference dry-static-energy-density profile,\n  sin² ramp from z = 20 km to max at z = 25 km.\n\n## Scientific outcome\n\nEnd-of-spinup surface v̄ peak = 37.94 m/s at r = 31.5 km (YD19 target ≈ 40);\nwarm-core θ' peak = 7.63 K at (r, z) = (1.5, 9.8) km (YD19 ~12 K at 10-12 km);\nhour 5-7 axisymmetric response range = [-1.00, +1.61] m/s (YD19 peak ≈ ±1.5);\nper-panel |w'| peaks [0.213, 0.183, 0.217] m/s at z = 6 / 3.6 / 2 km. The\nquadrupole pattern and dipole in v̄ are reproduced; the θ' magnitude shortfall\nis a known formulation caveat (mass-coord vs z-coord Picard closure) that\nsurvives spinup roughly unchanged.\n\n## What the example teaches\n\n- Building a balanced-vortex IC via Picard iteration.\n- Wiring a spatially structured, time-varying heat source into the energy\n  equation with `Forcing`.\n- Running three related stages in one script with in-memory state handoff.\n- Isolating a forced response via a control experiment.\n\n## Figures produced\n\n  - `F01_preflight.png`             vortex IC sanity check\n  - `F02ab_vortex.png`              basic-state vortex (YD19 Fig 2a,b)\n  - `F02cd_heating.png`             analytic heating (YD19 Fig 2c,d)\n  - `F03a_axisym_response.png`      axisymmetric response (YD19 Fig 3a)\n  - `F04_plan_response.png`         plan-view response (YD19 Fig 4a-c)\n  - `F05_cross_sections.png`        cross sections (YD19 Fig 5)\n  - `F06_response_timeseries.png`   response amplitude vs time\n  - `response_w_z3km.mp4`           w' evolution animation at z ≈ 3 km\n\n## Implementation notes\n\n- Self-contained: all physics (Jordan sounding, YD19 constants, kinematics,\n  Picard solver, residuals) inlined into the single example file. No\n  external `include`s.\n- Simulation default is `Float64`. `Float32` attempted and deferred —\n  the anelastic pressure solve NaN's in ρu within 100-300 spinup steps\n  at 3 km on GPU with the YD19 vortex intensity. Smoke (12 km) worked.\n  A separate Breeze-level stability investigation is warranted.\n- Analysis block uses `FieldTimeSeries(...; backend=OnDisk())` for\n  streaming reads and Float32 preallocated scratch buffers for centered\n  interpolation. Peak analysis RSS ≈ 50 MB regardless of snapshot count.\n- LaTeX math blocks, @cite / @citet / @ref markers throughout.\n- Six new bib entries (YuDidlake2019, MoonNolan2010, SternNolan2009,\n  Nolan2001, Jordan1958, Emanuel1986) in `docs/src/breeze.bib`.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* DROP ME: comment out other GPU tests, and increase timeout\n\n* Fix inline comments\n\n* Apply suggestions from code review\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Fix made up DOIs\n\n* add bulk surface fluxes\n\n* restore production-level constants, correct draft comments.\n\n* Fix output directory path\n\n* reduce figure size/increase compression\n\n* fix large HTML file size\n\n* Fix formatting and comments in tropical_cyclone_with_rainband.jl\n\n* Refactor cyclone parameters for clarity\n\n* Update units and improve variable readability\n\n* Update examples/tropical_cyclone_with_rainband.jl\n\n* Initialize CUDA seed for reproducibility\n\n* Enhance tropical cyclone example with improved snapshot handling and corrections to the plots\n\n* rename function names for clarity and improve documentation in tropical cyclone example\n\n* [Example] Switch TC rainband driver to acoustic substepping (Float32)\n\nReplace the anelastic + Float64 production configuration with\nCompressibleDynamics(SplitExplicitTimeDiscretization()) + Float32.\n\nThe anelastic elliptic pressure solve loses its precision margin at\nFloat32 — a 10⁻³ Pa/m gradient-wind residual sits right at F32 ε on a\n10⁵ Pa background — and so anelastic F32 runs deterministically NaN at\niter ~99 across grid resolutions (3 km, 1.5 km), WENO orders (3, 5),\nand surface configurations. Acoustic substepping replaces the elliptic\nsolve with linearized acoustic substeps that don't need to drive a\nglobal residual to round-off, enabling Float32 and running 1.8× faster\nwall-time than anelastic Float64 at identical Δt:\n\n  anelastic F64 (job 819): 3456 iter / Δt=25 s avg / 24.84 min wall\n  acoustic  F32 (job 810): 3454 iter / Δt=25 s avg / 13.81 min wall\n\nAll 3 stages (spinup + control + heated, 24 h each) and the F02–F06\nanalysis figures complete cleanly at F32 on a single T4 (job 817).\n\nConversion details:\n  - AnelasticDynamics(reference_state) →\n      CompressibleDynamics(SplitExplicitTimeDiscretization();\n                           surface_pressure=p_env(0.0),\n                           reference_potential_temperature=θ_env)\n  - formulation = :StaticEnergy dropped (compressible + :StaticEnergy\n    fails to compile on GPU — gpu__compute_temperature_and_pressure!\n    hits jl_f_throw_methoderror). Default :LiquidIcePotentialTemperature\n    is used.\n  - Upper-level sponge ρe → ρθ (target ρᵣθᵣ instead of ρᵣ[cᵖᵈTᵣ + gz]).\n  - Rainband heating tendency ρᵣcᵖᵈQ → ρᵣQ/Πᵣ with Πᵣ(z)=(pᵣ/pˢᵗ)^κ.\n  - IC adds ρ = ρᵢ from the Picard-balanced vortex.\n  - post-stage cache + JLD2 writer + load_last_snapshot include ρ.\n  - Surface fluxes (Cᴰ, Cᵀ, T₀_surf) removed from the prod config —\n    matches the YD19 §3a1 quasi-steady response amplitude (≈ ±1.5 m/s)\n    more closely than with-surface runs (≈ ±2 m/s).\n  - Per-iteration diagnostic_probe runs for the first 250 steps.\n\n* fix whitespace in examples/tropical_cyclone_with_rainband.jl:122\n\n* swap output handling to use in-memory slices instead of JLD2 files, keeping the final HTML file small\n\n* Strip trailing whitespace on lines 644-646\n\n* refactor example to use Float32 for soundings, fix minor plotting inaccuracy.\n\n* update simulation callback intervals and plot title for clarity\n\n* turn on all examples\n\n* removed extra figures and analyses for a more streamlined example\n\n* fix typo in comments\n\n* fix variable naming and update temperature conversion\n\n* [CI] Increase timeout of whole Documentation job\n\n* Move scaling by 100 to `jordan_p_mb` definition\n\n* Always use GPU architecture for tropical cyclone with rainband example\n\n* RICO model is on GPU\n\n* fix missing figure display in literated file\n\n* Update tropical cyclone example to include heated run plot\n\n* Update tropical_cyclone_with_rainband.jl\n\n* Rework tropical_cyclone_with_rainband example with operators, Fields, and output writers\n\n- Balanced-vortex IC solved with Field operators (CumulativeIntegral + ∂z with a\n  hydrostatic Gradient boundary condition) instead of manual Picard arrays; the IC\n  is mapped onto the model with set! + interpolate (no hand-rolled lookup table).\n- Single continuous run (24 h spinup + ramped heating) with a JLD2 output writer;\n  cell-centered velocities, the online-rotated tangential wind (XNode/YNode), and θ\n  are computed online, and the analysis reads them back via FieldTimeSeries.\n- Rainband heating stays discrete but reads the reference ρᵣ/Πᵣ fields by level\n  ([i,j,k]) — no host Array/CuArray columns; named geometry params (no *1000),\n  normalized azimuth s = 4λ/π, and no Float32 module consts.\n- Drop @sprintf/Printf; add an environment-sounding figure; run at CFL = 1\n  (verified stable through the heated phase). Net: ~210 fewer lines.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Add azimuthal_mean diagnostic\n\n`azimuthal_mean(field; radius, Nr, center)` bins a Cartesian field into an\n(r, z) `Field` via a KernelAbstractions gather kernel, so it runs on GPU.\nRe-exported through AtmosphereModels and Breeze; covered by a new testset\nin test/diagnostics.jl (Float32/Float64).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Rework tropical_cyclone_with_rainband forcing, figures, and notation\n\n- Force the rainband as a specific potential-temperature tendency (key `θ`):\n  the model applies ρ via `SpecificForcing`, so no Exner function, reference\n  density, or heat capacity appears in the forcing — it's just F(x, y, z, t).\n- Write the heating rate in Cartesian coordinates so it drops straight into\n  `Field`s; build the cross-section and plan-view heating figures with\n  `CenterField` + `set!` on dedicated grids rather than hand-rolled arrays.\n- Use the new `azimuthal_mean` diagnostic for the basic-state vortex figures.\n- Output w at its native (Center, Center, Face) location; slice on z-faces.\n- Compact math notation throughout the analysis (θₑ, θ̄′, Fᶜ/Fᵈ/Fᵉ, …).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Tidy tropical_cyclone_with_rainband prose and structure\n\n- Fix the heating narrative, which still described the removed Exner/ρθ\n  forcing path; it now matches the specific-θ forcing the code uses.\n- Split the ~85-line balanced-vortex block into three sub-sections\n  (setup / Picard iteration / map to the 3-D model).\n- Replace the cryptic F02ab/F02cd/F02e figure IDs with descriptive\n  section and figure titles that reference the YD19 panels in prose.\n- Rewrite the optional control-run note to use the real procedure\n  (a second model with heating dropped) instead of a nonexistent API.\n- Minor: fix a typo and an orphaned \"Stage 4\" header.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Match house call-formatting style in tropical_cyclone_with_rainband\n\nDrop the dangling-open-paren multi-line call style (no other example uses\nit). Makie calls (Axis, heatmap!, contour!) go single-line like the other\nexamples; the few long constructors (RectilinearGrid, ReferenceState,\nFieldBoundaryConditions, CompressibleDynamics) wrap with the first argument\non the open-paren line and the continuation aligned under it, matching rico\nand bomex. Pure formatting — no behavior change.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Pass heating params explicitly via NamedTuple; rename sponge z⁻/z⁺\n\n- Replace the eight global `const` heating parameters with a single `heating`\n  NamedTuple, threaded explicitly into `rainband_heating_rate(x, y, z, t, p)`\n  and handed to the GPU kernel through `Forcing`'s `parameters` — the same\n  pattern the sponge forcings already use, with no global state.\n- Rename the sponge `z_bot`/`z_top` to `z⁻`/`z⁺`, matching `sponge_mask`'s\n  argument names.\n\nValidated on H100: type-stable on GPU, stable 48 h run, figures reproduce\nYD19 Fig. 2 (a–e).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Use compact notation in rainband_heating_rate body\n\nRename the local shape factors to single symbols — r₀ (band centerline),\nζ (normalized height), G/V/A (radial Gaussian / vertical lobe / azimuthal\nwindow), R (time ramp) — so the heating reads as the product\nF = Fₘₐₓ · G · V · A · R. Pure local rename; behavior unchanged.\n\nVerified on H100: runs cleanly, full 48 h time-stepping in ~3.3 min\n(~11.6 min total wall including compile, IC, and figures).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* fixed `CumulativeIntegral` reference bug\n\n* Run example at 5 km; trim rot-prone and redundant comments\n\n- Coarsen to 5 km (≈128²): stable at CFL=1, ~7.4 min total on an H100\n  (down from ~11.6 min at 4 km), trimming the all-examples CI build.\n- Drop the incidental anelastic-NaN war story and run-specific residual\n  magnitudes (numbers that quietly rot), the duplicated Picard-sweep and\n  θ-forcing explanations, and the unused `z_centers`.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Apply rainband heating as a continuous Forcing\n\n`rainband_heating_rate` already has the `(x, y, z, t, p)` signature\nOceananigans' continuous forcing expects, so pass it directly and drop the\ndiscrete `(i, j, k, …)` wrapper that recomputed the node coordinates by hand.\nAddresses the standing review suggestion to use the continuous form.\n\nValidated on H100: bit-identical iteration history and max|w| to the discrete\nversion, figures unchanged. Composes correctly with the specific-`θ`\nSpecificForcing (ρ-multiply) path.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Test azimuthal_mean off-center and empty-ring paths\n\nAdd coverage for a non-default `center` (averaging a field symmetric about an\noffset center recovers a monotonic radial profile) and for rings finer than the\ngrid (empty rings are zero-filled, not NaN; populated rings hold the value).\nCloses the codecov patch-coverage gap on azimuthal_mean.jl.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* azimuthal_mean: fill empty rings with NaN, not zero\n\nPer review (nrb171): zero-filled empty rings would bias a subsequent radial\naverage. Fill rings that catch no grid points with `NaN` so they read as\n\"no data\". Document the behavior and the practical `Nr` guidance (keep\nradius/Nr ≳ the horizontal grid spacing); update the test accordingly.\n\nLeaves the example untouched — its azimuthal_mean (Nr=30, radius=150 km on\nthe 5 km grid) has no empty rings, so the figures are unchanged.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* azimuthal_mean: conservative sub-cell area weighting\n\nReplace center-only binning with first-order conservative remapping: split\neach Cartesian cell into an m×m block of sub-cells (default m=4) binned by\nradius, so a cell contributes to every ring it overlaps (uniform sub-sampling\n= area weighting). This keeps near-center rings populated and removes the\nempty-ring problem at sensible Nr without pulling in a regridding dependency\nor leaving the GPU — addresses the review thread on empty-ring handling.\n\nRings that still catch nothing (only when radius/Nr is finer than a sub-cell)\nremain NaN. Validated on H100 (kernel compiles/runs, example figure correct,\nsimulation bit-identical) and CPU (conservative fill, monotonic, offset center).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\nCo-authored-by: Nicholas Barron <nerb993@gmail.com>\nCo-authored-by: Nicholas Barron <40299766+nrb171@users.noreply.github.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-06-11T09:13:09-06:00",
+          "tree_id": "8e370262eae840ecc12c50555f0bb03c54b08ce6",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/41d99cf9d51c59857a3c6ed5a8c64f200450edbd"
+        },
+        "date": 1781192150909,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 118345100.93535684,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83212793.51178566,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 65801508.337521225,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 129890253.73592837,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 129890253.73592837,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 123208777.37039812,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 123208777.37039812,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 123208777.37039812,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 110361628.90595637,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 110361628.90595637,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 87722421.58027706,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 87722421.58027706,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84198187.8121179,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84198187.8121179,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74069665.91305745,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74069665.91305745,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 77090246.3242503,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 52395757.106990695,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6136732.670221738,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25025871.892203186,
             "unit": "points/s"
           }
         ]
