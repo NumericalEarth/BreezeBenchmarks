@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781192151388,
+  "lastUpdate": 1781230658691,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -7465,6 +7465,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25025871.892203186,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f9a98cfdae74d0887545a33c1b5a72a9d9a053cf",
+          "message": "Moist Exner reference state + splitting-supercell comparison (#704)\n\n* Moist Exner reference state + splitting-supercell tutorial\n\nAdd moist support to ExnerReferenceState by unifying the dry and moist Exner\nkernels: a single _compute_exner_reference! now takes qᵛ (a ZeroField for the\ndry case) and uses the moist gas constants Rᵐ, cᵖᵐ, κᵐ — these reduce exactly\nto Rᵈ, cᵖᵈ, κ when qᵛ ≡ 0, so the dry path is bit-identical to before. The\nNewton solve on the discrete hydrostatic balance is preserved (it is what\nmakes the substepper's slow vertical-momentum tendency vanish to ulp on a\nrest atmosphere). CompressibleDynamics gains a reference_vapor_mass_fraction\nkwarg; the ref_spec → ExnerReferenceState kwargs translation is centralized\nin _exner_kwargs(ref_spec) so materialize_dynamics and\nboundary_conditions_reference_state share one call site.\n\nAlso add pressure_balanced_density, a helper that returns ρ_bg · θ_bg / θ_init\nso that ρθ is preserved under a θ perturbation — used to initialize the\ncompressible solver without seeding an acoustic pulse.\n\nRewrite examples/splitting_supercell.jl as an anelastic-vs-compressible\ntutorial: walks through reference state, dynamics, microphysics, advection,\nmodel construction, and set! component-by-component for the anelastic core,\nthen introduces only the deltas for the compressible core. Produces stacked\nxy and xz comparison animations plus a maximum-vertical-velocity time series\noverlay.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Unify 1D and 3D Exner reference paths\n\n`_needs_3d_reference` switches `ExnerReferenceState` to a 3D per-column\nintegration when `potential_temperature` depends on horizontal coordinates.\nThat path still used the MPAS-style up-then-down Π integration and refused\n`vapor_mass_fraction` — so the discrete-balance + moist fix from the\nprevious commit did not apply.\n\nExtract the column work into an `@inline _compute_exner_column!` helper\nindexed by (i, j); both `_compute_exner_reference!` and\n`_compute_exner_reference_3d!` become thin `@kernel` wrappers over it.\nThe 3D constructor branch now allocates a 3D `qᵛᵣ` (or `ZeroField` for\ndry) and drops the moisture guard.\n\nVerification: 3D moist reference attains a discrete-balance residual at\nmachine precision (~2e-14 N/m³); 3D with constant θ(x,y,z) is bit-identical\nto the 1D path. `unit_tests` and `acoustic_substepping` pass.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Document reference state and discrete hydrostatic balance\n\nExpand the \"Reference state and discrete hydrostatic balance\" section of\n`docs/src/compressible_dynamics.md` to match the current per-column\ndiscrete-balance integration:\n\n- Correct the balance equation to the cell-center indexing actually used.\n- Derive the Newton residual `F_k(p)` from substituting the moist EOS into\n  the discrete constraint, and note its monotonicity in `p`.\n- Explain why discrete (not continuous) balance matters — the ~1e-3 N/m³\n  residual from MPAS-style up-then-down Π integration seeds an acoustic\n  instability at production Δt.\n- Document moist reference support, the dry-path bit-equivalence via\n  `ZeroField`, and the matching `reference_vapor_mass_fraction` kwarg on\n  `CompressibleDynamics`.\n- Describe the unified 1D / 3D θ̄ path; both support `vapor_mass_fraction`\n  and run through the same column kernel.\n- Cover `pressure_balanced_density` as the IC-side complement that keeps\n  perturbed θ in balance.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Use sim.run_wall_time for example timing\n\nReplace the manual `CUDA.synchronize()` + `time_ns()` block in the\nsplitting-supercell example with `simulation.run_wall_time`, which\nOceananigans already accumulates per iteration. Drop the now-unused\n`using CUDA` import.\n\nAddresses @glwagner's review comment.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Update examples/splitting_supercell.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Load CUDA in splitting_supercell example\n\nThe zero-argument `GPU()` constructor comes from Oceananigans' CUDA\npackage extension and is only defined once CUDA is loaded, so building\nthe docs (where this example runs) failed with `MethodError: no method\nmatching Oceananigans.Architectures.GPU()`. Every other GPU-using\nexample already loads CUDA the same way.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix docstring reference\n\n* Support moist reference state for terrain-following compressible dynamics\n\n`compute_terrain_reference_state!` previously passed the stored reference\nspec straight to `evaluate_profile`, which only accepts a `Number` or\n`Function`. A moist spec (with `reference_vapor_mass_fraction`) arrives as a\nNamedTuple, so terrain materialization threw a `MethodError` instead of\nbuilding a moist terrain reference state.\n\nUnpack the spec into `(θᵣ, qᵛᵣ)`, build the per-column reference using\nlevel-local moist constants (Rᵐ, cᵖᵐ, κᵐ = Rᵐ/cᵖᵐ), and solve the discrete\nhydrostatic balance per face with a Newton iteration — mirroring the\nnon-terrain `_compute_exner_column!`. The dry case is recovered exactly when\nqᵛ ≡ 0. The `reference_temperature` + terrain combination is explicitly\nrejected with a clear `ArgumentError`. Add a moist terrain test asserting\ndiscrete hydrostatic balance.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Add condensate-aware pressure_balanced_density method\n\nThe existing 3-argument `pressure_balanced_density` holds ρθ fixed, which keeps\npressure unchanged only for dry-air / vapor-only states. With nonzero liquid or\nice condensate that relation no longer balances pressure.\n\nAdd an overload taking `(q::MoistureMassFractions, pᵣ, pˢᵗ, constants)` that\nevaluates the full liquid-ice potential-temperature equation of state and\nbalances density via the temperature ratio. Expand the docstring to document\nboth forms and add a test confirming the condensate-aware method holds pressure\nfixed (to √eps) where the shortcut does not.\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Fix moist terrain surface anchor and refactor hydrostatic integration\n\nThe moist k=1 reference anchor balanced the surface-to-center half cell\nover the full cell thickness Δzᶜᶜᶜ instead of Δzᶜᶜᶜ/2, biasing the first\ncell-center pressure low (~3.4 kPa) and creating a spurious horizontal\npressure gradient between columns. Use the correct half-cell distance.\n\nAlso:\n- Refactor continuous hydrostatic integration into converged_* helpers\n  (step-doubling midpoint/RK2) with a sqrt(eps) relative tolerance.\n- Integrate the dry profile in the Exner function, which is exact for\n  hydrostatic balance (∂Π/∂z = -g/(cᵖᵈ θ)).\n- Move converged_hydrostatic_pressure beside its only caller in the\n  terrain compressible physics.\n- Add constant- and variable-moist terrain reference-state tests.\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n\n* Deduplicate hydrostatic reference-state helpers in compressible core\n\nConsolidate three duplications introduced alongside the moist reference-state\nwork, all behavior-preserving:\n\n- Share one Newton discrete-balance solve (newton_hydrostatic_pressure) between\n  the per-column Exner kernel and the terrain reference-state solve, hoisted into\n  Thermodynamics. Iteration counts preserved (5 kernel, 7 terrain).\n- Extract moist_reference_constants for the level-local Rᵐ/cᵖᵐ/κ formula that was\n  open-coded in five places (two kernel, three terrain).\n- Rename _exner_kwargs -> exner_kwargs (underscore prefix is reserved for kernels).\n\nVerified bit-identical: terrain (dry+moist) and 1D-Exner (dry+moist) reference\nstates match before/after to the last ULP.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Restore evaluate_profile dropped by the merge; dedup moist surface constants\n\nThe main merge silently dropped `Thermodynamics.evaluate_profile`: the\nmerge-base defined and exported it, the moist terrain reference code calls it,\nbut main's #712 removed it in favor of `surface_value` (different semantics).\nTaking main's reference_states.jl structure during conflict resolution lost the\ndefinition. The package still loaded (Julia 1.12 only warns on undeclared\nimports) but `compute_terrain_reference_state!` would have thrown UndefVarError.\n\n- Re-add `evaluate_profile(::Number, z)` / `(::Function, z)` and its export.\n- Use the `moist_reference_constants` helper for the 1D Exner surface constants\n  instead of open-coding Rᵐ/cᵖᵐ (behavior-identical dedup).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Update moist terrain reference testsets to main's renamed terrain API\n\nmain's PR #712 renamed `follow_terrain!(grid, h)` (returned TerrainMetrics) to\n`materialize_terrain!(grid, h)` (mutates the grid; TerrainMetrics is then\nauto-built by CompressibleDynamics from the terrain-following grid). The two\nmoist-terrain reference testsets added on this branch still used the old API,\nso they errored after the merge. Port them to the new idiom:\n\n- `metrics = follow_terrain!(grid, h)` → `materialize_terrain!(grid, h)`, and\n  drop the explicit `terrain_metrics = metrics` kwarg (auto-built now).\n- Grid `z` must be a `TerrainFollowingVerticalDiscretization(...; formulation =\n  LinearDecay())`, not a plain `MutableVerticalDiscretization`.\n- Topography is `h(x)` (one arg) on the Flat-y grid, matching every other\n  terrain testset.\n- Drop the now-unused `MutableVerticalDiscretization` import.\n\nVerified standalone: both testsets' interior discrete-hydrostatic residual is\n~3e-14 (tolerance 1e-8).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>",
+          "timestamp": "2026-06-11T21:54:51-04:00",
+          "tree_id": "1b999bb5eee6d2895982fd7a20d1651a97918f01",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/f9a98cfdae74d0887545a33c1b5a72a9d9a053cf"
+        },
+        "date": 1781230658210,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 120320588.85332865,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84022711.08183856,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 65565482.76788801,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133309628.45617492,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133309628.45617492,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 126900327.74825796,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 126900327.74825796,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 126900327.74825796,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 113240429.92574771,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 113240429.92574771,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91876001.4727612,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91876001.4727612,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85900233.87424518,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85900233.87424518,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75557344.32192352,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75557344.32192352,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 78321382.4325727,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 52643414.07947617,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6122893.334304361,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 24921658.07846115,
             "unit": "points/s"
           }
         ]
