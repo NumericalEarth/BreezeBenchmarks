@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781287040389,
+  "lastUpdate": 1781295515206,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -7837,6 +7837,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 24843059.081219222,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "caa260f80cba6878ab1b619a8be1203d11488ef1",
+          "message": "Add `InstantaneousPrecipitation` microphysics, remove `ZeroMomentCloudMicrophysics` (#771)\n\n* Add DCMIP2016LargeScaleCondensation on the density-state saturation adjustment\n\nReed–Jablonowski large-scale condensation as a dedicated microphysics scheme:\ninstantaneous, irreversible condensation with immediate rain-out that retains\nthe released latent heat (warms θˡⁱ). The condensation + rain-out is a thin\ncomposition of the #767 density-based primitives — adjust_thermodynamic_state(\n::LiquidIceDensityState, ::SaturationAdjustment) for condensation and\nwith_temperature for the latent-free rain-out — replacing LSC's previous bespoke\n~60-line constant-density secant, which #767 made redundant.\n\nWhy a dedicated scheme (not ZeroMomentCloudMicrophysics): ZMCM sinks condensate\nwater from ρqᵉ, but nothing sources ρθˡⁱ (there is no microphysical_tendency for\nρθˡⁱ and the θˡⁱ tendency has no microphysical term), so it would remove the\nrain's water but lose its latent warming → no intensification on the θˡⁱ core.\nLSC's defining behavior — rain out the water, keep the warming — needs the fused\nkernel writing ρθˡⁱ directly (mirroring the Kessler scheme), hence a separate\nscheme named for parity with DCMIP2016KesslerMicrophysics.\n\nTests: parity vs the pre-refactor inline formulas to 1e-9 (T, qᵛ⁺, qᶜ, θᶠ;\nwarming retained; subsaturated no-op), plus an integration test driving the\nkernel through microphysics_model_update! on a compressible model (density-\nconsistent saturation at the cell's own ρ, and the condensed-water budget).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Preserve precipitation_rate diagnostic across update_state! calls\n\nRain-out sets precipitation_rate only when condensation occurred; without\nan ifelse guard the field was silently zeroed on the post-microphysics\nupdate_state! pass. Use `ifelse(condensed_water_density > 0, ...)` and\ncompute the density from the before/after ρqᵛ difference instead of the\nremoved qᶜ variable.\n\nAdds a regression test: after one microphysics_model_update! + update_state!\ncycle the precipitation_rate field must remain positive.\n\nCo-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>\n\n* Rename DCMIP2016LargeScaleCondensation → InstantaneousPrecipitation\n\nThe scheme is a generic instantaneous-rain-out idealization — condense all\nsupersaturation, retain the released latent heat, and remove the condensate in\nthe same step (no cloud/rain reservoir, no re-evaporation) — not DCMIP-specific,\nso a descriptive name reads better than the vague \"large-scale condensation\".\n\nRenames the type (internal alias LSC → IP), the once-per-step kernel\n(_large_scale_condensation_update! → _instantaneous_precipitation_update!), and\nthe source/test files (dcmip2016_large_scale_condensation.jl →\ninstantaneous_precipitation.jl); updates the Microphysics/Breeze exports and\ninclude. The DCMIP2016 Reed–Jablonowski provenance is kept in the docstring.\nNo behavior change — pure rename.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Add surface_precipitation_flux for DCMIP2016 large-scale condensation\n\nLSC removes condensate immediately and stores a volumetric precipitation\nrate field; the surface flux is just the column integral of that field.\nImplements AtmosphereModels.surface_precipitation_flux via Field(Integral(..., dims=3)).\n\nTests verify the surface flux is positive after a rain-out step and\nmatches an independently computed column integral.\n\nCo-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>\n\n* Fix stale LSC alias in surface_precipitation_flux\n\nThe InstantaneousPrecipitation rename left surface_precipitation_flux\ndispatching on the removed LSC alias, breaking precompilation. Use the\ncurrent IP alias and update the docstring wording.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Remove ZeroMomentCloudMicrophysics\n\nInstantaneousPrecipitation covers the instant-rain-out use case, so the\nzero-moment scheme and its tests are no longer needed. Also prune the\nnow-unused Parameters0M and remove_precipitation imports from the\nextension and drop stale zero-moment mentions from docstrings and the\nRICO example.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Remove stale explicit imports in BreezeCloudMicrophysicsExt\n\nThese four imports were left over from the ZeroMomentCloudMicrophysics\nremoval: the AtmosphereModels functions are only extended via qualified\nnames, and SaturationAdjustment now appears only inside a jldoctest.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>",
+          "timestamp": "2026-06-12T15:55:00-04:00",
+          "tree_id": "9a35a49bd4f5f63816017967b485f1c77dbbabd4",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/caa260f80cba6878ab1b619a8be1203d11488ef1"
+        },
+        "date": 1781295514766,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121060890.86029741,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84961219.85700065,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 66691333.75497598,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133602135.87281768,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133602135.87281768,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 127009113.91401017,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 127009113.91401017,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 127009113.91401017,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 110584700.02802937,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 110584700.02802937,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 89624407.60973783,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 89624407.60973783,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84407937.37079984,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84407937.37079984,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74881919.48952314,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74881919.48952314,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 77595373.32639594,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 52238839.51653857,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 5990574.917767393,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25228702.343915835,
             "unit": "points/s"
           }
         ]
