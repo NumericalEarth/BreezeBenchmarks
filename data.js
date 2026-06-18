@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781687434941,
+  "lastUpdate": 1781761245302,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -8333,6 +8333,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25099320.39904032,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0fed941dfa1687189d94b2d0aa64bea1b7d8dbf4",
+          "message": "Precompute SLEVE decay basis (≈19× faster TwoLevelDecay substepping) (#788)\n\n* Precompute SLEVE decay basis to eliminate per-access sinh/cosh\n\nThe TwoLevelDecay/SLEVE decay bases bₙ(r)=sinh((z_top−r)/sₙ)/sinh(z_top/sₙ) and\nbₙ′(r)=−cosh(...)/(...) depend only on the reference coordinate r (plus the static\nformulation parameters), but `σ` and `znode` evaluate them on every operator\naccess. Crucially `σⁿ` feeds every vertical spacing `Δz = Δr·σ`, which is touched\nby essentially every operator (divergence, advection, the whole substep loop), so\neach Δz access paid a sinh/cosh pair. On the GPU this made TwoLevelDecay ≈20–30×\nslower per step than LinearDecay.\n\nMaterialize bₙ, bₙ′ once at the Center and Face z-locations into a `TwoLevelBasis`\ncache stored on the formulation (1D in z, indexed [1,1,k] over the same halo'd\nk-range as rnode, bit-identical to the on-the-fly values). `allocate_formulation`\nzero-allocates it during grid construction; `materialize_terrain!` fills it from\n`grid.z.cᵃᵃᶜ`/`cᵃᵃᶠ`. The hot path (terrain_following_σ/Δz_surface/∂z∂x/∂z∂y) now\nreads the cache instead of evaluating transcendentals.\n\nBenchmark (H100, 512²×128, split-explicit substepping, Witch-of-Agnesi hill):\nTwoLevelDecay tfvd_hill drops 10.89 → 0.573 s/step (≈19× faster; TFVD overhead vs\na flat RectilinearGrid falls from 31× to 1.65×, matching LinearDecay's 1.48×).\nLinearDecay is unchanged — its basis is trivial and left analytic.\n\nAdds a throughput benchmark (benchmarking/terrain_following_throughput.jl) and a\nunit test that the materialized basis reproduces the analytic bₙ(r), bₙ′(r).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Remove terrain-following throughput benchmark script\n\nDrop benchmarking/terrain_following_throughput.jl from the SLEVE\ndecay-basis precompute PR; the speedup numbers it produced are recorded\nin the commit message and PR description, and the script itself doesn't\nbelong in the merged history.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-06-17T22:13:13-07:00",
+          "tree_id": "8a506b69f387840876cbf91a908fd71b89c46e30",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/0fed941dfa1687189d94b2d0aa64bea1b7d8dbf4"
+        },
+        "date": 1781761244806,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 124944151.74398543,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 86602783.56699383,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 68341950.06182252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136393428.05569828,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136393428.05569828,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130420247.43321417,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130420247.43321417,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130420247.43321417,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 117052058.12277356,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 117052058.12277356,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92224519.12752986,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92224519.12752986,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86562500.36105403,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86562500.36105403,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78381923.7930334,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78381923.7930334,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 76176334.43736698,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 54191383.96761454,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6869082.535795774,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25219486.83619694,
             "unit": "points/s"
           }
         ]
