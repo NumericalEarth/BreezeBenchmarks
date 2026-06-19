@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781804227265,
+  "lastUpdate": 1781875882950,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -8581,6 +8581,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25416195.891093545,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "08784f5c19cb3c538d1f02071ce5b826bf1de731",
+          "message": "Unify iterative solvers; move the temperature solver from dynamics to the formulation (#780)\n\n* Unify iterative solvers and move the temperature solver to the formulation\n\nIntroduce Breeze.Solvers with NewtonSolver(reltol, abstol, maxiter),\nSecantSolver(reltol, abstol, maxiter), and FixedIterations(n), plus shared\nnewton_solve / secant_solve drivers. All iterative thermodynamic algorithms\nnow dispatch on a solver object instead of carrying ad hoc tolerance/maxiter\nscalars:\n\n- The compressible θˡⁱ→T inversion (LiquidIceDensityState) carries a\n  temperature_solver; FixedIterations unrolls to straight-line code for\n  Reactant/Enzyme, and `nothing` selects the non-iterated closed form,\n  replacing the sign-of-tolerance hack from #767.\n- The temperature solver lives on LiquidIcePotentialTemperatureFormulation,\n  not CompressibleDynamics: the need for the inversion is dictated by the\n  intersection of formulation and dynamics. A DefaultTemperatureSolver\n  sentinel resolves at materialization via default_temperature_solver(dynamics)\n  (nothing for anelastic, NewtonSolver() for compressible).\n- SaturationAdjustment carries a SecantSolver (replacing tolerance/maxiter\n  fields, including the unbounded maxiter = Inf default).\n- dewpoint_temperature and the DewpointTemperature diagnostic take a solver.\n- The legacy MoistAirBuoyancies secant loop (previously uncapped) now uses\n  the shared driver.\n\nRemoved keyword arguments throw ArgumentErrors pointing to the new API.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Route #704 hydrostatic Newton solve through the unified solver framework\n\nThe moist Exner reference state (#704) carried its own hand-rolled fixed-count\nNewton loop, newton_hydrostatic_pressure, that landed after the iterative-solver\nunification. Delegate it to the shared newton_solve driver via a\nresidual_and_derivative closure, taking a solver object instead of a bare\niterations::Int. Call sites pass FixedIterations(5) (per-column Exner kernel) and\nFixedIterations(7) (terrain reference solve), preserving the compile-time trip\ncount so the loop unrolls to straight-line code on the GPU and under Reactant/Enzyme.\n\nBit-identical to the previous loop; the discrete hydrostatic-balance residual\nremains at machine precision (~1e-13 N/m³) for dry and moist columns.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Update stale SaturationAdjustment doctest for the unified secant solver\n\nSaturationAdjustment now carries a SecantSolver instead of bare\ntolerance/maxiter fields, so its show output changed. Update the\none_moment_microphysics doctest to match (verified against the live\nshow output).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fully qualify cross-module @ref links to solver types in docstrings\n\nNewtonSolver/FixedIterations live in Breeze.Solvers but are referenced from\ndocstrings in Microphysics and PotentialTemperatureFormulations, where they\nare not imported. Documenter only performs the cross-module fallback for\nfully-qualified @ref targets, so an unqualified [`FixedIterations`](@ref)\nfails to resolve. Qualify the targets (matching the existing\n@ref Breeze.AtmosphereModels.default_temperature_solver convention) while\nkeeping the displayed text. SecantSolver in saturation_adjustment is imported\ninto Microphysics and resolves via aliasing, so it is left unqualified.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix Reactant GPU regression and docs cross-references\n\nThe Reactant GPU kernel-raising pipeline fails (\"failed to run pass\nmanager on module\") when Enzyme reverse-differentiates the compressible\ntime step if the θˡⁱ→T Newton iteration goes through Solvers.newton_solve\nwith a residual closure. Write the inversion's loop bodies inline with\nplain scalar arguments, preserving the solver abstraction via dispatch\n(solve_temperature methods for NewtonSolver / FixedIterations / Nothing).\n\nAlso qualify @ref targets for solver types in docstrings of modules that\ndo not import them, fixing the Documenter cross-reference build failure.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Unqualify SecantSolver in SaturationAdjustment doctest output\n\nThe doctest sandbox runs with `using Breeze` (DocTestSetup), which brings\nthe exported SecantSolver into scope, so the type parameter prints\nunqualified there — the qualified form only appears outside the sandbox.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Requalify SecantSolver in SaturationAdjustment doctest output\n\nThis doctest lives in the BreezeCloudMicrophysicsExt extension module,\nnot in Breeze. The DocTestSetup `using Breeze` (set via setdocmeta! with\nrecursive=true) only reaches Breeze and its submodules; extension modules\nare not submodules, so that setup never applies here. The only scope is\nthe doctest body's `using Breeze.Microphysics`, and Microphysics does not\nre-export SecantSolver, so Julia prints the type parameter fully qualified\nas Breeze.Solvers.SecantSolver{Float64}. Reverts e443a56, whose premise\nheld only for in-Breeze docstrings.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Make solver tolerance conventions consistent and documented\n\nAddress review question on `reltol` vs `abstol` and `maxiter` across solver\ncall sites by adopting a single convention and writing it down.\n\nTolerance type follows the residual's natural scale:\n- Absolute tolerance for temperature residuals (θˡⁱ→T inversion, saturation\n  adjustment, Boussinesq adjustment), unified to `abstol = 1e-4` K.\n- Relative tolerance for the dewpoint vapor-pressure residual, which spans\n  orders of magnitude (kept at `reltol = 1e-4` vs pᵛ).\n\n`maxiter` follows convergence order and role: Newton inversion 8, secant\ntemperature solves 20 (was 100), dewpoint diagnostic 10. The two hydrostatic\n`FixedIterations` solves are unified to 5 (was 5 and 7) for the identical\nmonotone residual.\n\nThe convention is documented in the `Solvers` module docstring. `test/solvers.jl`\nnow pins the default tolerances and verifies that `FixedIterations(5)` reaches\nmachine precision against a 30-iteration reference for the hydrostatic solve.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Port InstantaneousPrecipitation to the unified solver API\n\nInstantaneousPrecipitation (merged from main) still constructed its\nSaturationAdjustment with the removed `tolerance`/`maxiter` keyword\narguments, which now throw an ArgumentError. Forward a `solver` instead,\nand update the parity test to pass a SecantSolver with its tight tolerance.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>",
+          "timestamp": "2026-06-19T07:07:43-06:00",
+          "tree_id": "e09796ac48d2394f1b6263c5ebef7c6218d6d902",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/08784f5c19cb3c538d1f02071ce5b826bf1de731"
+        },
+        "date": 1781875882642,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 123937561.56445853,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 86612771.08875485,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 67176200.90064815,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136030764.5739555,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136030764.5739555,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130714985.03073034,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130714985.03073034,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130714985.03073034,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 118297699.09665382,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 118297699.09665382,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93206761.04439814,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93206761.04439814,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87989757.13276261,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87989757.13276261,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78647171.63383226,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78647171.63383226,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 74768222.42765565,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53827453.92098503,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6834207.07513957,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25174359.31987617,
             "unit": "points/s"
           }
         ]
