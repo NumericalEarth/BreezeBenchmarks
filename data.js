@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781875882950,
+  "lastUpdate": 1781881824213,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -8705,6 +8705,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25174359.31987617,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a97df65b28589f441b9e9601f3af4c500ccf44b3",
+          "message": "Filter all terms in bulk surface fluxes (#700)\n\n* Filter all terms in bulk surface fluxes (#698)\n\nWhen a `FilteredSurfaceVelocities` is attached to a bulk boundary condition,\nevery field that enters the bulk formula is now read from a filtered source:\nwind speed `|U|`, the velocity (or scalar) difference, and the virtual\npotential temperature `θᵥ` used inside the stability-dependent transfer\ncoefficient. Previously only `|U|` was filtered while `ρu`, `Δϕ`-readers,\nand `θᵥ` in `bulk_coefficient` were read instantaneously, producing the\ninconsistency reported in #698.\n\nThe momentum drag formula is restructured from `Jᵘ = -Cᴰ |U| ρu` to the\nscalar-flux-parallel form `Jᵘ = -ρ₀ Cᴰ |U| u`. Rationale: Monin–Obukhov\nsimilarity is a profile law for `u`, not `ρu`, so this form is faithful\nto the theory underlying `Cᴰ` (Shin, Yang & Howland 2025). `ρ₀` is the\nsurface density computed from `(p₀, T₀, constants)` as already done in\n`BulkSensibleHeatFluxFunction`/`BulkVaporFluxFunction`. When the user\nconstructs `BulkDrag` without an explicit `surface_temperature` (allowed\nfor constant `coefficient`), `materialize_bulk_drag` now fills T₀ from\nthe reference-state potential temperature so `ρ₀` is always well-defined.\n\nChanges\n-------\n\n* `FilteredSurfaceVelocities` gains a `θᵥ :: Field{Center, Center, Nothing}`\n  field, an independent `last_θᵥ_update` Ref for dedup, and new\n  `update_θᵥ!`/`initialize_θᵥ!` helpers (reusing the existing exponential-\n  filter kernel structure).\n* `bulk_coefficient` and `stability_corrected_coefficient` dispatch on\n  whether a filtered θᵥ is available and pull from `fv.θᵥ[i, j, 1]` instead\n  of the 3D `coef.virtual_potential_temperature` when filtering is enabled.\n* `BulkDragFunction` gains `surface_pressure` and `thermodynamic_constants`\n  fields (parallel to the scalar bulk functions), filled in during\n  materialization.\n* `surface_velocity_at_face` helpers (mirroring `wind_speed²ᶠᶜᶜ`) read the\n  face-located velocity from `FilteredSurfaceVelocities.u` (or `.v`) when\n  filtering is on, otherwise from `fields.u`/`fields.v`.\n* `update_boundary_condition!`/`initialize_boundary_condition!` for each\n  bulk BC drive the filtered θᵥ update with the\n  `PolynomialCoefficient.virtual_potential_temperature` KFO. Constant\n  coefficients route through a `Nothing` no-op.\n\nTests\n-----\n\n* `test/forcing_and_boundary_conditions.jl`: new \"BulkDrag uses ρ₀,\n  filtered u and θᵥ\" testset that constructs a 1×1×1 model, sets a known\n  wind, and checks that the surface momentum flux matches the analytic\n  `-ρ₀ Cᴰ Ũ u` to `increment_tolerance`.\n* `test/polynomial_bulk_coefficients.jl`: extends the\n  `FilteredSurfaceVelocities` construction tests to cover the new `θᵥ`\n  field and `last_θᵥ_update` Ref; adds an explicit\n  `update_θᵥ!`/`initialize_θᵥ!` unit test; updates the existing \"Drag\n  flux uses filtered velocity, not instantaneous\" testset to the new\n  `-ρ₀ Cᴰ Ũ u` formula and the reference-state T₀ default.\n\nVerified locally\n----------------\n\n* `polynomial_bulk_coefficients`: 192/192 pass\n* `forcing_and_boundary_conditions`: 28/28 pass in the \"Bulk boundary\n  conditions\" testset (plus the unrelated existing testsets all green)\n* End-to-end: the `prescribed_sea_surface_temperature` example (reduced\n  grid) runs five `time_step!`s with the new machinery; filtered ū\n  integrates from 0 toward the set value, filtered θ̄ᵥ updates, and τˣ\n  has the expected sign.\n\nRefs #698\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* clean up\n\n* Dispatch default surface temperature for BulkDrag on dynamics\n\nMoves `default_drag_surface_temperature` from `BoundaryConditions` to the\ndynamics interface (`AtmosphereModels.dynamics_interface`) and dispatches\non the dynamics type:\n\n* `AnelasticDynamics`: returns the reference-state surface temperature via\n  the Exner inversion T₀ = (p₀/pˢᵗ)^{Rᵈ/cᵖᵈ} θ₀, drawn from the dynamics'\n  `ReferenceState`. Behaviour is unchanged from the previous PR.\n* `CompressibleDynamics`: throws `ArgumentError` with an informative\n  message. Compressible dynamics carries no reference profile from which\n  a surface temperature can be derived (the prognostic surface state would\n  make ρ₀ grid-dependent and break MO consistency at the surface). Users\n  must pass `surface_temperature` explicitly.\n* Generic fallback throws an informative error pointing to the same fix.\n\nAlso folds in two small cleanups:\n* `surface_velocity_at_face` -> `near_surface_velocity` on the YDirection\n  getbc path, matching the rename already applied to the helper definition.\n* Adds Monin–Obukhov-consistency and default-surface-temperature paragraphs\n  to the `BulkDragFunction` docstring explaining why ρ₀ is read from surface\n  quantities rather than the prognostic density.\n\nTests:\n* `forcing_and_boundary_conditions.jl` \"Bulk boundary conditions\" testset\n  gains a regression test that `CompressibleDynamics` + `BulkDrag` without\n  `surface_temperature` throws `ArgumentError`.\n* `polynomial_bulk_coefficients.jl` \"Drag flux uses filtered velocity\"\n  testset's call to `default_drag_surface_temperature` updated to the new\n  module location.\n\nAll 290 local tests (192 polynomial + 7 forcing + 4 BC dependency + 29 bulk\n+ 10 energy flux + 3 lateral + 14 helper + 2 getbc + 1 ThetaFluxBC) pass,\nand the prescribed-SST smoke test runs cleanly with the new dispatch.\n\nRefs #698\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n* Update test/polynomial_bulk_coefficients.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Update test/polynomial_bulk_coefficients.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Update test/polynomial_bulk_coefficients.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Update test/polynomial_bulk_coefficients.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Update src/AnelasticEquations/AnelasticEquations.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Update test/forcing_and_boundary_conditions.jl\n\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>\n\n* Cite Nishizawa & Kitamura (2018) and Shin et al. (2025) for filtered velocities\n\nCo-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.7 (1M context) <noreply@anthropic.com>\nCo-authored-by: Navid C. Constantinou <navidcy@users.noreply.github.com>",
+          "timestamp": "2026-06-19T08:43:48-06:00",
+          "tree_id": "6d2f918256e600aa260f67bbec2ada651d396090",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/a97df65b28589f441b9e9601f3af4c500ccf44b3"
+        },
+        "date": 1781881823537,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 123637780.36095645,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 85437080.73991325,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 67036562.131539725,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 137505883.20134372,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 137505883.20134372,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 131336089.99412227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 131336089.99412227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 131336089.99412227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 118655748.04883921,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 118655748.04883921,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93209796.77718708,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93209796.77718708,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87129863.30440015,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87129863.30440015,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 79610520.98715506,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 79610520.98715506,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 75692489.89097956,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 54001317.65719126,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6760903.499182276,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25211990.995338086,
             "unit": "points/s"
           }
         ]
