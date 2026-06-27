@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782413834528,
+  "lastUpdate": 1782529299677,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -8953,6 +8953,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25287941.81100925,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e50bbfd843a0c4ac663e5f0eb2e06203b4664ea1",
+          "message": "Convert CompressibleEquations to dry-density (ρᵈ) evolution (#806)\n\n* Convert CompressibleEquations to MPAS-style dry-density (ρᵈ) evolution\n\nPrognose dry-air density ρᵈ instead of total density, following the MPAS-A\ndry-coupled formulation. `dynamics_density` now returns ρᵈ — the coupling density\nthat weights the flux variables (momentum ρu = ρᵈu, thermodynamic ρθ = ρᵈθ),\ndivides velocity/θ, and is advanced by continuity. The total air density\nρ = ρᵈ + Σρˣ is a diagnosed field (`total_air_density`, stored on the dynamics)\nused wherever total mass enters the physics: moisture mass-fraction recovery,\nscalar/water advection carriers, the equation of state, buoyancy, and saturation.\n\nMoisture stays in mass fractions throughout — no mixing ratios. Anelastic is\nunaffected (`total_air_density === dynamics_density`).\n\nWhy: with total density prognostic, mass consistency requires a hydrometeor\nsedimentation flux in the ρ, ρqᵗ, and energy equations computed with an identical\ndiscrete operator (the WENO-inconsistency that stalled #458/#614). With ρᵈ\nprognostic, dry air has no source/no fall flux, so sedimentation lives only in the\ncondensate equations and total continuity holds by summation — never discretized.\n\n- Rename prognostic density field/key to ρᵈ/:ρᵈ; keep generic flux keys (ρu, ρθ, ρqˣ).\n- Add diagnosed `total_density` field + `total_air_density` accessor + per-update kernel.\n- Two-density EOS: θ = ρθ/ρᵈ (coupling), inversion + p = ρRᵐT on total ρ.\n- Buoyancy on total ρ (explicit + acoustic-substepper slow tendency; frozen-water loading).\n- Route moisture recovery, tracer/water advection carriers, formulation tendencies,\n  microphysics state, and γᵐRᵐ through total ρ; velocity/continuity/θ-coupling on ρᵈ.\n- set!: `ρ=` means TOTAL density (back out ρᵈ = ρ·qᵈ so moist columns start in balance);\n  `ρᵈ=` sets dry density directly.\n- Fix potential-temperature and number-concentration diagnostics to use total ρ.\n\nValidated (CPU): dry bit-for-bit (acoustic_substepping, dynamics); moist correct\n(compressible_saturation_adjustment, instantaneous_precipitation, cloud_microphysics_1M/2M);\ndiagnostics, number_concentration, quality_assurance (ExplicitImports + Aqua).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Update Project.toml\n\n* Apply suggestion from @glwagner\n\n* Rename to total_density/condensate terms; add ρᵗ, ρᵡ notation; address review\n\nTerminology (per review):\n- total_air_density → total_density (accessor + pointwise kernel function +\n  imports + docs). The only \"total\" mass is ρ = ρᵈ + Σρˣ, so the names denote\n  the same quantity; \"air\" was redundant.\n- water_mass_field_names → condensate_field_names and total_water_density →\n  total_condensate_density, generalized in docs to \"all phases of the\n  condensable species (water by default)\" so non-water condensates can extend\n  condensate_field_names.\n\nNotation (docs/src/appendix/notation.md):\n- Add ρᵗ = ρqᵛᵉ + Σρqᶜ (total condensate density) and register the `t`\n  superscript for \"total\" (consistent with the existing qᵗ).\n- Add ρᵡ for the generic thermodynamic density (ρᵡ = ρᵈχ; ρθ or ρe); rename the\n  substepper locals χ_field/χ_name/Gˢρθ → ρᵡ/ρᵡ_name/Gˢρᵡ. `\\^chi`+TAB → ᵡ\n  (U+1D61) is a valid Julia identifier char.\n- Fix stale doc: compute_slow_scalar_tendencies! writes Gⁿ.ρᵈ (not Gⁿ.ρ).\n\nReview comments addressed:\n- Drop the ρ_total naming (conflicts with plain ρ, which already means total\n  density): use ρ in compute_total_density!; use ρ_field/ρᵈ_field handles in\n  the instantaneous-precipitation kernel.\n- In the energy/temperature set! kernels, the variable holding total_density\n  was named ρᵣ (reference density); rename to ρ.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix set! density init: two-phase establish_densities! for ρ and ρᵈ\n\nThe compressible θˡⁱ/energy-from-T (and from-energy) set! kernels read the\ndiagnosed total_density, which `compute_total_density!` only fills inside\n`update_state!` — i.e. *after* the set! kwarg loop. So `set!(model; ρ=…, T=…)`\n(e.g. the tropical-cyclone rainband example) read total_density = 0 in the\nT→θ kernel, giving ρθ = ρ·θ = 0 and NaN once stepped.\n\nRestructure set! into two phases:\n  1. density + moisture + microphysics + tracers\n  2. (barrier) establish_densities! — make ρᵈ and the diagnosed total ρ\n     mutually consistent and available\n  3. thermodynamic variable + ℋ + velocities/momentum (read the established\n     densities; ρθ = ρᵈθ, ρu = ρᵈu)\n\nestablish_densities! (replaces reconcile_initial_density!) handles the two\ndensity-input modes, which differ because ρqˣ = ρ·qˣ depends on the total ρ:\n  - `:ρ`  (total): total_density ← ρ; dry_density ← ρ − Σρqˣ\n  - `:ρᵈ` (dry):   total_density ← ρᵈ/qᵈ (qᵈ = 1 − qᵗ, combining ρᵈ and the\n                   moisture); re-weight the moisture partial densities by ρ\n  - neither: diagnose ρ = ρᵈ + Σρqˣ\n\nThe four set!-time thermodynamic kernels now weight ρθ/ρe by the dry density\nρᵈ (dynamics_density) and read total ρ only for mass fractions, so no post-hoc\nrescale is needed and both modes are correct. Dominant `:θ` path is unchanged\nbit-for-bit. Adds `:ρᵈ` to prioritize_names and a moist-compressible set!\ndensity-mode regression test.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix GPU failure in set! density-mode test: reduce interiors on CPU\n\n`all(≈(ρ₀; rtol), interior(field))` compiled the keyword-carrying closure\n`≈(ρ₀; rtol)` into a GPU mapreduce kernel, which failed with \"passing\nnon-bitstype argument\" (a Symbol in the kwargs Pairs). Pull each interior to\nthe host with `Array(interior(...))` before reducing, matching the rest of the\nfile. CPU behavior unchanged.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* [TEMP, revert before merge] Isolate rainband example in docs build\n\nComment out all docs examples except tropical_cyclone_with_rainband and force\nits build_always=true, so the PR docs build runs only the rainband and\nvalidates the dry-density set!(ρ=…, T=…) fix end-to-end through Literate.\nRevert this commit before merging.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Revert \"[TEMP, revert before merge] Isolate rainband example in docs build\"\n\nThis reverts commit f9c34278b8b52ddd5b59bed2f31007b96392bc7a.\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>",
+          "timestamp": "2026-06-26T20:39:06-06:00",
+          "tree_id": "2058f0d5898465828c37d00d98fb6ac1f50928a2",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/e50bbfd843a0c4ac663e5f0eb2e06203b4664ea1"
+        },
+        "date": 1782529299419,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121971802.47483346,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 85532845.63715778,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 67439360.53275344,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 137646205.97039568,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 137646205.97039568,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128759939.19081673,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128759939.19081673,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128759939.19081673,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 113320370.93434355,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 113320370.93434355,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91695127.05806468,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91695127.05806468,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84143149.28341188,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84143149.28341188,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74198383.16538282,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74198383.16538282,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 72984777.1480219,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53639014.924250945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6653613.795771133,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25182325.593734372,
             "unit": "points/s"
           }
         ]
