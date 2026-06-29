@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782529299677,
+  "lastUpdate": 1782757031370,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -9077,6 +9077,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 25182325.593734372,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "414b475740c288e8e6a42071a89693bf16bcef31",
+          "message": "Acoustic substep: kernel-launch reduction, per-stage substeps, cleanup (#795)\n\n* Acoustic substep: kernel-launch reduction, per-stage substeps, cleanup\n\nOptimize and clean up the split-explicit acoustic substep loop. No change to the\nalgorithm; the only deliberate numerical change is the per-stage substep\ndistribution (a strict improvement, below). Net −188 lines.\n\nKernel-launch reduction in the hot substep loop:\n- Split `_build_predictors_and_vertical_rhs!` (one :xy column kernel) into two\n  :xyz kernels — `_build_predictors!` then `_build_vertical_rhs!` — for full\n  occupancy; the launch boundary is the global sync (RHS reads predictors at k±1).\n- Fuse the time-averaged-velocity accumulation into `_post_solve_recovery!` (the\n  momentum components are already loaded there).\n- Fold the per-substep old-(ρθ)′ save into `_build_predictors!` (it reads (ρθ)′\n  anyway), replacing a full-field broadcast with one halo fill.\n- Collapse the 6 stage-start workspace zeros, the velocity seed, and the\n  time-averaged accumulation each into a single launch.\n\nPer-stage substep distribution:\n- `ProportionalSubsteps` (default) now fits ⌈β·N⌉ substeps of size β·Δt/⌈β·N⌉ to\n  each WS-RK3 stage's interval — exact coverage at the minimum count, no global\n  multiple-of-6 quantization.\n- The previous uniform-Δτ scheme is renamed `ConstantSubstepSize` (kept available).\n\nGenerality / API:\n- Allow flux-form momentum advection on `OrthogonalSphericalShellGrid` (e.g.\n  `LambertConformalConicGrid`): the compressible core supplies the curvilinear\n  curvature term `U_dot_∇u_metric`, so the hydrostatic-ocean guard (OSSG ⇒\n  VectorInvariant only) does not apply here.\n- Add an `ST` storage-type kwarg to `AcousticSubstepper` (default `eltype(grid)`)\n  for the acoustic perturbation/predictor/linearization fields, enabling\n  reduced-precision storage (e.g. BFloat16, where supported) of the\n  bandwidth-bound substep working set.\n\nCleanup (no behavior change):\n- Compact verbose comments/docstrings (equations preserved).\n- Math-notation helper names (θF{ˣ,ʸ,ᶻ}, Fʷ, ∇{ˣ,ʸ,ᶻ}p′, δp/δρ, δpᴸ).\n- Pass the `thermodynamic_constants` struct into the mixture-EOS kernel instead\n  of six pre-converted scalars; drop redundant `convert(FT, …)` on already-FT\n  values.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Review refinements: branchless RHS, own validate_momentum_advection, ST kwarg, cleanups\n\n- `_build_vertical_rhs!`: drop the `if k==1 / else / if k==Nz` branches; compute the RHS\n  unconditionally and pin the boundary faces with a branchless `ifelse((k != 1) & (k != Nz+1), …)`,\n  launched over the face range `1:Nz+1` (no warp divergence; boundary halo reads are discarded).\n- `validate_momentum_advection`: define an AtmosphereModel-specific method (flux-form is valid on\n  every grid, incl. OrthogonalSphericalShellGrid) instead of importing + side-stepping the\n  hydrostatic ocean model's version.\n- `ST` perturbation storage type is now a kwarg on `AcousticSubstepper` (default `eltype(grid)`),\n  replacing the `SUBSTEP_BF16` env var; drop the `BFloat16s` dependency.\n- Merge identical `δp`/`δρ` into one `δϕ`; rename `coefficient_over_Δτ → α_over_Δτ`,\n  `{x,y}_damping_diffusivity → κˣ/κʸ`, `acoustic_stage_vertical_transport_momentum → transport_ρw`.\n- Default `acoustic_cfl` 0.5 → 0.7.\n- docs: temporarily build only the stratified thermal bubble + baroclinic wave examples (PR\n  validation that the baroclinic wave completes); restore before merge.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Rename ST kwarg -> substep_floattype\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Tridiag coefficients: use Oceananigans reciprocal-metric operators\n\nReplace the manual 1/Δzᶜᶜᶜ reciprocals and the / Δzᶠ divisions in the AcousticTridiag\n{Lower,Diagonal,Upper} coefficients with Oceananigans' Δz⁻¹ᶜᶜᶜ / Δz⁻¹ᶜᶜᶠ operators and\nmultiplication. (Reciprocal-multiply vs divide is not bit-identical — ~1 ulp — but matches the\nOceananigans metric convention and avoids the manual inverses.)\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Add DivergenceDamping: direct 3-D divergence acoustic damping\n\nNew AcousticDampingStrategy that forms ∇·(ρ𝐮)′ directly from the perturbation momentum and corrects\nthe horizontal momentum by Δ(ρu)′ = α Δx² ∂x[∇·(ρ𝐮)′] (KSH18 eq. 7 / §3 'old method'), as an\nalternative to ThermalDivergenceDamping's (ρθ)′-tendency proxy (their eq. 36). Two launches: materialize\nthe 3-D divergence into the (post-recovery, free) density predictor scratch, halo-fill, then take ∂x/∂y.\nAdds a test exercising construction + a stable, divergent-IC step.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Remove redundant explicit timestepper=:AcousticRungeKutta3\n\nThe AtmosphereModel constructor auto-selects the time stepper via default_timestepper\n(:AcousticRungeKutta3 for SplitExplicitTimeDiscretization, :SSPRungeKutta3 otherwise), so the\nexplicit kwarg was redundant at every model-construction site. Removed across the test suite + the\ntwo_dimension_mountain_wave example.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* DirectDivergenceDamping (Θ-flux form); default to NoDivergenceDamping\n\n- Rename DivergenceDamping -> DirectDivergenceDamping (contrast with ThermalDivergenceDamping).\n- Correct the damped divergence to the Θ-flux divergence D = ∇·(θᴸ(ρu)′) — the divergence carried by\n  the (ρθ)′ continuity equation (KSH18 D = ∇·ρθv) — computed directly via the build_predictors flux\n  form (θFˣ/θFʸ/θFᶻ) with the /θᴸ correction matching eq 36; NOT the mass divergence ∇·(ρu)′.\n- Re-export DirectDivergenceDamping from Breeze + add its convert_acoustic_parameter method.\n- Default SplitExplicitTimeDiscretization damping -> NoDivergenceDamping, to test whether the baroclinic\n  wave is stable without the horizontal divergence filter (vertical damping still from CN off-centering);\n  baroclinic_wave example + default-construction test updated accordingly.\n- Also bundles the off-centered-CN derivation comment reformat (same file, could not split non-interactively).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Default to DirectDivergenceDamping (NoDivergenceDamping blows up the baroclinic wave)\n\nThe NoDivergenceDamping experiment confirmed CN off-centering alone is insufficient — the baroclinic\nwave goes unstable without horizontal divergence damping. Switch the default to DirectDivergenceDamping\nso the docs baroclinic_wave example renders with the new Θ-flux divergence filter.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* DirectDivergenceDamping: horizontal θ-flux divergence only (drop the destabilizing vertical term)\n\nThe 3-D form blew up the baroclinic wave: folding the vertical θ-flux divergence ∂z(θᴸ(ρw)′) into the\ndamped divergence damps the *resolved* vertical flux. The correct quantity for the horizontal momentum\nfilter is the horizontal divergence δ = ∂x(θᴸ(ρu)′) + ∂y(θᴸ(ρv)′), per KSH18 eq. 36 and PR #794 (which\nfixes the same blow-up the same way). Δ(ρu)′ = α Δx² ∂x δ / θᴸ, Δτ-free. Reverts the dynamics-threading\nthat was only needed for the vertical term.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Default back to ThermalDivergenceDamping (isolate baro-wave blow-up)\n\nDirect (both 3-D and horizontal-only) blows up the docs baroclinic wave, but the last *passing* docs\nbuild (2156d27) predates the recip-metric + per-stage-substep changes — so Thermal at HEAD is untested.\nRestore the proven Thermal default to determine whether the blow-up is the damping form or the other\nchanges since 2156d27.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Increase default forward_weight 0.65 → 0.8 (stronger vertical off-centering damping)\n\nThe α sweep showed the baroclinic-wave grid-scale noise is unaffected by the horizontal divergence\ndamping (ζ roughness flat from α=0.10→0.125, and α≥0.2 blows up) — so the noise is the vertical top-lid\nw-mode (#794's residual), which is damped by the CN off-centering (KSH18 eq 32: γ_v = c²Δτσ/2, σ=2ω−1),\nnot by α. Bump ω 0.65→0.8 (σ 0.3→0.6, double the vertical damping) to see if it suppresses the noise in\nthe docs baroclinic wave.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Add Cartesian-channel baroclinic wave validation case (Ullrich et al. 2015)\n\nA β-plane (FPlane) channel baroclinic wave on a RectilinearGrid — the\nrectilinear counterpart to the lat-lon DCMIP baro wave, with no spherical\nmetric/curvature terms. Serves as a control for isolating curvilinear-grid\nbehavior in the compressible split-explicit core.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_019XeMCMu2irUx2jAVLDtN2C\n\n* Isotropic horizontal divergence damping + V⁻¹ᶜᶜᶜ operator\n\nMake LocalHorizontalDampingScale isotropic and mesh-varying:\nκˣ = κʸ = α/Δτ · min(Δx,Δy)² (was anisotropic αΔx² / αΔy²), following MPAS.\nmin(Δx,Δy) keeps the explicit-diffusion number ≤ α in both directions\neverywhere, including the converging meridians at high latitude (√(ΔxΔy)\nwould exceed the α ≤ 0.25 bound there, and cbrt(V) is too small for a\nhorizontal filter due to the thin Δz).\n\nImport and use V⁻¹ᶜᶜᶜ for the cell-volume reciprocal in the predictor and\ndirect-damping kernels (was 1/Vᶜᶜᶜ); minor reformatting of those kernels.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_019XeMCMu2irUx2jAVLDtN2C\n\n* Fix seed-velocity OOB and remove stale Vᶜᶜᶜ import after dry-density merge\n\n- _seed_time_averaged_velocity! launched one fused kernel over max(size)\n  across the three staggered velocity parents; the smaller (center-in-z u/v)\n  components were over-indexed at k=Nz+1, throwing BoundsError under\n  --check-bounds=yes (substepper_rest_state T3). Replace with a per-component\n  copyto! over each array's own bounds (GPU-safe, no kernel needed).\n- Drop now-unused explicit import Vᶜᶜᶜ (replaced by V⁻¹ᶜᶜᶜ); fixes the\n  ExplicitImports stale-import failure in quality_assurance.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Update acoustic_cfl test/docstrings to match PR's 0.7 default\n\nThe PR deliberately raised the default acoustic_cfl 0.5→0.7 (commit 2156d273)\nand forward_weight 0.65→0.8 (commit b2e7d35c) but left the plumbing test and\nfield-list docstrings at the old values. CI's --quickfail masked the test\nfailure behind the earlier rest-state BoundsError. Sync them:\n- test acoustic_cfl default expectation 0.5 → 0.7\n- AcousticSubstepper docstring defaults (acoustic_cfl 0.7, forward_weight 0.8)\n- compute_acoustic_substeps docstring (0.7 default; 0.5 is the ERF/WRF target)\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix terrain UndefVarErrors after merge: import Δzᶜᶜᶜ, rename test symbols\n\nTwo latent PR failures (masked by CI --quickfail stopping at the earlier\nrest-state error):\n- terrain_compressible_physics.jl uses Δzᶜᶜᶜ but the PR cleanup removed its\n  only import (from acoustic_substepping.jl, shared via module namespace).\n  Import it explicitly in the file that uses it.\n- test/terrain_following.jl referenced source helpers the PR renamed:\n  linearized_pressure_perturbation → δpᴸ, z_linearized_pressure_gradient → ∇ᶻp′\n  (both 1:1, same signatures).\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix misleading damping comment in baroclinic_wave example\n\nThe PR added an inline comment claiming 'default damping is now\nNoDivergenceDamping', but the default was never changed — it is\nThermalDivergenceDamping(coefficient=0.1) (time_discretizations.jl). An\nundamped baroclinic wave would be unsafe; the comment was simply wrong.\nCorrect it to state the real default.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-29T11:51:16-06:00",
+          "tree_id": "97a88ddfbabc3b9127bd6b580b4d89f8dcacb9fc",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/414b475740c288e8e6a42071a89693bf16bcef31"
+        },
+        "date": 1782757031095,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121147093.15928125,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84318874.28279968,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 65154008.99887122,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136181821.24780735,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136181821.24780735,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130650550.85032159,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130650550.85032159,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130650550.85032159,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 118616465.59485,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 118616465.59485,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93230662.88089941,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93230662.88089941,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 88032145.4147093,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 88032145.4147093,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 79884079.752252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 79884079.752252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 73888016.4812381,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53818869.76383406,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6725476.61668996,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26558993.54062871,
             "unit": "points/s"
           }
         ]
