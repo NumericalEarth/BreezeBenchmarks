@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782842666609,
+  "lastUpdate": 1782858507678,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -9325,6 +9325,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 26487363.49030257,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danielkytezable@gmail.com",
+            "name": "dkytezab",
+            "username": "dkytezab"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ddd26a2ff8b746851e0ceaf2278c8a61b654f3c6",
+          "message": "Add benchmarks for WENO scalar, model tendency (#805)\n\n* Add tendency benchmark\n\n* Dump MLIR for the scalar-tendency benchmark in CI\n\nEnable Reactant's DUMP_MLIR_ALWAYS pointed at a saved directory for the\n--mode tendency entry (GB-25 pattern), and upload it as an artifact so the\ngenerated MLIR can be inspected later. Gated on GITHUB_ACTIONS, so only the\ntendency matrix entry dumps; other entries produce no files.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Sweep optimize=true/false in the scalar-tendency benchmark\n\nFor each WENO order, compile + profile the kernel both with and without XLA's\noptimization passes (passed as the `optimize` compile option to\n`Reactant.@compile`), giving 8 cases total. Both compiles dump MLIR via\nDUMP_MLIR_ALWAYS, so optimized vs unoptimized IR can be compared. The\noptimized/unoptimized runs are distinct chart series via an `_opt_`/`_noopt_`\ntag in the benchmark name.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Use optimize=:before_raise instead of false in tendency sweep\n\nCompare fully optimized vs before-raise MLIR for each WENO order.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Compare vanilla vs reactant in the scalar-tendency benchmark\n\nReplace the optimize sweep with a backend sweep: for each WENO order, time the\nkernel both as a Reactant-compiled optimized XLA program (profiled via\nReactant.Profiler) and as an eager vanilla launch (timed with device sync, no\nReactant compile). 4 orders x 2 backends = 8 cases, split into per-backend\nchart series. Reactant still dumps MLIR; vanilla does not compile.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Partition tendency MLIR dumps by WENO order\n\nSet DUMP_MLIR_DIR to mlir_dumps/<WENOn> per order so each case's MLIR is in its\nown subdirectory rather than interleaved by counter. Reactant only.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Add full-model compute_tendencies! benchmark\n\nAdd a model_tendency case that builds a compressible AtmosphereModel and times\ncompute_tendencies! (the full per-stage tendency), mirroring the bare scalar\nkernel benchmark. Generalize the runner (benchmark_scalar_tendency ->\nbenchmark_tendency) to take the grid and a mode tag explicitly so both cases\nshare it. New --mode model_tendency and a CI matrix entry (vanilla vs reactant,\nWENO order sweep, MLIR dumps); the publish clause now covers both tendency\nmodes, charted separately via base_name.\n\nAlso add the standalone benchmark_model_tendency.jl prototype.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Dump Reactant profiles for the tendency benchmarks in CI\n\nThread a profile_dir through benchmark_tendency to Reactant.Profiler.@timed so\nthe xprof trace files are written to benchmarking/profiles/<case>_<advection>\n(Reactant + CI only), and upload them as an artifact. Covers both the tendency\nand model_tendency matrix entries; indexed per advection like the MLIR dumps.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Share benchmark result logging; report total time\n\nFactor the verbose result summary into log_benchmark_result(::BenchmarkResult),\nused by both benchmark_time_stepping and benchmark_tendency, so they report\nidentically — including total time, which the tendency benchmark was missing.\nRename the tendency runner's per-call locals to the per-step names used by the\ntime-stepping runner to remove the gratuitous difference.\n\nAddresses review feedback (report total time; reduce duplication / align\n\"time per step\").\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Use 300 trials for the tendency timing\n\nA single tendency evaluation is much cheaper than a time step, so hardcode\nnrepeat=300 for both tendency modes to get a stable timing, independent of the\n--time_steps used for the stepping benchmarks.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Bump tendency timing trials to 320 via --time_steps\n\nOverride --time_steps to 320 (4x) on the tendency / model_tendency matrix\nentries so a single tendency evaluation is timed over enough trials, without\naffecting the stepping benchmarks. Runner takes nrepeat from --time_steps again.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Also run the scalar tendency in BFloat16\n\nAdd BFloat16s as a benchmarking dep so --float_type can request BFloat16, fix\nthe name tag for it (BF16), and run the scalar-tendency entry in both Float32\nand BFloat16. model_tendency stays Float32.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Support TPU device in make_backend_arch\n\nMap --device TPU to Reactant's tpu backend, and error clearly on the\nimpossible vanilla+TPU combo (eager KA/CUDA has no TPU path). Enables running\nthe tendency benchmarks on TPU via --backend reactant.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Delete benchmark_model_tendency.jl\n\n* Re-pivot tendency charts: panel per WENO order, line per config\n\nMap the WENO order to level_2 (side-by-side panels) and float-type × backend\nto level_4 (lines), matching the multi-panel/multi-line layout the dashboard\nalready uses for the CBL charts. Scalar gets 4 lines per order panel (Float32 /\nBFloat16 × vanilla / reactant); model gets 2 (Float32 only).\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Sweep reactant raise=true/false in the tendency benchmarks\n\nFor the reactant backend, compile + profile both raise=true (kernels raised to\nStableHLO) and raise=false (kernels kept as XLA custom calls), as separate\nlines, with raise_first tied to raise. Skipped on TPU, where raise=false has no\nCUDA custom-call path. Vanilla is unaffected. MLIR/profile dumps are\npartitioned per raise variant.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Bump tendency benchmark grid to 512x512x128\n\nUse a larger grid for both the scalar and model tendency sweeps.\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Revert tendency benchmark grid back to 256x256x128\n\nCo-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>\n\n* Fix naming, cut WENO3\n\n* Update Benchmarks.yml\n\n* Update Benchmarks.yml\n\n* Revert temporary plotting changes\n\n---------\n\nCo-authored-by: Claude Opus 4.8 <noreply@anthropic.com>",
+          "timestamp": "2026-07-01T00:01:27+02:00",
+          "tree_id": "660728afd12aeb31edb12ec186466db1d93305c6",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/ddd26a2ff8b746851e0ceaf2278c8a61b654f3c6"
+        },
+        "date": 1782858507178,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121307816.69077574,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84922586.5949114,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 66276376.80240945,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136180230.83555588,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136180230.83555588,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128951489.14882757,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128951489.14882757,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128951489.14882757,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115383811.43641981,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115383811.43641981,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92621018.17153312,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92621018.17153312,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85973339.73182245,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85973339.73182245,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76486952.4786732,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76486952.4786732,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 72651635.87105888,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53611877.18462591,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6705136.418310641,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26465070.45405571,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1059430765.8150452,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 944120406.4690746,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1347837334.1876945,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 757243324.5464727,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 177197429.48848766,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 903273212.805134,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 545076850.1496754,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24702706.962782282,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 617185895.160754,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6596464813.965755,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7868256587.123746,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8569414067.408247,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5275550080.32949,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10115153422.539915,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8605209734.220053,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4601938475.450378,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4510862820.128132,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5562162004.461077,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3563865124.5768523,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5497687507.823544,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5317352850.00992,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3142015284.2786217,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 162742483.12944692,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3546011533.424697,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2202526980.384553,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 2919713354.21443,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3468601466.8127112,
             "unit": "points/s"
           }
         ]
