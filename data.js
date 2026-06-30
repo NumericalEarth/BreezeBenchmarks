@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782757031370,
+  "lastUpdate": 1782842666609,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -9201,6 +9201,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
             "value": 26558993.54062871,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0649c8e36543d3603661f911c050f66e889edd38",
+          "message": "Move adiabatic-balance machinery into AtmosphereModels (one file); fix notation (#815)\n\nConsolidate the two top-level files (`src/balance_adiabatically.jl`,\n`src/adiabatic_balance.jl`) into a single `src/AtmosphereModels/adiabatic_balance.jl`\nthat lives inside the AtmosphereModels module, where it conceptually belongs.\n\nThis is possible by using the standard Breeze interface-extension pattern for the one\npiece that genuinely depends on a later-loaded submodule:\n\n  * `adiabatic_twin_dynamics(dynamics, time_stepping)` is generic in AtmosphereModels with\n    a fallback that reuses the dynamics unchanged — so the balance is solver-agnostic\n    (AnelasticDynamics and any future solver work via the fallback). CompressibleDynamics\n    extends it in CompressibleEquations to swap the time discretization (sponge stripped).\n  * `initial_fields` is now generic (every prognostic except `ρw`) rather than dispatching\n    on CompressibleModel/AnelasticModel — same result, no model-type methods.\n  * a small `DefaultTimeStepping` sentinel lets `AdiabaticBalancer`'s default avoid naming\n    `ExplicitTimeStepping` (whose type lives in CompressibleEquations). The public\n    `time_stepping` API is unchanged (default → explicit, `nothing` → native, TD → that).\n  * `set!` calls `balance_adiabatically!(model, balancer)` directly now that they share a\n    module — the `balance_initial_state!` stub is removed.\n\nAlso fixes notation flagged in review: dry-air specific heat `cᵖ` → `cᵖᵈ` (with `cᵛᵈ`,\n`γᵈ`), and `maximum(interior(model.temperature))` → `maximum(model.temperature)`.\n\nThe explicit unsupported-dynamics error is gone (the agnostic fallback replaces it).\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-06-30T11:40:16-06:00",
+          "tree_id": "488f0361f09820b562163f9a86f090c77f2a9550",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/0649c8e36543d3603661f911c050f66e889edd38"
+        },
+        "date": 1782842666292,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 122191817.40252495,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 85456743.94492705,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 67082968.313089155,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133408743.89448567,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133408743.89448567,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129227857.74964596,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129227857.74964596,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129227857.74964596,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 116721294.87241489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 116721294.87241489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 90775437.07475665,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 90775437.07475665,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86899150.82983941,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86899150.82983941,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78867260.15924804,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78867260.15924804,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 73557384.44413239,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53712812.11291137,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6637120.865256299,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26487363.49030257,
             "unit": "points/s"
           }
         ]
