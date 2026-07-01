@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782912942436,
+  "lastUpdate": 1782948867874,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -10361,6 +10361,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3486508009.0772314,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e78f1674afeb6e4055a9d9c2ead9eb4aa4ba441d",
+          "message": "Initialize models through `set!`: `compute_reference_state` + `HydrostaticallyBalancedDensity` (#812)\n\n* Recompute reference state from model mean via set!(model; compute_reference_state=true)\n\nExtend the reference-state recompute to the split-explicit `ExnerReferenceState`,\nand expose it through `set!`.\n\n- `set_to_mean!(ref::ExnerReferenceState, model)`: re-runs the constructor's exact\n  1-D Exner column integration (`_compute_exner_reference!`) with the horizontal-mean\n  liquid-ice potential temperature and vapor mass fraction of the current model state,\n  reusing the existing reference fields (preserving their bottom `ValueBoundaryCondition`s).\n- `reset_reference_state!` now dispatches over both the anelastic `ReferenceState` and\n  the `ExnerReferenceState`.\n- `set!(model; compute_reference_state=true)` (default `false`) recomputes the reference\n  from the just-set state, before the mass-conservation correction. This lets a limited-area\n  run derive its perturbation base state from the initial analysis mean after the IC is set,\n  rather than requiring the mean profile up front at dynamics-construction time.\n\nValidated against a fresh `ExnerReferenceState` built directly at the target θ: the\nrecomputed pressure and density match to machine precision.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Elevate coverage + drop the no-op rescale_densities branch from the Exner set_to_mean!\n\n- Add tests for the public `set!(model; compute_reference_state=true)` path (covers\n  `reset_reference_state!` → `set_to_mean!`) and the no-op-without-a-reference-state branch.\n- Remove `rescale_densities` from `set_to_mean!(::ExnerReferenceState, model)`: for compressible\n  dynamics `dynamics_density` is the prognostic dry density `ρᵈ`, not the reference, so a reference\n  recompute never needs to rescale the density-weighted prognostics — the branch was a rescale-by-1\n  no-op (it is meaningful only for the anelastic `ReferenceState`, where `dynamics_density` *is* the\n  reference). Removing it also clears the uncovered lines.\n- Drop `FT()` wrapping and `Array(interior(...))` from the tests — Julia promotes, and `≈` works on\n  Fields directly.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Add `set!(model; ρ = HydrostaticallyBalancedDensity())` for moist hydrostatic-balance ICs\n\nCompletes the \"set! does initialization\" story: after θˡⁱ/qᵛ are set, derive the density (and seed\nthe pressure) in discrete moist hydrostatic balance, so a compressible cold start carries no spurious\nvertical pressure-gradient force (addresses @kaiyuan-cheng's review point).\n\n- `HydrostaticallyBalancedDensity(; surface_pressure)` is a marker passed as the `ρ` value to `set!`.\n  It is a *deferred* density (it depends on the thermodynamic state): `set!` writes a unit placeholder\n  in phase 1, sets θ/momentum, then — after the optional `compute_reference_state`, before the\n  mass-conservation correction — runs `set_hydrostatically_balanced_density!`.\n- That reuses the reference-state constructor's per-column Exner integration\n  (`_compute_exner_reference_3d!`, a Newton solve of the discrete balance\n  `(pᵏ−pᵏ⁻¹)/Δz + g(ρᵏ+ρᵏ⁻¹)/2 = 0`) on the model's actual θˡⁱ/qᵛ and the surface pressure, seeds the\n  pressure, then scales the prognostic dry density and `rescale_density_weighted_fields!`s the\n  density-weighted prognostics so the total density matches the balanced column while θ, qˣ and the\n  velocities are preserved.\n\nComposes with the rest of the PR / #811:\n  set!(model; θˡⁱ, qᵗ, u, v, ρ = HydrostaticallyBalancedDensity(),\n       compute_reference_state = true, balancer = true)\n\nTest: for uniform θ the balanced pressure/density reproduce a fresh ExnerReferenceState at that θ to\nmachine precision, and the balanced state survives the default mass-conservation correction.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Simplify: dispatch accessors for reference/pressure state + skip unused halo fill\n\nCleanup pass over the set-reference-state work (behavior-preserving):\n\n- Route `set_hydrostatically_balanced_density!` through the existing\n  `surface_pressure`/`standard_pressure` dispatch interface instead of\n  reaching into `dynamics` fields directly.\n- Replace the lone `hasproperty(dynamics, :reference_state)` reflection in\n  `reset_reference_state!` with a dispatched `dynamics_reference_state`\n  accessor (nothing fallback + CompressibleDynamics/AnelasticDynamics\n  overrides), matching the module's dispatch idiom.\n- Move the per-substep `ρθ′ˢ⁻` halo fill into\n  `apply_divergence_damping!(::ThermalDivergenceDamping)`, its only consumer,\n  so `NoDivergenceDamping`/`DirectDivergenceDamping` no longer pay for an\n  unused halo exchange each acoustic substep.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Fix anelastic reference reset rescaling\n\n* Fix 3D Exner reference recomputation\n\n* Recompute terrain reference state on set!(; compute_reference_state)\n\nAdd reset_reference_state!(::TerrainCompressibleModel), which rebuilds the 3D\nterrain-following reference pressure/density from the horizontal-mean θˡⁱ/qᵛ of\nthe current state via compute_terrain_reference_state! — the terrain analogue of\nthe ExnerReferenceState/anelastic set_to_mean! reset.\n\nIntroduces HorizontalMeanProfile, a callable piecewise-linear profile pairing\neach level's horizontal-mean value with its mean physical height, so it can be\nre-evaluated per column on a terrain-following grid. Adds an integration test\n(recomputed reference matches a freshly built model) and a unit test for the\nprofile interpolation/clamping.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Reproject after adiabatic balancing\n\n* Fix balanced density pressure seeding\n\n* Preserve specific humidity in balanced density seeding\n\nSplit the density-weighted rescaling in set_hydrostatically_balanced_density!\ninto dry-density-weighted fields (momentum, ρθ) and total-density-weighted\nfields (moisture, microphysics, tracers). The previous code rescaled every\nprognostic by the dry-density ratio, which left the diagnosed specific humidity\nat ρqᵗ/(ρᵈ + ρqᵗ) instead of the value set via qᵗ.\n\nNow recover qᵛ from moisture_density/ρᵈ (the placeholder cancels so qᵛ = the set\nspecific moisture), scale the total-weighted constituents by ρ/ρᵈ_old, set the\ndry density as the residual ρᵈ = ρ − ρqᵗ, then rescale the dry-weighted\nprognostics by ρᵈ_new/ρᵈ_old. Add a moist assertion to the balanced-column test.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>",
+          "timestamp": "2026-07-01T17:04:36-06:00",
+          "tree_id": "3a74e1db5cee8bfed4ee6593935452fa75a626e5",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/e78f1674afeb6e4055a9d9c2ead9eb4aa4ba441d"
+        },
+        "date": 1782948867530,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 120889489.29311106,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84921840.36268672,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 65744795.80880149,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133947121.467161,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133947121.467161,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128855097.71015464,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128855097.71015464,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128855097.71015464,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 116169581.72455873,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 116169581.72455873,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91480902.85006803,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91480902.85006803,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86802329.31899095,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86802329.31899095,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 79470091.57490483,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 79470091.57490483,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 73448888.09791225,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53583429.028275825,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 6778524.666559545,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25161756.39445503,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1030167847.4354477,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 928176330.9839604,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1295994865.8345482,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 735091756.6364967,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 176908198.2381364,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 869051744.5094322,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 531817754.55786884,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24702019.83888389,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 595971276.0960089,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6794441571.798413,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7673702823.824077,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8589965378.435917,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5420105924.845055,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10409949542.457056,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8637364085.667215,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4653199107.911646,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4564615259.8807125,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5197576622.761852,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3617606289.2322493,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5572544783.72414,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5185348557.751744,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3201231503.2657676,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 162792983.57204446,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3448664746.495468,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2254661276.9662814,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 2963082484.4995184,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3473840004.5718184,
             "unit": "points/s"
           }
         ]
