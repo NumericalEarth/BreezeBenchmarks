@@ -80,6 +80,15 @@
       .header-label {
         margin-right: 4px;
       }
+      .commit-slider-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .commit-slider-container input[type="range"] {
+        width: min(300px, 50vw);
+        cursor: pointer;
+      }
       .benchmarks-container {
         width: 100%;
       }
@@ -279,6 +288,13 @@
         <strong class="header-label">Repository:</strong>
         <a id="repository-link" rel="noopener"></a>
       </div>
+      <div class="header-item commit-slider-container">
+        <strong class="header-label">
+          <label for="commit-slider">Commits shown:</label>
+        </strong>
+        <input type="range" id="commit-slider" min="2" step="1" />
+        <span id="commit-slider-value"></span>
+      </div>
       <!-- Only time plots shown -->
     </header>
     <main id="main"></main>
@@ -323,47 +339,64 @@
           "#FF3333",
         ];
 
-        // Maximum number of commits to show in plots
-        const MAX_COMMITS = 20;
+        // Maximum number of commits to show in plots (controlled by the slider)
+        let maxCommits = 20;
 
-        function init() {
-          function collectBenchesPerTestCase(entries) {
-            const map = new Map();
-            for (const entry of entries) {
-              const { commit, date, tool, benches } = entry;
-              for (const bench of benches) {
-                const result = { commit, date, tool, bench };
-                const splitted_name = bench.name.split("/");
-                const benchmarkName = splitted_name[0];
-                const variant = splitted_name[3];
-                const device = splitted_name[2];
-                const passes = splitted_name[1];
+        // Keep track of created charts so they can be destroyed on re-render
+        const activeCharts = [];
 
-                if (map.get(benchmarkName) === undefined) {
-                  map.set(benchmarkName, new Map());
-                }
+        function collectBenchesPerTestCase(entries) {
+          const map = new Map();
+          for (const entry of entries) {
+            const { commit, date, tool, benches } = entry;
+            for (const bench of benches) {
+              const result = { commit, date, tool, bench };
+              const splitted_name = bench.name.split("/");
+              const benchmarkName = splitted_name[0];
+              const variant = splitted_name[3];
+              const device = splitted_name[2];
+              const passes = splitted_name[1];
 
-                const mapBenchmarkName = map.get(benchmarkName);
-                if (mapBenchmarkName.get(device) === undefined) {
-                  mapBenchmarkName.set(device, new Map());
-                }
+              if (map.get(benchmarkName) === undefined) {
+                map.set(benchmarkName, new Map());
+              }
 
-                const mapDevice = mapBenchmarkName.get(device);
-                if (mapDevice.get(passes) === undefined) {
-                  mapDevice.set(passes, new Map());
-                }
+              const mapBenchmarkName = map.get(benchmarkName);
+              if (mapBenchmarkName.get(device) === undefined) {
+                mapBenchmarkName.set(device, new Map());
+              }
 
-                const mapPasses = mapDevice.get(passes);
-                if (mapPasses.get(variant) === undefined) {
-                  mapPasses.set(variant, [result]);
-                } else {
-                  mapPasses.get(variant).push(result);
-                }
+              const mapDevice = mapBenchmarkName.get(device);
+              if (mapDevice.get(passes) === undefined) {
+                mapDevice.set(passes, new Map());
+              }
+
+              const mapPasses = mapDevice.get(passes);
+              if (mapPasses.get(variant) === undefined) {
+                mapPasses.set(variant, [result]);
+              } else {
+                mapPasses.get(variant).push(result);
               }
             }
-            return map;
           }
+          return map;
+        }
 
+        // Pre-filter the database to the N most recent commits (globally),
+        // then group the surviving entries for charting. Benchmarks whose
+        // data is entirely older than the selected window drop out here and
+        // are not rendered at all.
+        function buildDataSets() {
+          const data = window.BENCHMARK_DATA;
+          return Object.keys(data.entries).map((name) => {
+            const entries = [...data.entries[name]]
+              .sort((a, b) => a.date - b.date) // Oldest first
+              .slice(-maxCommits); // Keep only the most recent commits
+            return { name, dataSet: collectBenchesPerTestCase(entries) };
+          });
+        }
+
+        function init() {
           const data = window.BENCHMARK_DATA;
 
           // Render header
@@ -384,12 +417,6 @@
             a.download = "benchmark_data.json";
             a.click();
           };
-
-          // Prepare data points for charts
-          return Object.keys(data.entries).map((name) => ({
-            name,
-            dataSet: collectBenchesPerTestCase(data.entries[name]),
-          }));
         }
 
         function renderAllChars(dataSets) {
@@ -435,9 +462,9 @@
                 });
               }
             }
+            // Entries are already pre-filtered to the most recent commits
             const sortedCommits = Array.from(allCommits.values())
-              .sort((a, b) => a.date - b.date)  // Oldest first, so latest appears on right
-              .slice(-MAX_COMMITS);  // Take the last MAX_COMMITS (most recent)
+              .sort((a, b) => a.date - b.date);  // Oldest first, so latest appears on right
 
             const data = {
               labels: sortedCommits.map((c) => c.id.slice(0, 7)),
@@ -588,11 +615,13 @@
               },
             };
 
-            new Chart(canvas, {
-              type: "line",
-              data,
-              options,
-            });
+            activeCharts.push(
+              new Chart(canvas, {
+                type: "line",
+                data,
+                options,
+              })
+            );
           }
 
           function renderDevice(benchmarkName, device, deviceData, parent) {
@@ -709,7 +738,51 @@
           }
         }
 
-        renderAllChars(init()); // Start
+        function renderPage() {
+          // Destroy previous charts and clear the page before re-rendering
+          for (const chart of activeCharts) {
+            chart.destroy();
+          }
+          activeCharts.length = 0;
+          document.getElementById("main").innerHTML = "";
+          renderAllChars(buildDataSets());
+        }
+
+        function setupCommitSlider() {
+          // Total number of distinct commits in the database
+          const allCommitIds = new Set();
+          for (const entries of Object.values(
+            window.BENCHMARK_DATA.entries
+          )) {
+            for (const entry of entries) {
+              allCommitIds.add(entry.commit.id);
+            }
+          }
+          const totalCommits = Math.max(allCommitIds.size, 2);
+          maxCommits = Math.min(maxCommits, totalCommits);
+
+          const slider = document.getElementById("commit-slider");
+          const sliderValue = document.getElementById("commit-slider-value");
+          slider.max = totalCommits;
+          slider.value = maxCommits;
+          const updateLabel = () => {
+            sliderValue.textContent = `${maxCommits} / ${totalCommits}`;
+          };
+          updateLabel();
+
+          let renderTimer = null;
+          slider.addEventListener("input", () => {
+            maxCommits = Number(slider.value);
+            updateLabel();
+            // Debounce re-rendering while the slider is being dragged
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(renderPage, 150);
+          });
+        }
+
+        init(); // Start
+        setupCommitSlider();
+        renderPage();
       })();
     </script>
   </body>
