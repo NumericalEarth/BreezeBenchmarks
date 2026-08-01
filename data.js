@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784731270465,
+  "lastUpdate": 1785624657972,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -14246,6 +14246,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3496025372.2697096,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7b3f7c5303ee10eda0c3db0fb91cf79e5ff83f94",
+          "message": "[test] Cap Reactant and use dev version of Oceananigans (#882)\n\n* [test] Cap Reactant\n\n* Update Project.toml\n\n* Also cap Oceananigans\n\n* Revert \"Unify the compressible reference state and set the perturbation-form PGF as default (#863)\"\n\nThis reverts commit b0a6a9a965f2652aa921839c7e9cbdff5e4a859c.\n\n* DROP ME: check out dev branch of Oceananigans with potential fix\n\n* Require new Oceananigans\n\n* Revert \"Revert \"Unify the compressible reference state and set the perturbation-form PGF as default (#863)\"\"\n\nThis reverts commit a1cdb9bf2fb9eb59472b49782be8e2440f4e576e.\n\n* Use dev Oceananigans also in `examples/` environment",
+          "timestamp": "2026-08-01T23:17:23+01:00",
+          "tree_id": "ee505c23262ee831981e61bbda0e5a98d10bf275",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/7b3f7c5303ee10eda0c3db0fb91cf79e5ff83f94"
+        },
+        "date": 1785624657436,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 125543713.66063908,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84621347.03309622,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 60237756.087728195,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136411849.44879165,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136411849.44879165,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 127731364.69912934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 127731364.69912934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 127731364.69912934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 112619712.97195351,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 112619712.97195351,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 87348591.01728423,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 87348591.01728423,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 83925162.94477831,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 83925162.94477831,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75284131.90480177,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75284131.90480177,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68274498.68316138,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 53527326.8173487,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7524768.0042124735,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26442091.88592426,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1020027165.321424,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 919896607.9571431,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1287496184.066072,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 735666048.3263831,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 229932453.60301858,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 875223902.5228994,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 531435765.2688084,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24623409.05574773,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 596757610.1177373,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6536095614.675535,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7487301607.136163,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8265232868.964959,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5246016646.632878,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 9968968664.435656,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8274690338.115168,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4522740023.916609,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4538199696.609689,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5070796192.705304,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3518999925.136741,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5398856333.767759,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5162013827.139222,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3104938220.4111547,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 162761267.90763205,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3442963327.7924848,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2193805652.522901,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 2925057290.424444,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3415764229.996038,
             "unit": "points/s"
           }
         ]
