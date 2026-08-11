@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786131739460,
+  "lastUpdate": 1786447350200,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -15541,6 +15541,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3321901298.211697,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f947e15aec85142d00689b838c0986d4ea102561",
+          "message": "BreezeRRTMGPExt: support compressible dynamics on terrain grids in radiation (#791)\n\n* BreezeRRTMGPExt: support compressible dynamics on terrain grids in radiation\n\nThe RRTMGP gas-state, cloud-state, and gray paths read\n`model.dynamics.reference_state` pressure/density, which is `nothing` for\n`CompressibleDynamics` on a `TerrainFollowingVerticalDiscretization` grid: a\nsingle 1D column is not hydrostatically balanced per terrain column, so the 3D\nreference instead lives in `terrain_reference_pressure`/`terrain_reference_density`.\n\nAdd `radiation_reference_pressure`/`radiation_reference_density(dynamics)` that\nreturn `reference_state.<field>` when present (anelastic and flat compressible —\nunchanged behavior), else `terrain_reference_<field>` (terrain compressible),\nelse the diagnostic/prognostic field. Route the three radiation reads through\nthem, and explicitly import `CompressibleDynamics` for the new dispatch.\n\nSurfaced when running compressible dynamics on a terrain-following grid with\nactive radiation.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01HAophMb6GBRRRb34aMmzzC\n\n* Fix the prognostic-density radiation fallback\n\nCompressibleDynamics carries total_density, not density; the fallback\n(no reference state, no terrain reference) read a nonexistent field.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Promote the radiation reference state to dynamics-interface getters\n\nreference_pressure/reference_density join mean_pressure in the dynamics\ninterface (reference state, else terrain reference, else the prognostic\nstate), replacing the radiation-private accessors. dynamics_density is\nnot a substitute: it returns the prognostic dry density on\nCompressibleDynamics, the wrong mass for radiation layers.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Feed radiation the total state, never a pressure-gradient reference\n\nreference_pressure/reference_density now return the total thermodynamic\nstate RRTMGP needs: dynamics.pressure / dynamics.total_density for a\ncompressible atmosphere (which carries the true total), reference_state.*\nfor an anelastic atmosphere (whose only thermodynamic pressure is its\nreference). The terrain_reference_* fallthrough is removed — those fields\nare a pressure-gradient device for the dynamics and must never reach\nradiation; the actual total density is available regardless of whether a\nterrain reference was built.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Route radiation pressure/density through interface getters\n\nReplace the per-type reference_pressure/reference_density overrides on\nAnelasticDynamics and CompressibleDynamics with delegation through the\nshared interface: reference_pressure → dynamics_pressure, and\nreference_density → total_density (changed from dynamics_density).\n\nThe two edits are coupled: switching the reference_density default to\ntotal_density is what makes dropping the compressible override safe, so\nradiation still receives the total moist density ρ = ρᵈ + Σρˣ rather than\nthe dry coupling density ρᵈ. Values fed to radiation are unchanged for\nboth formulations; the pressure-gradient reference states remain\nunreachable by radiation. Drop the now-unused CompressibleDynamics import.\n\nCo-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\n\n* Use thermodynamic state accessors for radiation\n\n* Collapse thermodynamic_pressure into dynamics_pressure\n\n`thermodynamic_pressure` had no override anywhere in the tree, so it was\nindistinguishable from `dynamics_pressure` for every dynamics type. #867 had\nalready given `dynamics_pressure` exactly this contract (\"the pressure entering\nthe equation of state, buoyancy, and the thermodynamic tendencies\"), so the\nalias reintroduced the two-names-one-concept problem that #867 removed. This\nalso finishes the asymmetry left by df56dcca, which dropped the sibling\n`reference_density` alias and called `total_density` directly but only renamed\n`reference_pressure` rather than deleting it.\n\nThe physics reasoning that motivated the alias now lives on\n`dynamics_pressure`'s docstring, where implementers of new dynamics will see\nit: a (flat or terrain) reference state is a pressure-gradient device and must\nnever substitute for the thermodynamic state.\n\nAlso in the radiation extension:\n\n- Drop the free-floating comment in compressible_dynamics.jl. It was attached\n  to no definition, duplicated the comment above the `total_density` override,\n  and claimed physics reads `thermodynamic_pressure` when dcmip2016_kessler\n  reads `dynamics_pressure`. That file is now untouched by this branch.\n- Name the cloud-state kernel's field argument `total_density` and keep the\n  scalar `ρ`, matching `_compute_temperature_and_pressure!`, which makes the\n  same `grid_moisture_fractions` call. Avoids `ρᶜ`, which reads as \"cloud\n  density\" given the `ᶜ` species superscript in notation.md.\n- State \"never the pressure-gradient reference state\" once on the accessor\n  instead of five times across three files; rrtmgp_shared_utilities keeps only\n  its unique point about RRTMGP's monotonic level pressures.\n\nAnelastic behavior is unchanged: `dynamics_pressure` and `total_density`\nresolve to `reference_state.pressure` and `.density` as before. Compressible\nreads the diagnosed `dynamics.pressure` and `dynamics.total_density`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Untrack a stray local Manifest backup swept in by the merge\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Correct the radiation and dynamics_pressure docstrings\n\nThe gray radiation docstring claimed pressure levels are built with a geometric\nmean. The code uses ℑzᵃᵃᶠ, an arithmetic average, which is also only first order\nwherever Δz varies. It further claimed the surface and TOA faces are interpolated\nor extrapolated, when each boundary level in fact inherits whatever that field's\nhalo carries: a Value bottom boundary condition reproduces the prescribed surface\npressure exactly, while a default NoFlux halo mirrors the interior and collapses\np_lev onto p_lay. Record the consequence as a TODO, since a mirrored end leaves\nthe layer spanning half a cell in pressure while the flux divergence still\ndivides by the full Δzᶜᶜᶜ.\n\nThe dynamics_pressure docstring said a dynamics' reference state must never\nsubstitute for the thermodynamic state, which reads as a rule the anelastic core\nbreaks, since there dynamics_pressure returns exactly reference_state.pressure.\nRephrase to the intended guidance: call the accessor rather than reaching into\ndynamics.reference_state, and say why the two cores differ.\n\nDocstrings only, no behavior change.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_013DsH56CicoVLxegr4WCWWq\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: kai <kai@ip-10-50-31-186.ap-southeast-2.compute.internal>\nCo-authored-by: Gregory L. Wagner <greg@aeolus.earth>",
+          "timestamp": "2026-08-11T12:55:55+02:00",
+          "tree_id": "ff8eba6f2daa41dcc55fa63d124719b358666ecf",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/f947e15aec85142d00689b838c0986d4ea102561"
+        },
+        "date": 1786447349646,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 124276530.3393681,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 85033229.38397577,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 60438856.39547738,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133637876.67424011,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133637876.67424011,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128393263.23221354,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128393263.23221354,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128393263.23221354,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 113379305.18234661,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 113379305.18234661,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 87593232.13461795,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 87593232.13461795,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 83616058.21516307,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 83616058.21516307,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75204149.53896411,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75204149.53896411,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68929657.21087512,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40310629.827088654,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7200421.811819763,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26339350.848700073,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1041210901.1444627,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 865608000.6595811,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1330775198.1026566,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 744488412.9987712,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116372254.9642286,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 895022284.845057,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 538681486.9509376,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24000620.423142616,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 609557470.6797076,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6649568945.989339,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7756822559.362485,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8702263690.18535,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5270339394.673094,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10119302122.752184,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8637684263.41998,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4538190390.09137,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4640171078.695204,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5253745402.209946,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3496531834.7353735,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5431924554.301063,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5331160689.034988,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3111321220.929262,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440067381.876466,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3405170954.551894,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2197027475.287254,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1781628678.829486,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3337292334.451386,
             "unit": "points/s"
           }
         ]
