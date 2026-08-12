@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786447350200,
+  "lastUpdate": 1786564841407,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -15800,6 +15800,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3337292334.451386,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "961591e074d5f2b06a49dcb10748d2db96c364aa",
+          "message": "Bump RRTMGP in / (#853)\n\n* Bump RRTMGP in /\n\nUpdates the requirements on  and [RRTMGP](https://github.com/CliMA/RRTMGP.jl) to permit the latest version.\n\nUpdates `RRTMGP` to 0.22.2\n- [Release notes](https://github.com/CliMA/RRTMGP.jl/releases)\n- [Changelog](https://github.com/CliMA/RRTMGP.jl/blob/main/NEWS.md)\n- [Commits](https://github.com/CliMA/RRTMGP.jl/compare/v0.21.7...v0.22.2)\n\nUpdates `RRTMGP` to 0.22.2\n- [Release notes](https://github.com/CliMA/RRTMGP.jl/releases)\n- [Changelog](https://github.com/CliMA/RRTMGP.jl/blob/main/NEWS.md)\n- [Commits](https://github.com/CliMA/RRTMGP.jl/compare/v0.21.7...v0.22.2)\n\nUpdates `RRTMGP` to 0.22.2\n- [Release notes](https://github.com/CliMA/RRTMGP.jl/releases)\n- [Changelog](https://github.com/CliMA/RRTMGP.jl/blob/main/NEWS.md)\n- [Commits](https://github.com/CliMA/RRTMGP.jl/compare/v0.21.7...v0.22.2)\n\nUpdates `RRTMGP` to 0.22.2\n- [Release notes](https://github.com/CliMA/RRTMGP.jl/releases)\n- [Changelog](https://github.com/CliMA/RRTMGP.jl/blob/main/NEWS.md)\n- [Commits](https://github.com/CliMA/RRTMGP.jl/compare/v0.21.7...v0.22.2)\n\nUpdates `RRTMGP` to 0.22.2\n- [Release notes](https://github.com/CliMA/RRTMGP.jl/releases)\n- [Changelog](https://github.com/CliMA/RRTMGP.jl/blob/main/NEWS.md)\n- [Commits](https://github.com/CliMA/RRTMGP.jl/compare/v0.21.7...v0.22.2)\n\n---\nupdated-dependencies:\n- dependency-name: RRTMGP\n  dependency-version: 0.22.2\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: RRTMGP\n  dependency-version: 0.22.2\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: RRTMGP\n  dependency-version: 0.22.2\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: RRTMGP\n  dependency-version: 0.22.2\n  dependency-type: direct:production\n  dependency-group: julia\n- dependency-name: RRTMGP\n  dependency-version: 0.22.2\n  dependency-type: direct:production\n  dependency-group: julia\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>\n\n* Adapt BreezeRRTMGPExt to RRTMGP.jl v0.22 API\n\nRRTMGP v0.22 overhauled its public API; update the extension accordingly:\n\n* RRTMGPGridParams now takes the physical `domain_nlay` instead of the\n  total `nlay` (the isothermal boundary layer is added internally).\n* `RRTMGP.Vmrs.init_vmr` was removed (module renamed to\n  VolumeMixingRatios): add an `initialize_global_mean_vmr` helper that\n  constructs `VmrGM` directly with zero-filled arrays.\n* `lookup_tables` now returns a flat `LookupBundle`, replacing the\n  `(; lookups, lu_kwargs)` named tuple.\n* Flux compute buffers are now indexed `(ncol, nlev)`: read spectral\n  fluxes through the `(nlev, ncol)` presentation getters\n  (`RRTMGP.lw_flux_up` etc., refreshed by `update_{lw,sw}_fluxes!`) and\n  swap the index order in the gray-optics flux copy, which reads the\n  layer-1 compute buffers directly.\n* Drop `set_flux_to_zero!` before the shortwave solve: the whole-flux\n  method is gone, and v0.22 zeroes night columns (cos_zenith <= 0)\n  internally.\n\nCaller-owned state arrays (layerdata, p_lev, t_lev, vmr, cloud state)\nkeep their vertical-first `(nlay, ncol)` layout, so the gas- and\ncloud-state update kernels are unchanged.\n\nTighten RRTMGP compat to 0.22 since the new API is not available in 0.21.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Update Project.toml\n\n* BreezeRRTMGPExt: adapt shortwave flux zeroing to RRTMGP v0.22\n\nRRTMGP v0.22 removed the whole-flux `set_flux_to_zero!(flux)` method,\nkeeping only per-column variants meant for use inside kernels. Zero the\nshortwave flux arrays directly with `fill!` at construction instead.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Remove too much information comment\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Mosè Giordano <mose@gnu.org>\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>",
+          "timestamp": "2026-08-12T21:33:41+02:00",
+          "tree_id": "26209781bc8c563d707bb9454324393aeecad3c2",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/961591e074d5f2b06a49dcb10748d2db96c364aa"
+        },
+        "date": 1786564840283,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 122659609.5049311,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84094447.4532884,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 60098430.62353986,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 128065456.1900229,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 128065456.1900229,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128818630.83787473,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128818630.83787473,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128818630.83787473,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114584358.13781461,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114584358.13781461,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91418077.67538595,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91418077.67538595,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86739835.67262703,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86739835.67262703,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76978069.37254354,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76978069.37254354,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 67570793.5059605,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 39271292.25429752,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7136864.924954073,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26622861.95065843,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1043084570.0458034,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 869244277.5531656,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1326260666.5889857,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 751968681.8152502,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116399353.99988113,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 890353882.587095,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 541032905.11674,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24001714.905243587,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 612840010.9642779,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6418669214.851022,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7802296618.319745,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8511393360.620309,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5346463927.144413,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10362523687.051737,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8566578671.908907,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4488848535.910779,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4676917450.138519,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5209244559.037863,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3589483841.5246973,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5520135716.53249,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5489682396.333147,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3143363266.232957,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440752577.2410458,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3468644494.256766,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2245990940.1748123,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1807262955.5828595,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3497176780.562643,
             "unit": "points/s"
           }
         ]
