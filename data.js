@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787271308506,
+  "lastUpdate": 1787321286476,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -17095,6 +17095,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3474052925.3563466,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "309f9b9f3d0db421f98721deee458f4caf926b0e",
+          "message": "Fix aliased base-state reads in the acoustic substepper (#917)\n\n* Fix GPU aliasing races in the acoustic substepper (#906)\n\nTwo substep kernels were launched with a field as both input and output while\nreading that field across neighbouring grid points, so a thread could read a\nvalue another thread had already overwritten.\n\n`_recover_full_state!` aliases the stage-base state with its own outputs, and\nthe terrain-following `acoustic_recovered_vertical_momentum` interpolated the\naliased base horizontal momenta. Those momenta cancel algebraically when\nconverting the substepped contravariant momentum back to Cartesian ρw, since ℑ\nis linear:\n\n    ρw = (ρw̃ᴸ + ρw̃′) + slopeₓ ℑ(ρuᴸ + ρu′) + slopeᵧ ℑ(ρvᴸ + ρv′)\n       = ρwᴸ + ρw̃′ + slopeₓ ℑρu′ + slopeᵧ ℑρv′\n\nso they are no longer arguments, and the base ρw now arrives as a value rather\nthan a field: no aliased field is in reach of a stencil. The result is identical\nto the previous formula to 2.2e-16 over every z-face point, and drops the\ncatastrophic cancellation the old grouping carried for large base momenta. The\ninterpolated perturbations promote to the grid float type first, since recovery\nwrites the FT primary prognostics.\n\n`_build_vertical_rhs!` wrote the tridiagonal RHS over `momentum_perturbation.w`\nwhile the implicit vertical-damping term reads (ρw)′ at faces k-1, k, k+1. The\nRHS now lands in a dedicated `vertical_momentum_rhs` z-face field, which the\nsolve reads while still writing its solution into `momentum_perturbation.w`. An\nA/B on the real kernel from a frozen input state shows the alias changed the RHS\nby 6.7e-3 relative under `damp_vertical=true`; it is inert under the default\n`damp_vertical=false`, where dˢ⁻ = 0.\n\nTests: terrain recovery pins the cancellation against an analytic value, and the\nvertical RHS build is checked to leave (ρw)′ bit-identical.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Update src/CompressibleEquations/terrain_compressible_physics.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/CompressibleEquations/acoustic_substepping.jl\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Address review on the acoustic substepper aliasing fix\n\nRename `vertical_momentum_rhs` to `vertical_solver_source_term`. The old name\nread as the slow tendency Gˢρw rather than the right-hand side of the (ρw)′\ntridiagonal system; `source_term` follows `FourierTridiagonalPoissonSolver`,\nwhose `source_term` field the anelastic pressure solve already uses.\n\nRemove `promote_to_grid_precision`. It preserved the `FT` accumulation the old\n`ρuᴸ + ρu′` stencil got for free from the base momentum, but that is about one\nulp of a value already stored at `substep_floattype`, and a no-op at the\ndefault `substep_floattype = eltype(grid)`.\n\nDrop the aliasing comments above `_build_vertical_rhs!` and inside the\n`AcousticSubstepper` struct, along with the issue references they carried.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_015kUohqyhhUxcojg9NxkCnL\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-08-21T09:40:41-04:00",
+          "tree_id": "197472f48b03e1e24d739ed21ad32d199dc70978",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/309f9b9f3d0db421f98721deee458f4caf926b0e"
+        },
+        "date": 1787321285749,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 123535407.38481641,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 84065028.6064149,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 59265108.799690455,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 139269933.0705161,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 139269933.0705161,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130185906.94015452,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130185906.94015452,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130185906.94015452,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114793888.58510427,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114793888.58510427,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 88685503.4736038,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 88685503.4736038,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84510874.80970812,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84510874.80970812,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 74427021.23098765,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 74427021.23098765,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68945017.3828197,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40278841.028404646,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7313868.187100702,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26082591.27755063,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1037509023.7690225,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 861132175.3375372,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1316273852.9884531,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 737638254.1158725,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116378863.04593518,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 885088718.2263466,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 532612743.31555176,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24001099.186692376,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 595882796.6159606,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6705368434.970915,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7668799172.107634,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8469431787.548576,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5359981612.020632,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10371351033.907211,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8532474044.870562,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4660336895.873747,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4738138003.800177,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5405581238.296167,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3593399281.7687397,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5426685220.082456,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5236321507.312092,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3194538105.16373,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440628323.6452554,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3512408521.9559865,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2246782971.4872355,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1816746293.3525074,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3536312872.712924,
             "unit": "points/s"
           }
         ]
