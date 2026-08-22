@@ -17371,265 +17371,6 @@ window.BENCHMARK_DATA = {
             "username": "web-flow"
           },
           "distinct": true,
-          "id": "4cc1657191b2acee8bafb991e435fcba3df0591b",
-          "message": "Fix the AIVA split time-step pairing under AcousticRungeKutta3 (#902)\n\n* Pin the adaptive-implicit advection split to each acoustic RK3 stage\n\n`AdaptiveImplicitVerticalAdvection` (AIVA) splits every vertical advective flux into an\nexplicit fraction s = min(1, cfl Δz / (|w| Δt)) and a first-order-upwind implicit remainder.\nThe two halves only sum to one transport if both are sized with the same Δt. Under\n`AcousticRungeKutta3` they were not: Oceananigans' generic hook leaves `td.Δt[] =\nclock.last_Δt`, the whole outer step, at every stage.\n\nThis specializes `update_advection_timestep!` on `AcousticRungeKutta3`, so the split is\nwritten once per stage — inside `update_state!`, before the tendencies that consume it — to\nthe interval of the stage that will consume it. It supersedes the `set_advection_timestep!`\nof PR #902, which was a second writer to the same Ref, writing mid-stage after the tracer\ntendencies had already been frozen against the first value.\n\nTwo fixes to that hook:\n\n* `maybe_prepare_first_time_step!` now seeds `clock.last_stage_Δt`, mirroring Oceananigans'\n  `RungeKutta3TimeStepper` companion. Traced on a cold start at Δt = 4: stage 1 was given\n  td.Δt[] = 4.0 where the stage interval is β₁Δt = 1.3333, a 3x overestimate of the split\n  interval for one stage. (Not the `Inf` an earlier note claimed — `clock.last_Δt` is already\n  finite by then.) After: 1.3333, identical to every later stage 1. The guard also fires on a\n  clock with a non-finite `last_stage_Δt` at nonzero iteration.\n\n* A `FluxFormAdvection` disambiguation. `AdaptiveImplicitVerticalAdvection` is a type alias\n  keyed on the z time discretization, so a `FluxFormAdvection` with an AIVA z-scheme matches\n  both the new method and Oceananigans' `(::FluxFormAdvection, timestepper, clock)`. Before\n  this, `Aqua.test_ambiguities` reported 1 ambiguity and the first `set!` on such a model\n  threw. That method is also what keeps the `FluxFormAdvection` import live, so the\n  stale-explicit-import failure in test/quality_assurance.jl goes with it. Both CI failures\n  are fixed by the one method.\n\nStage 1 still uses β₁ of the *previous* outer step, and that is deliberate — documented in\nthe docstring. Correcting it at stage entry would rebuild the split after the tracer\ntendencies were frozen against the old one, recreating the desynchronization the hook exists\nto remove. The cost is confined to CFL targeting on one stage.\n\nRemoved: the ρθ linearization apparatus — `restore_withheld_linearization_flux!` and its\nkernel, and the ρᵈθᴸ shift around `implicit_substep!`'s thermodynamic solve.\nsrc/TimeSteppers/acoustic_substep_helpers.jl is now byte-identical to main, including the\n`implicit_substep!` contract docstring the previous commit deleted, and `src/` differs from\nmain by the Δt hook alone.\n\nWhy removed: the shift destroys vertically-implicit closure diffusion of ρθ. Measured on an\n8 x 64 compressible column (Δz = 62.5 m, 4 K θ bump of width 200 m, ScalarDiffusivity with\n`VerticallyImplicitTimeDiscretization`, κ = ν = 20, 20 steps of Δt = 1), each variant against\nits own κ = 0 twin:\n\n    explicit WENO5 on ρθ         max|θ(κ=20) − θ(κ=0)| = 0.177877\n    AIVA on ρθ, this commit                            = 0.177877   (matches to 3.9e-9)\n    AIVA on ρθ, previous commit                        = 2.086e-5   (99.99% of it gone)\n\nThis is below the split threshold, where s ≡ 1 and the restoration is inert, so the shift\nalone accounts for it: `implicit_step!` solves advection and diffusion in one tridiagonal\nsystem, and shifting the variable it solves for removes the diffusion of the shifted part.\n\nWhat is not understood. On the configuration of the AIVA acoustic testset (8x8x32, imposed\n10 m/s updraft, Δt = 10, vertical Courant 1.6), run to t = 2000 s:\n\n    momentum WENO5, ρθ WENO5    max|w| = 1.5235       (both trees)\n    momentum AIVA,  ρθ WENO5    max|w| = 1.5408       (both trees)\n    momentum AIVA,  ρθ AIVA     max|w| = 0.7861       previous commit\n    momentum AIVA,  ρθ AIVA     DomainError at 500 s  this commit\n\nThe apparatus is a no-op exactly where it is inert: below the split threshold with no\nvertically-implicit closure, both trees reproduce explicit WENO5 on ρθ to the same 1.24e-8.\nIt is not a no-op below the threshold once a vertically-implicit closure is present, and it\nis not a no-op above the threshold — the difference between 0.786 and a blow-up. But\nneither state is right: 0.786 against an explicit reference of 1.5235 is 49% damping, not a\nconverged answer. The apparatus was masking a defect in AIVA on the thermodynamic variable\n(issue #897) with damping and paying for it with the closure. I have no mechanism for the\ndamping and am not proposing one; three mechanism claims on this branch have already been\nfalsified.\n\nScope of what is claimed. AIVA is usable for momentum under the acoustic substepper.\nAIVA on the thermodynamic variable is available and is broken. No stability or speed claim is\nmade for AIVA anywhere: the \"maximum stable step rises from 10 s to 30 s\" sentence went with\nthe docstring that carried it, and two testset names that asserted stability are renamed to\nsay what they measure, with the explicit control recorded beside them.\n\nTests. Three new testsets in test/implicit_vertical_advection.jl, plus explicit-fraction\nlabels on the four below-threshold equality testsets so their vacuity (s ≡ 1) is an assertion\nrather than an accident. On the previous commit the file gives 77 pass / 5 fail / 1 error; on\nthis one 83 / 83.\n\n  - \"Below threshold, AIVA does not disturb vertically-implicit diffusion\" — the ρθ\n    regression above (2 fails before: 0.0009115 > 0.3382 evaluated false).\n  - \"Explicit fraction and implicit remainder sum to one transport\" — the invariant the whole\n    feature rests on, measured as a centroid displacement (s = 1/6 after the explicit half,\n    1 after both). Passes before and after; it is the anchor for the M5 defects below.\n  - \"Split time step tracks the Wicker–Skamarock stage interval\" — the Δt hook, with a ladder\n    that both shrinks and grows (3 fails before: observed[(1,1)] = 10.0 against β₁Δt =\n    3.3333, and two restart-shaped assertions).\n  - The `FluxFormAdvection` case in the acoustic testset errors before (`MethodError: ... is\n    ambiguous`) and passes after.\n\nNot addressed here, verified and filed separately: bounds-preserving WENO combined with AIVA\ntransports 1 + (1 − s) times (measured 275 m against an exact 150 m); a precipitating species\nloses its sedimentation flux because `scalar_substep!` hands `implicit_step!` only the\ntransport velocities (−25 m against an exact −135 m); and `field_index = Val(i - 5)` in\n`scalar_substep!` gives every non-acoustic scalar its predecessor's diffusivity. All three are\npre-existing on main and none is specific to this branch.\n\nNot covered: GPU, Float32, and any regime beyond the CPU Float64 cases listed above.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Freeze the stage-entry advecting state for the implicit vertical remainder\n\nThe slow tendencies split vertical fluxes of the stage-entry state: the\nexplicit fraction s = min(1, cfl Δz / (|w| Δt)) is computed from the advecting\nvertical velocity at tendency time. The post-loop implicit solve must size the\nwithheld remainder from the same state, or the two halves do not partition one\ntransport. Target invariant: wᴸ = wᵉ + wⁱ with identical interpolation and\nstage time step.\n\nMeasured on the previous commit, the two halves of that pairing were in\ndifferent conditions:\n\n* The velocity half held by accident: nothing refreshes `model.velocities` or\n  the contravariant velocity between tendency computation and the implicit\n  solve (both update only in `update_state!`, between stages), so the solve\n  read stage-entry w by staleness — max|Δw| = 0.0 exactly, but fragile against\n  any future mid-stage refresh.\n* The density half was a real error: `_recover_full_state!` rewrites\n  `dynamics.dry_density` at stage end, before `implicit_substep!` reads it, so\n  the implicit coefficients were weighted with post-acoustic ρ (0.008% at\n  Δt = 4 s in a weak mountain wave; grows with Δt and compressibility).\n\nThe substepper now carries `advecting_vertical_velocity_cache` and\n`advecting_density_cache`, filled by `cache_advecting_state!` immediately\nafter `prepare_acoustic_cache!` — the full stage-entry wᴸ, not the clipped\nwᵉ: in saturated cells |wᵉ| = cfl Δz / Δt regardless of |wᴸ|, so the\nremainder cannot be recovered from the clipped field. `implicit_substep!`\ntakes its advective coefficient state from the cache; the θ path receives the\nsame cached w. Allocation is gated on the advection needing the implicit\nsolver, so closure-only configurations keep live fields and bit-identical\nbehavior; closure diffusion always acts on the full field.\n\nTests (implicit_vertical_advection.jl, 83 → 91 assertions): no cache without\nan adaptive-implicit scheme; cache immunity to live-field corruption between\ntendency and solve (bit-exact); the split identity through the real\ninterpolation at forced saturation (1541 saturated faces, residual 5.6e-17),\nwith a guard that fails the test if no face saturates.\n\nRe-measured after the fix, per review directive: the h = 600 m stratified\nmountain-wave gate is unchanged to four digits (AIVA at Δt = 8 s: L2 error\n46.18% before and after; death times shift < 5%). The pairing fix is a\ncorrectness invariant, not a performance change — the accuracy limitation of\nthe first-order-upwind remainder stands, now with \"broken partition\"\neliminated as an alternative explanation.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Use ifelse for stage selection: clock.stage is traced under Reactant\n\nThe stage-selection helpers used ternaries on clock.stage, which fails\nReactant's trace (TypeError: non-boolean TracedRNumber{Bool} in boolean\ncontext) in test/reactant/lat_lon_compilation.jl's SplitExplicitTimeDiscretization\ntestset. ifelse evaluates both Val-dispatched branch values, which are constant\nstage fractions, so semantics for eager execution are unchanged.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Reactant: no-op maybe_prepare_first_time_step! for the acoustic stepper\n\nThe eager companion added for AcousticRungeKutta3 guards on clock.iteration\nand clock.last_stage_Δt, which are traced values under Reactant — a boolean\ncontext cannot accept a TracedRNumber{Bool}, failing\ntest/reactant/lat_lon_compilation.jl. Mirror OceananigansReactantExt, whose\nRungeKutta3 and SplitRungeKutta no-ops exist for exactly this reason:\nReactant initializes through first_time_step!, so the eager seeding is\nunnecessary there. Constrains both dynamics and architecture so the method is\nstrictly more specific than the eager one (no ambiguity).\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Cap test-worker RSS on Linux CI runners too\n\nThe ubuntu runners (~13 GiB) run earlyoom, which SIGTERMs Julia test workers\nwhen several approach 3.7 GiB RSS at once — surfacing as\nMalt.TerminatedWorkerException and erroring whole testsets. The macOS clause\nin runtests.jl already caps worker RSS for exactly this reason; apply the\nsame dynamic cap on Linux GitHub Actions runners so workers recycle before\nthe OOM killer fires.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Scope the Linux CI worker-RSS cap to small-memory runners, and cap low\n\nThe previous commit extended the macOS dynamic cap to all Linux CI, but that\nformula grants each worker ~40% of machine memory — on multi-worker runners\nit raises the effective ceiling. Result: the GPU-L4 jobs, which passed\nbefore, began dying with Malt.TerminatedWorkerException. Revert Linux to a\nlow fixed cap (2500 MB) applied only when the runner has under 20 GiB, so\nubuntu-latest workers recycle gracefully before earlyoom fires and the\nlarge-memory GPU runners keep their previous behavior exactly.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Trim comments and consolidate stage helpers for readability\n\nReplace the block comment on the AcousticSubstepper cache fields with\nshort inline comments (moving the field descriptions to the struct\ndocstring), trim the update_advection_timestep! and\nmaybe_prepare_first_time_step! docstrings to their invariants, and\nshorten the remaining body comments added by this branch.\n\nCollapse the six Val-typed stage_fraction/stage_increment methods and\nthe advection_outer_timestep/advection_stage_timestep wrappers into two\nplain ifelse-based helpers (Reactant-safe, no other users).\n\nNo functional change; the AIVA suite passes 91/91.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Add CompressibleAcousticModel alias and fuse the advecting-state cache copy\n\nName the recurring AtmosphereModel{<:CompressibleDynamics, <:Any, <:Any,\n<:AcousticRungeKutta3} constraint CompressibleAcousticModel, with the\narchitecture as the free parameter so BreezeReactantExt specializes on\nCompressibleAcousticModel{<:ReactantState}.\n\nReplace the two broadcast copies in cache_advecting_state! with one\ncolumn-loop kernel launch covering both parents (they differ in z extent).\n\nThe AIVA suite passes 91/91; the kernel copy is bit-exact against both\nsource parents.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Remove stale Reactant ext imports and launch the cache copy in 3D\n\nThe CompressibleAcousticModel alias left AcousticRungeKutta3 and\nCompressibleDynamics unused in BreezeReactantExt, which failed the\nExplicitImports quality-assurance testset on every CI platform.\n\nAlso launch _cache_advecting_state! over (i, j, k) instead of looping\ncolumns, clamping the ρ index at its top level to absorb the one-level\nz-extent mismatch without branching.\n\nLocally: ExplicitImports 5/5, Aqua 31/31, AIVA suite 91/91; the kernel\ncopy is bit-exact against both source parents.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Split one transport velocity in the tracer AIVA update\n\n`update_state!` builds the moisture and tracer tendencies from the substepper's\ntime-averaged velocity, and the next stage's acoustic loop resets and rebuilds that\nfield before `scalar_substep!` applies them. The explicit fraction was therefore\nscaled by one stage's averaged velocity while the implicit remainder was sized from\nthe next stage's, so the two halves no longer added back to a single transport\noperator: with wᵉ = s w₁ and wⁱ = (1 - s) w₂, w₁ ≠ w₂, the transporting velocity is\nneither field. Mass stayed conserved (both halves are flux-form divergences), but a\nuniform mixing ratio does not stay uniform while the split is active.\n\nFreeze the transport `w` after every tendency computation the stepper issues and have\n`scalar_substep!` split that frozen copy, extending the treatment\n`cache_advecting_state!` already gives momentum and the thermodynamic variable. The\nfreeze point is the last moment the field still holds what Gⁿ was built with, before\neither the next loop zeroes it or `freeze_linearization_state!` reseeds it.\n\nOnly `w` is frozen: adaptive implicit vertical advection keeps the horizontal fluxes\nfully explicit, so the implicit solve reads no horizontal velocity. The carrier\ndensity needs no equivalent, since only `update_state!` refreshes `total_density`.\n\nSeed the time-averaged velocity before the first tendency computation too, so stage 1\nof step 1 splits a physical velocity rather than the constructor's zeros; previously\nthe seeding ran after the tendencies were built and that stage transported no tracers\nvertically.\n\nThe one-stage lag relative to WRF, which builds these tendencies inside the stage\nafter its own substep loop, is left in place; the stale comment claiming that ordering\nwas matched is corrected to state the actual alignment.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Retrigger CI: Actions never received the previous push event\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Name the substepper caches by what distinguishes them\n\nvertical_velocity_cache and time_averaged_vertical_velocity_cache: one\nis the stage-entry predictor, the other the acoustic mean — 'advecting'\nand 'transport' distinguished nothing, since both are advecting\ntransport velocities. The density partner drops its prefix to match.\nAlso replace the block comment on the time-averaged cache field with a\nshort inline comment per the struct-comment rule.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>",
-          "timestamp": "2026-08-21T17:36:22-06:00",
-          "tree_id": "3cae6d4beba7f0a2b7440d0974906d18ea362916",
-          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/4cc1657191b2acee8bafb991e435fcba3df0591b"
-        },
-        "date": 1787357184154,
-        "tool": "customBiggerIsBetter",
-        "benches": [
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
-            "value": 123798427.09697214,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
-            "value": 83302787.18476593,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
-            "value": 58125168.23817252,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
-            "value": 137855299.28367615,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
-            "value": 137855299.28367615,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
-            "value": 129688551.71108297,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
-            "value": 129688551.71108297,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 129688551.71108297,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
-            "value": 115699399.66881667,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
-            "value": 115699399.66881667,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
-            "value": 92027973.10639374,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
-            "value": 92027973.10639374,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
-            "value": 85132923.84612884,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
-            "value": 85132923.84612884,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
-            "value": 76310653.48133658,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
-            "value": 76310653.48133658,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
-            "value": 68623722.44810732,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
-            "value": 39780704.85068748,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
-            "value": 7284019.637154991,
-            "unit": "points/s"
-          },
-          {
-            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
-            "value": 26046762.296139788,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
-            "value": 1010729278.1094587,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
-            "value": 850088255.6273729,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
-            "value": 1291770533.628257,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
-            "value": 722692034.7387606,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
-            "value": 116369600.96429391,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
-            "value": 866442166.853222,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
-            "value": 522832793.3592963,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
-            "value": 24000190.087870292,
-            "unit": "points/s"
-          },
-          {
-            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
-            "value": 592902409.5269147,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
-            "value": 6681681871.019283,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
-            "value": 7739803492.623822,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
-            "value": 8367530191.447744,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
-            "value": 5264871801.398457,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
-            "value": 9920220622.58236,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
-            "value": 8315259099.483457,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
-            "value": 4543303725.151022,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
-            "value": 4616773391.0846815,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
-            "value": 5197264261.237154,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
-            "value": 3536030598.7797227,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
-            "value": 5400211795.530406,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
-            "value": 5218123266.427841,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
-            "value": 3143442502.4169784,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
-            "value": 440081095.38045394,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
-            "value": 3381342934.3398695,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
-            "value": 2214069459.566651,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
-            "value": 1798372235.2138124,
-            "unit": "points/s"
-          },
-          {
-            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
-            "value": 3405701822.9415126,
-            "unit": "points/s"
-          }
-        ]
-      },
-      {
-        "commit": {
-          "author": {
-            "email": "gregory.leclaire.wagner@gmail.com",
-            "name": "Gregory L. Wagner",
-            "username": "glwagner"
-          },
-          "committer": {
-            "email": "noreply@github.com",
-            "name": "GitHub",
-            "username": "web-flow"
-          },
-          "distinct": true,
           "id": "2ad8d3b2a9c20b2fea2dbcf13a385bd096079327",
           "message": "Convert Δt with kernel_time_step in microphysics launch sites (#921)\n\n* Convert Δt with kernel_time_step in microphysics launch sites\n\n`AtmosphereModels.kernel_time_step` exists to convert `Δt` to the grid's\nfloat type at the launch site, because Metal cannot load Float64 kernel\narguments. The dynamics and time-stepper launch sites all use it, but the\ntwo microphysics ones did not: `Δt = model.clock.last_Δt` was passed\nstraight into `_microphysical_update!` and\n`_instantaneous_precipitation_update!`.\n\nOn a Float32 grid that Float64 argument promotes every expression it\ntouches inside the kernel, including `rʳ^βᵃᶜᶜ` and the rain-evaporation\nventilation powers. Metal.jl device-overrides `^` for Float32 but not for\nFloat64, so the promoted powers compile to genuine doubles and the kernel\nfails to build with \"unsupported use of double value\". On CUDA the same\npromotion is merely slow rather than fatal, which is why this went\nunnoticed.\n\nRoute both launch sites through `kernel_time_step`. A Float32 moist\n`AtmosphereModel` (DCMIP2016 Kessler, compressible dynamics with acoustic\nsubstepping) now builds and time-steps on Metal.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n* Rename Δt_FT to kernel_Δt, matching the Oceananigans convention\n\nOceananigans names the converted, kernel-bound time step `kernel_Δt` at\nits launch sites, e.g. `nonhydrostatic_ab2_step.jl` and\n`nonhydrostatic_rk3_substep.jl`. Use the same name in Breeze instead of\n`Δt_FT` so the two read alike.\n\nApplied only where the local really is a kernel argument. The `Δt_FT` in\n`acoustic_substepping.jl` is a host-side value used to compute the\nsubstep count and size, so it keeps its name.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Gregory Wagner <glwagner@Gregorys-MacBook-Pro.local>\nCo-authored-by: Claude Opus 5 <noreply@anthropic.com>",
           "timestamp": "2026-08-21T11:02:57-06:00",
@@ -17872,6 +17613,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3491447655.388959,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4cc1657191b2acee8bafb991e435fcba3df0591b",
+          "message": "Fix the AIVA split time-step pairing under AcousticRungeKutta3 (#902)\n\n* Pin the adaptive-implicit advection split to each acoustic RK3 stage\n\n`AdaptiveImplicitVerticalAdvection` (AIVA) splits every vertical advective flux into an\nexplicit fraction s = min(1, cfl Δz / (|w| Δt)) and a first-order-upwind implicit remainder.\nThe two halves only sum to one transport if both are sized with the same Δt. Under\n`AcousticRungeKutta3` they were not: Oceananigans' generic hook leaves `td.Δt[] =\nclock.last_Δt`, the whole outer step, at every stage.\n\nThis specializes `update_advection_timestep!` on `AcousticRungeKutta3`, so the split is\nwritten once per stage — inside `update_state!`, before the tendencies that consume it — to\nthe interval of the stage that will consume it. It supersedes the `set_advection_timestep!`\nof PR #902, which was a second writer to the same Ref, writing mid-stage after the tracer\ntendencies had already been frozen against the first value.\n\nTwo fixes to that hook:\n\n* `maybe_prepare_first_time_step!` now seeds `clock.last_stage_Δt`, mirroring Oceananigans'\n  `RungeKutta3TimeStepper` companion. Traced on a cold start at Δt = 4: stage 1 was given\n  td.Δt[] = 4.0 where the stage interval is β₁Δt = 1.3333, a 3x overestimate of the split\n  interval for one stage. (Not the `Inf` an earlier note claimed — `clock.last_Δt` is already\n  finite by then.) After: 1.3333, identical to every later stage 1. The guard also fires on a\n  clock with a non-finite `last_stage_Δt` at nonzero iteration.\n\n* A `FluxFormAdvection` disambiguation. `AdaptiveImplicitVerticalAdvection` is a type alias\n  keyed on the z time discretization, so a `FluxFormAdvection` with an AIVA z-scheme matches\n  both the new method and Oceananigans' `(::FluxFormAdvection, timestepper, clock)`. Before\n  this, `Aqua.test_ambiguities` reported 1 ambiguity and the first `set!` on such a model\n  threw. That method is also what keeps the `FluxFormAdvection` import live, so the\n  stale-explicit-import failure in test/quality_assurance.jl goes with it. Both CI failures\n  are fixed by the one method.\n\nStage 1 still uses β₁ of the *previous* outer step, and that is deliberate — documented in\nthe docstring. Correcting it at stage entry would rebuild the split after the tracer\ntendencies were frozen against the old one, recreating the desynchronization the hook exists\nto remove. The cost is confined to CFL targeting on one stage.\n\nRemoved: the ρθ linearization apparatus — `restore_withheld_linearization_flux!` and its\nkernel, and the ρᵈθᴸ shift around `implicit_substep!`'s thermodynamic solve.\nsrc/TimeSteppers/acoustic_substep_helpers.jl is now byte-identical to main, including the\n`implicit_substep!` contract docstring the previous commit deleted, and `src/` differs from\nmain by the Δt hook alone.\n\nWhy removed: the shift destroys vertically-implicit closure diffusion of ρθ. Measured on an\n8 x 64 compressible column (Δz = 62.5 m, 4 K θ bump of width 200 m, ScalarDiffusivity with\n`VerticallyImplicitTimeDiscretization`, κ = ν = 20, 20 steps of Δt = 1), each variant against\nits own κ = 0 twin:\n\n    explicit WENO5 on ρθ         max|θ(κ=20) − θ(κ=0)| = 0.177877\n    AIVA on ρθ, this commit                            = 0.177877   (matches to 3.9e-9)\n    AIVA on ρθ, previous commit                        = 2.086e-5   (99.99% of it gone)\n\nThis is below the split threshold, where s ≡ 1 and the restoration is inert, so the shift\nalone accounts for it: `implicit_step!` solves advection and diffusion in one tridiagonal\nsystem, and shifting the variable it solves for removes the diffusion of the shifted part.\n\nWhat is not understood. On the configuration of the AIVA acoustic testset (8x8x32, imposed\n10 m/s updraft, Δt = 10, vertical Courant 1.6), run to t = 2000 s:\n\n    momentum WENO5, ρθ WENO5    max|w| = 1.5235       (both trees)\n    momentum AIVA,  ρθ WENO5    max|w| = 1.5408       (both trees)\n    momentum AIVA,  ρθ AIVA     max|w| = 0.7861       previous commit\n    momentum AIVA,  ρθ AIVA     DomainError at 500 s  this commit\n\nThe apparatus is a no-op exactly where it is inert: below the split threshold with no\nvertically-implicit closure, both trees reproduce explicit WENO5 on ρθ to the same 1.24e-8.\nIt is not a no-op below the threshold once a vertically-implicit closure is present, and it\nis not a no-op above the threshold — the difference between 0.786 and a blow-up. But\nneither state is right: 0.786 against an explicit reference of 1.5235 is 49% damping, not a\nconverged answer. The apparatus was masking a defect in AIVA on the thermodynamic variable\n(issue #897) with damping and paying for it with the closure. I have no mechanism for the\ndamping and am not proposing one; three mechanism claims on this branch have already been\nfalsified.\n\nScope of what is claimed. AIVA is usable for momentum under the acoustic substepper.\nAIVA on the thermodynamic variable is available and is broken. No stability or speed claim is\nmade for AIVA anywhere: the \"maximum stable step rises from 10 s to 30 s\" sentence went with\nthe docstring that carried it, and two testset names that asserted stability are renamed to\nsay what they measure, with the explicit control recorded beside them.\n\nTests. Three new testsets in test/implicit_vertical_advection.jl, plus explicit-fraction\nlabels on the four below-threshold equality testsets so their vacuity (s ≡ 1) is an assertion\nrather than an accident. On the previous commit the file gives 77 pass / 5 fail / 1 error; on\nthis one 83 / 83.\n\n  - \"Below threshold, AIVA does not disturb vertically-implicit diffusion\" — the ρθ\n    regression above (2 fails before: 0.0009115 > 0.3382 evaluated false).\n  - \"Explicit fraction and implicit remainder sum to one transport\" — the invariant the whole\n    feature rests on, measured as a centroid displacement (s = 1/6 after the explicit half,\n    1 after both). Passes before and after; it is the anchor for the M5 defects below.\n  - \"Split time step tracks the Wicker–Skamarock stage interval\" — the Δt hook, with a ladder\n    that both shrinks and grows (3 fails before: observed[(1,1)] = 10.0 against β₁Δt =\n    3.3333, and two restart-shaped assertions).\n  - The `FluxFormAdvection` case in the acoustic testset errors before (`MethodError: ... is\n    ambiguous`) and passes after.\n\nNot addressed here, verified and filed separately: bounds-preserving WENO combined with AIVA\ntransports 1 + (1 − s) times (measured 275 m against an exact 150 m); a precipitating species\nloses its sedimentation flux because `scalar_substep!` hands `implicit_step!` only the\ntransport velocities (−25 m against an exact −135 m); and `field_index = Val(i - 5)` in\n`scalar_substep!` gives every non-acoustic scalar its predecessor's diffusivity. All three are\npre-existing on main and none is specific to this branch.\n\nNot covered: GPU, Float32, and any regime beyond the CPU Float64 cases listed above.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Freeze the stage-entry advecting state for the implicit vertical remainder\n\nThe slow tendencies split vertical fluxes of the stage-entry state: the\nexplicit fraction s = min(1, cfl Δz / (|w| Δt)) is computed from the advecting\nvertical velocity at tendency time. The post-loop implicit solve must size the\nwithheld remainder from the same state, or the two halves do not partition one\ntransport. Target invariant: wᴸ = wᵉ + wⁱ with identical interpolation and\nstage time step.\n\nMeasured on the previous commit, the two halves of that pairing were in\ndifferent conditions:\n\n* The velocity half held by accident: nothing refreshes `model.velocities` or\n  the contravariant velocity between tendency computation and the implicit\n  solve (both update only in `update_state!`, between stages), so the solve\n  read stage-entry w by staleness — max|Δw| = 0.0 exactly, but fragile against\n  any future mid-stage refresh.\n* The density half was a real error: `_recover_full_state!` rewrites\n  `dynamics.dry_density` at stage end, before `implicit_substep!` reads it, so\n  the implicit coefficients were weighted with post-acoustic ρ (0.008% at\n  Δt = 4 s in a weak mountain wave; grows with Δt and compressibility).\n\nThe substepper now carries `advecting_vertical_velocity_cache` and\n`advecting_density_cache`, filled by `cache_advecting_state!` immediately\nafter `prepare_acoustic_cache!` — the full stage-entry wᴸ, not the clipped\nwᵉ: in saturated cells |wᵉ| = cfl Δz / Δt regardless of |wᴸ|, so the\nremainder cannot be recovered from the clipped field. `implicit_substep!`\ntakes its advective coefficient state from the cache; the θ path receives the\nsame cached w. Allocation is gated on the advection needing the implicit\nsolver, so closure-only configurations keep live fields and bit-identical\nbehavior; closure diffusion always acts on the full field.\n\nTests (implicit_vertical_advection.jl, 83 → 91 assertions): no cache without\nan adaptive-implicit scheme; cache immunity to live-field corruption between\ntendency and solve (bit-exact); the split identity through the real\ninterpolation at forced saturation (1541 saturated faces, residual 5.6e-17),\nwith a guard that fails the test if no face saturates.\n\nRe-measured after the fix, per review directive: the h = 600 m stratified\nmountain-wave gate is unchanged to four digits (AIVA at Δt = 8 s: L2 error\n46.18% before and after; death times shift < 5%). The pairing fix is a\ncorrectness invariant, not a performance change — the accuracy limitation of\nthe first-order-upwind remainder stands, now with \"broken partition\"\neliminated as an alternative explanation.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Use ifelse for stage selection: clock.stage is traced under Reactant\n\nThe stage-selection helpers used ternaries on clock.stage, which fails\nReactant's trace (TypeError: non-boolean TracedRNumber{Bool} in boolean\ncontext) in test/reactant/lat_lon_compilation.jl's SplitExplicitTimeDiscretization\ntestset. ifelse evaluates both Val-dispatched branch values, which are constant\nstage fractions, so semantics for eager execution are unchanged.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Reactant: no-op maybe_prepare_first_time_step! for the acoustic stepper\n\nThe eager companion added for AcousticRungeKutta3 guards on clock.iteration\nand clock.last_stage_Δt, which are traced values under Reactant — a boolean\ncontext cannot accept a TracedRNumber{Bool}, failing\ntest/reactant/lat_lon_compilation.jl. Mirror OceananigansReactantExt, whose\nRungeKutta3 and SplitRungeKutta no-ops exist for exactly this reason:\nReactant initializes through first_time_step!, so the eager seeding is\nunnecessary there. Constrains both dynamics and architecture so the method is\nstrictly more specific than the eager one (no ambiguity).\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Cap test-worker RSS on Linux CI runners too\n\nThe ubuntu runners (~13 GiB) run earlyoom, which SIGTERMs Julia test workers\nwhen several approach 3.7 GiB RSS at once — surfacing as\nMalt.TerminatedWorkerException and erroring whole testsets. The macOS clause\nin runtests.jl already caps worker RSS for exactly this reason; apply the\nsame dynamic cap on Linux GitHub Actions runners so workers recycle before\nthe OOM killer fires.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Scope the Linux CI worker-RSS cap to small-memory runners, and cap low\n\nThe previous commit extended the macOS dynamic cap to all Linux CI, but that\nformula grants each worker ~40% of machine memory — on multi-worker runners\nit raises the effective ceiling. Result: the GPU-L4 jobs, which passed\nbefore, began dying with Malt.TerminatedWorkerException. Revert Linux to a\nlow fixed cap (2500 MB) applied only when the runner has under 20 GiB, so\nubuntu-latest workers recycle gracefully before earlyoom fires and the\nlarge-memory GPU runners keep their previous behavior exactly.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Trim comments and consolidate stage helpers for readability\n\nReplace the block comment on the AcousticSubstepper cache fields with\nshort inline comments (moving the field descriptions to the struct\ndocstring), trim the update_advection_timestep! and\nmaybe_prepare_first_time_step! docstrings to their invariants, and\nshorten the remaining body comments added by this branch.\n\nCollapse the six Val-typed stage_fraction/stage_increment methods and\nthe advection_outer_timestep/advection_stage_timestep wrappers into two\nplain ifelse-based helpers (Reactant-safe, no other users).\n\nNo functional change; the AIVA suite passes 91/91.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Add CompressibleAcousticModel alias and fuse the advecting-state cache copy\n\nName the recurring AtmosphereModel{<:CompressibleDynamics, <:Any, <:Any,\n<:AcousticRungeKutta3} constraint CompressibleAcousticModel, with the\narchitecture as the free parameter so BreezeReactantExt specializes on\nCompressibleAcousticModel{<:ReactantState}.\n\nReplace the two broadcast copies in cache_advecting_state! with one\ncolumn-loop kernel launch covering both parents (they differ in z extent).\n\nThe AIVA suite passes 91/91; the kernel copy is bit-exact against both\nsource parents.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Remove stale Reactant ext imports and launch the cache copy in 3D\n\nThe CompressibleAcousticModel alias left AcousticRungeKutta3 and\nCompressibleDynamics unused in BreezeReactantExt, which failed the\nExplicitImports quality-assurance testset on every CI platform.\n\nAlso launch _cache_advecting_state! over (i, j, k) instead of looping\ncolumns, clamping the ρ index at its top level to absorb the one-level\nz-extent mismatch without branching.\n\nLocally: ExplicitImports 5/5, Aqua 31/31, AIVA suite 91/91; the kernel\ncopy is bit-exact against both source parents.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Split one transport velocity in the tracer AIVA update\n\n`update_state!` builds the moisture and tracer tendencies from the substepper's\ntime-averaged velocity, and the next stage's acoustic loop resets and rebuilds that\nfield before `scalar_substep!` applies them. The explicit fraction was therefore\nscaled by one stage's averaged velocity while the implicit remainder was sized from\nthe next stage's, so the two halves no longer added back to a single transport\noperator: with wᵉ = s w₁ and wⁱ = (1 - s) w₂, w₁ ≠ w₂, the transporting velocity is\nneither field. Mass stayed conserved (both halves are flux-form divergences), but a\nuniform mixing ratio does not stay uniform while the split is active.\n\nFreeze the transport `w` after every tendency computation the stepper issues and have\n`scalar_substep!` split that frozen copy, extending the treatment\n`cache_advecting_state!` already gives momentum and the thermodynamic variable. The\nfreeze point is the last moment the field still holds what Gⁿ was built with, before\neither the next loop zeroes it or `freeze_linearization_state!` reseeds it.\n\nOnly `w` is frozen: adaptive implicit vertical advection keeps the horizontal fluxes\nfully explicit, so the implicit solve reads no horizontal velocity. The carrier\ndensity needs no equivalent, since only `update_state!` refreshes `total_density`.\n\nSeed the time-averaged velocity before the first tendency computation too, so stage 1\nof step 1 splits a physical velocity rather than the constructor's zeros; previously\nthe seeding ran after the tendencies were built and that stage transported no tracers\nvertically.\n\nThe one-stage lag relative to WRF, which builds these tendencies inside the stage\nafter its own substep loop, is left in place; the stale comment claiming that ordering\nwas matched is corrected to state the actual alignment.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Retrigger CI: Actions never received the previous push event\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Name the substepper caches by what distinguishes them\n\nvertical_velocity_cache and time_averaged_vertical_velocity_cache: one\nis the stage-entry predictor, the other the acoustic mean — 'advecting'\nand 'transport' distinguished nothing, since both are advecting\ntransport velocities. The density partner drops its prefix to match.\nAlso replace the block comment on the time-averaged cache field with a\nshort inline comment per the struct-comment rule.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>",
+          "timestamp": "2026-08-21T17:36:22-06:00",
+          "tree_id": "3cae6d4beba7f0a2b7440d0974906d18ea362916",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/4cc1657191b2acee8bafb991e435fcba3df0591b"
+        },
+        "date": 1787357184154,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 123798427.09697214,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83302787.18476593,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 58125168.23817252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 137855299.28367615,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 137855299.28367615,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129688551.71108297,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129688551.71108297,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129688551.71108297,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115699399.66881667,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115699399.66881667,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92027973.10639374,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92027973.10639374,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85132923.84612884,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85132923.84612884,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76310653.48133658,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76310653.48133658,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68623722.44810732,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 39780704.85068748,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7284019.637154991,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26046762.296139788,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1010729278.1094587,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 850088255.6273729,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1291770533.628257,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 722692034.7387606,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116369600.96429391,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 866442166.853222,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 522832793.3592963,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24000190.087870292,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 592902409.5269147,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6681681871.019283,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7739803492.623822,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8367530191.447744,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5264871801.398457,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 9920220622.58236,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8315259099.483457,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4543303725.151022,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4616773391.0846815,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5197264261.237154,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3536030598.7797227,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5400211795.530406,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5218123266.427841,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3143442502.4169784,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440081095.38045394,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3381342934.3398695,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2214069459.566651,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1798372235.2138124,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3405701822.9415126,
             "unit": "points/s"
           }
         ]
