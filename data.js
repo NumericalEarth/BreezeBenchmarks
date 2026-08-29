@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787865531697,
+  "lastUpdate": 1787970888227,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -18908,6 +18908,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3361841456.660316,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "806f0f1e089a6b4d392c371742d2fb76d7be62b3",
+          "message": "Implement PredictedParticleProperties (P3) microphysics (#900)\n\n* Implement PredictedParticleProperties (P3) microphysics\n\nSingle-category ice microphysics with continuously predicted particle\nproperties, tracking Fortran P3-microphysics v5.5.0 (Morrison and Milbrandt\n2015a, with the predicted-liquid-fraction extension of Milbrandt et al. 2025).\n\nRather than partitioning frozen hydrometeors into fixed categories (cloud ice,\nsnow, graupel, hail), P3 carries one ice category whose rime mass, rime volume,\nand liquid coating are prognostic, so particle density and fall speed follow\nfrom the state rather than from a category label. Eight prognostic densities by\ndefault: cloud liquid mass, rain mass and number, dry ice mass and number, rime\nmass and rime volume, and the liquid coating on ice. Cloud droplet number,\nunactivated aerosol number, and the saturation deficit are gated on a type, so\na configuration that omits them does not carry them. Warm rain uses\nKhairoutdinov and Kogan (2000).\n\nStructure:\n\n- Lookup tables: 5D and 6D ice integrals parsed from the Fortran ASCII tables;\n  the rain tables are generated at startup by Chebyshev-Gauss quadrature.\n- Process rates: riming, aggregation, deposition and sublimation, melting,\n  wet growth and refreezing, ice nucleation, immersion and homogeneous\n  freezing, rain evaporation, and the coupled saturation adjustment that\n  budgets vapor across them.\n- Kernel paths are GPU-compatible throughout: `ifelse` rather than branching,\n  concretely typed, allocation-free.\n\nBehaviour is pinned by Fortran-parity regression suites over process routing\nand trace-regime handling, alongside unit tests for the PSD integrals, the\nfreezing paths, and full-model integration.\n\nSupersedes #395, rebased onto main as a single commit.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Ape8tQNmzbmyzaf52qdnpM\n\n* Collapse the degenerate μ axis and de-duplicate the P3 rate paths\n\nTable interpolation\n-------------------\n\nThe 2-moment lookup tables carry a single μ point (`n_mu = 1`), so their μ\naxis has `inverse_Δ = 0` and `prepare_5d`/`prepare_6d` always bracket it as\n`m⁻ == m⁺` with `ψ = 0` — for μ = 0 and μ = 20 alike. Both interpolators\nnonetheless evaluated two slices and blended them, so every table lookup did\ntwice the loads and arithmetic it needed, with the second slice multiplied by\nzero.\n\n`collapse_trailing_axis` (5D) and `interpolate_6d` (6D) now evaluate one slice\nwhen the bracket is degenerate. They test the bracket rather than assuming a\nshape, so a 3-moment table with a real μ axis takes the blended path unchanged.\n\n`RimeDensityIndexedTable5D`'s call operator now routes through\n`prepare_5d`/`evaluate_at` instead of delegating to the wrapped table. That\ndelegation reached Oceananigans' quintilinear operator, which we cannot extend\nwithout type piracy, and it is the path the hot kernels actually take.\n\nMeasured 2.1x on the 5D interpolation in isolation and ~5.5% on the full\nper-cell rate computation. The GPU case is unmeasured, and is where halved\nloads and register pressure should matter more.\n\nDe-duplication\n--------------\n\nSix duplications removed, none of which changes any result:\n\n- The sink limiter ran the rain / total-ice / coating budgets once before the\n  re-projection loop and again inside it, ~57 identical lines. It is now one\n  `for iteration in 0:N` loop with `f_dry_ice` gated to 1 on the first pass,\n  which reproduces the old first pass exactly since multiplying by one is\n  exact. The cloud budget and `sublim_n` are hoisted above the loop: they were\n  part of the pre-loop pass but never part of the loop body, and `sublim_n`\n  reads `dep` before any budget scales it. This was the real hazard — a rate\n  added to one copy of a source list and not the other would have over-drawn\n  the budget only on iterations 2..N.\n- `cloud_riming_rate`/`cloud_warm_collection_rate` and `rain_riming_rate`/\n  `rain_warm_collection_rate` were pairs differing only in the direction of the\n  temperature comparison. They now share `cloud_collection_mass_rate` and\n  `rain_collection_mass_rate` gated by `temperature_active`, matching the\n  pattern `rain_collection_number_rate` already used on the number side.\n- `ice_melting_rates` recomputed the mean mass, liquid fraction, density\n  correction and the entire four-table ventilation lookup that `ice_melting_rate`\n  had just done. The rate function now returns its small/large ventilation split\n  and the partition is formed from it.\n- The diffusional-growth share was written out four times, varying only in\n  `(ε, ξ)` — a transposed pair would have been invisible in the numerical core\n  of the vapor budget. Now `growth_share`.\n- `q_sat0` at the melting point, and the mass-basis comment that is the\n  load-bearing part of it, appeared in three functions. Now\n  `freezing_point_saturation_mass_fraction`.\n- `collection_kernel_per_particle` and `aggregation_kernel` had identical\n  bodies and each carried two arguments they never read; their `Fˡ`-less\n  overloads had no callers at all. Both now delegate to `tabulated_ice_integral`.\n\nVerification\n------------\n\nEvery step was checked against a snapshot of all 59 rate fields over 6144\nstates spanning the temperature range and every hydrometeor combination —\n362,496 values, byte-for-byte identical after each change. The interpolation\ncollapse was separately checked over 400k randomized lookups, 5D and 6D, also\nbit-identical: the skipped terms carry an exact zero factor and the kept terms\nan exact one. The 6D restructure does change summation order in the\nnon-degenerate case, which is unexercised until 3-moment tables land.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Ape8tQNmzbmyzaf52qdnpM\n\n* Refine atmosphere model APIs and allocations\n\n* Clarify compressible density reconciliation\n\n* Use thermodynamic constants throughout P3\n\n* Align P3 naming and notation with the documented conventions\n\nBring the PredictedParticleProperties module in line with the symbol table in\ndocs/src/microphysics/p3_notation.md, so that the code, its comments, and the\ndocs all spell a given quantity the same way.\n\nNames and symbols:\n\n- Adopt the documented symbols for prognostic and diagnosed state: sˢᵃᵗ → sᵛ⁺ˡ\n  (and ρsˢᵃᵗ → ρsᵛ⁺ˡ), Nᶜ → Nᶜˡ, μ_c/λ_c → μᶜˡ/λᶜˡ.\n- Expand abbreviated locals and parameter fields, and move the min/max\n  qualifier to the front where it reads as English: aggregation_efficiency_max\n  → maximum_aggregation_efficiency, splintering_temperature_low →\n  minimum_splintering_temperature, a_cn → stokes_prefactor, ssat_names →\n  supersaturation_names.\n- Use symbols for hydrometeor quantities in expression-local variables, with\n  English reserved for struct fields, function names, and process labels:\n  target_cloud_water → qᶜˡ_target, target_cloud_number → Nᶜˡ_target,\n  rime_volume → bᶠ_safe (it is bᶠ reconstructed with floors). The\n  rime-splintering locals were named as if they were state rather than rates,\n  so they become qᶜˡ_splintering_rate, qʳ_splintering_rate,\n  nᶜˡ_splintering_rate, nʳ_splintering_rate, and n_splintering_rate — with\n  lowercase n, since these are per unit mass of air.\n\nNotation ordering:\n\n- Put the species superscript immediately after the letter it labels and any\n  numeric subscript last, so the rain PSD intercept is Nʳ₀ rather than N₀ʳ,\n  matching λʳ and μʳ. p3_notation.md now states the rule.\n- Move species labels out of subscripts and into superscripts throughout the\n  docstring math, comments, and docs pages: D_r → D^r, N_{cl} → N^{cl},\n  E_{ci}/E_{ii} → E^{ci}/E^{ii}, F_r → F^f, q_v → q^v, N_{i,\\max} → N^i_{\\max},\n  and Nᵢ → Nⁱ, εⁱʷ → εʷⁱ. Subscripts that are genuinely indices are left\n  alone (D_i and a_i in the piecewise mass integral, q_i for the regularized\n  incomplete gamma, D_1/D_2 in the aggregation kernel).\n- Also use the documented symbols for two quantities that sat in the same\n  formulas: the ventilation factor f_v → f^{ve}, and ρ_w → ρᴸ.\n\nNo physics or control flow changes; the renames are local variables, comments,\nand docstrings. P3 tests pass: processes (420), freezing (112), integrals (96),\nFortran process routing (67), and trace-regime parity (33).\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Use min/max/clamp instead of sign-branching ifelse in P3 rates\n\nRates that select between a zero branch and a capped branch on the sign of\na raw growth rate are just clamps, so express them that way:\n\n  - Vapor rate caps in `coupled_saturation_adjustment_rates`: the rain and\n    coating condensation/evaporation pairs become `min(max(0, r), cap)`, and\n    the cloud condensation and ice deposition rates, which cap each sign with\n    a different reservoir, become a single `clamp`.\n  - `limit_vapor_rates` scaled the positive and negative parts of `cond` and\n    `dep` with different limiting factors through a pair of `ifelse`s and a\n    carrier variable; each collapses to one expression.\n  - The aggregation sticking-efficiency and rime-fraction ramps are linear\n    ramps between two bounds, so `clamp` replaces the nested `ifelse` ladders.\n\nAll rewrites are bitwise identical to the originals on finite inputs, checked\nby differential testing over ~500k input combinations per site in Float32 and\nFloat64, spanning twelve decades plus signed zeros, subnormals and infinities.\nTwo behavior notes: a NaN raw rate now propagates instead of falling into the\nzero branch, and the deposition clamp assumes non-negative calibration factors\n(they default to one).\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Show computed values instead of types in P3 doctests\n\nThe homogeneous freezing and air transport doctests ended on typeof(...),\nso they only asserted the return type and would have passed with entirely\nwrong physics. Print the rounded values instead, which pins the rates and\nmakes the expected magnitudes visible to readers. The transport doctest\nnow also checks all three properties against the reference values listed\nin its own docstring.\n\nProcessRateParameters keeps typeof, where the type parameters are the\ndocumented subject.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Describe P3 on its own terms rather than by reference to Fortran\n\nRemove all 468 mentions of Fortran, .f90, and microphy_p3 across the P3\nsource, tests, and documentation. Comments that pointed at a variable or\nline number in the reference implementation are rewritten to state the\nphysics directly, since dropping the language name alone would have left\nbare tokens like `ncshdc` explaining nothing.\n\nProvenance that carries information is kept: the Morrison & Milbrandt and\nMilbrandt et al. citations, the phrase \"P3 reference implementation\" in the\ntwo overview passages where contrasting Breeze's tendency-based design with\nan in-place subcycled one is the point, and the f1pr* labels naming columns\nof the ASCII table Breeze actually reads.\n\nThe overview section \"Equivalences with the Fortran runtime\" becomes\n\"Options Breeze fixes rather than exposes\" -- it was three notes saying\n\"we match their default\", which only meant something relative to the\nother code.\n\nTwo substantive fixes surfaced while auditing the constants left behind:\n\n- cloud_slope_bounds documented its bounds as 160 um and 4 um mean droplet\n  diameter. Both are 4x too large. The (mu+1) factor in each bound cancels\n  against the gamma-PSD mean diameter (mu+1)/lambda, giving 40 um and 1 um\n  independently of the shape parameter. The derivation is now written out.\n\n- shed_drop_mass and shed_drop_mass_liqfrac were the literals 1/1.923e6 and\n  1/1.928e6, the same 1 mm drop 0.26% apart, the second with no derivation\n  anywhere. Both now derive from shed_drop_diameter and the configured\n  liquid density, pi/6 rho D^3 = 5.236e-7 kg. This changes results: the\n  cloud/wet-growth shed number by -0.69% and the liquid-fraction shed\n  number by -0.95%. Both fields remain settable so each shedding path\n  stays independently tunable.\n\nAlso cite Cober & List (1993) for the rime-density fit and Pruppacher &\nKlett for the rain ventilation coefficients; both bibliography entries\nalready existed but were never referenced from the source.\n\nA test asserting the shed-drop source hardcoded 1.923e6 directly beneath a\ncomment claiming the value was not hardcoded; it now reads the parameter.\n\nP3 test suite: 842/842 passing.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Reduce P3 docs to background/theory and usage sections\n\nConsolidate the eight P3 microphysics pages into two, per review\nfeedback on PR #900: p3_theory.md carries the physical background,\nnotation, particle properties, size distribution, integral\nproperties, process rates, and prognostic equations; p3_usage.md\ncarries the quick-start snippet and worked visual examples. All\nexisting @id anchors are preserved so cross-references elsewhere in\nthe docs and source still resolve.\n\n* Remove redundant P3 table dimensions\n\nDrop the singleton ice shape coordinate and generic 6D interpolation path, update P3 process code, docs, and tests, and add dimension and performance findings.\n\n* Bound FT in the PreparedInterpolation constructor\n\nThe default outer constructor leaves FT unbound when N is 0, since an empty\naxes tuple pins no element type. Defining the inner constructor every call\nsite already uses keeps the ambiguous outer one from being generated.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Qualify the initial_aerosol_number_density cross-reference\n\nThe page sets CurrentModule to PredictedParticleProperties, which only\nextends the function, so the bare @ref found no docstring there and\nDocumenter allows the fallback to AtmosphereModels only for qualified names.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Doctest the P3 constructor example\n\nThe `PredictedParticlePropertiesMicrophysics` docstring used a plain `julia`\nblock, which is never exercised. Convert it to `jldoctest` showing the scheme's\n`show` output, and give `KhairoutdinovKogan2000` the `Base.summary` method that\nevery other component of that tree already has, so the warm-rain line prints\nthe type name rather than its fully qualified path.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Address review: drop NullLogger, restore linkcheck, rename humidity_density\n\n`NullLogger` is gone from the P3 examples and doctests. The only log output was\nthe artifact download, and `docs/make.jl` and `test/runtests.jl` already install\n`P3_lookup_tables` before anything runs, so the constructor is silent on its own.\n\n`linkcheck` is back to `true`. Documenter authenticates github.com URLs with\n`GITHUB_TOKEN` (`docchecks.jl`, `_url_requires_github_token`) and the docs job\nexports it, so the 429s came from an unauthenticated local build, not from CI.\n\n`humidity_density` becomes `moist_air_density`, returning plain `ρ`: the density\nof the moist air implied by the equation of state, `ρ = p / (Rᵐ(q) T)`, which\nturns a mass fraction into a partial pressure. The name reads with the `Rᵐ`/`cᵖᵐ`\nmoist-air-mixture vocabulary, and puts the anelastic contrast in the name itself,\nwhere `total_density(dynamics)` returns a dry reference state.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Address review: rename to gas_phase_density and carrier density\n\nResponds to review threads on #900:\n\n- Rename `moist_air_density` to `gas_phase_density`, and state in the\n  docstring that it is the dry-air-plus-vapor density, differing from\n  `total_density` by omitting the condensate.\n\n- Rename the \"coupling density\" concept to \"carrier density\" throughout\n  (identifiers, comments, docstrings, and notation.md). The term named the\n  density that weights an intensive variable into its conservative form,\n  which \"coupling\" did not convey. Terminology only; no behavior change.\n\n- Explain in `AtmosphereModel` why the aerosol reservoir is seeded in the\n  constructor rather than in `initialize!`: it is a default, and\n  `initialize!` runs after `set!`, so re-seeding there would overwrite a\n  user-supplied `nᵃ`/`ρnᵃ`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Revert the \"carrier density\" rename, keep the other two review fixes\n\nReverts e6cdce40 (\"Address review: rename to gas_phase_density and\ncarrier density\") and reapplies the parts of it that stand on their own:\n\n- Rename `moist_air_density` to `gas_phase_density`, and state in the\n  docstring that it is the dry-air-plus-vapor density, differing from\n  `total_density` by omitting the condensate.\n\n- Explain in `AtmosphereModel` why the aerosol reservoir is seeded in the\n  constructor rather than in `initialize!`: it is a default, and\n  `initialize!` runs after `set!`, so re-seeding there would overwrite a\n  user-supplied `nᵃ`/`ρnᵃ`.\n\nThe \"coupling density\" -> \"carrier density\" rename is dropped, so that\nterminology goes back to what it was before e6cdce40 pending the outcome\nof the review discussion. Terminology only; no behavior change.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Address PR #900 review comments on the P3 module\n\nAdds a `Breeze.Utils` module for the scheme-independent helpers the review\nasked to relocate: `safe_divide`, the Chebyshev-Gauss quadrature, and the\n`@adapt_architecture` macro. Retires `quadrature.jl` and `gpu_adaptation.jl`,\nand merges the seven `ice_*` container files into `ice_properties.jl`.\n\nMoves two functions that were not P3-specific into `Breeze.Thermodynamics`:\n`p3_air_pressure` becomes `air_pressure(𝒰, constants)` beside\n`density(𝒰, constants)`, and `psychrometric_correction` now sits next to its\nmixture-heat-capacity counterpart in `bulk_microphysics.jl`, cross-referenced\nfrom both sides. `pressure_from_density_temperature` gains a `grid` argument\nso it takes kernel-function form.\n\nPromotes literals the review flagged to `ProcessRateParameters`: the\nfall-speed density-correction exponent and its density floor, and the cloud\nPSD bounds, now expressed as mean-droplet-diameter bounds. Particle masses\nthat hard-coded an ice density are derived from a radius and\n`constants.ice.density` instead, which shifts `nucleated_ice_mass` and\n`splintering_crystal_mass` by the 900 -> 917 kg/m³ difference. All P3\nconstructors take `FT::DataType = Oceananigans.defaults.FloatType`.\n\nRemoves `clamp_positive` in favour of `max(0, x)` across 104 call sites,\ndrops struct docstrings per the documented convention, renames the lookup\ntable axis counts to the `Nlabel` form, spells out `ccn_act`, and adds CCN\nand saturation-adjustment notation to the appendix. Documents the answers to\nthe review's questions in place: what the surface-temperature scan and the\nprocess-rate cache are for, where the Gunn-Kinzer and ventilation constants\ncome from, and why `@noinline` stays on the heavy rate method but not its\nforwarders. The column scan for surface temperature now dispatches, so only\n`ImmersedBoundaryGrid` pays for it.\n\nAlso simplifies the lookup-table accessors to read integrals directly off\n`p3.ice`, and trims arguments the rate functions no longer need.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Diagnose P3 fall speeds in update_state!, not during tendency assembly\n\nRemoves `prepare_microphysical_tendencies!` and folds the P3 terminal-velocity\ndiagnosis into `update_microphysical_auxiliaries!`, so every auxiliary field the\nscheme owns is established by `update_state!` and carries the same time level as\nthe prognostics it was built from.\n\nThe hook ran only from `compute_tendencies!`, which `update_state!` skips when\n`compute_tendencies=false`. Since `set!`, `set_to_mean!`, and the hydrostatic\nbalance solve all end that way, the six z-Face fall-speed fields were the one\nmicrophysical auxiliary that initialization left unwritten, and `update_state!`\nwas not idempotent for them.\n\nFolding the call into the pointwise interface removes work rather than adding\nit. The thermodynamic kernel has already built ρ, q, 𝒰, and ℳ for the cell, so\nthe dedicated kernel was rebuilding all of it; dropping it deletes a grid-sized\nlaunch and a redundant thermodynamic-state reconstruction per RK stage. The\nexplicit halo fill on the fall-speed fields goes too, since they live in\n`microphysical_fields` and the generic fill in\n`compute_auxiliary_thermodynamic_variables!` already covers them with the same\nboundary conditions. No velocity plumbing is needed: the fall speeds never read\nℳ.w, which enters P3 only through the adiabatic temperature tendency and CCN\nactivation, both of which stay in the tendency-cache kernel. Fall speeds after a\ntime step match the previous commit exactly on the anelastic test configuration.\n\nAlso applies the review's signature suggestions for anelastic\n`gas_phase_density` and `same_level_borrow!`, documents why the tuple recursion\nin the negative-moisture correction carries no runtime cost, and records why\n`set!` rejects ℋ together with `HydrostaticallyBalancedDensity` and what\nsupporting it would take.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01XbT15g9g4U1Ab4BseGQ2uW\n\n* Correct P3 doc claims that disagreed with the code\n\nChecked both P3 pages against the scheme by running the API, dumping every\nparameter default, and evaluating the lookup tables.\n\n`p3_usage.md`:\n\n- The tables were described as indexed by `(log₁₀ m̄, Fᶠ, Fˡ, ρᶠ, μ)`. Loading\n  the real table gives four axes, `log₁₀ m̄ ∈ [-14.81, -0.58]` by `Fᶠ` by `Fˡ`\n  by the `ρᶠ` index; `μ` is a tabulated output column, not a coordinate, and\n  the fifth coordinate belongs to the ice-rain block and is `log λʳ`. The\n  theory page already said this correctly.\n- `m̄` was defined as `qⁱ/nⁱ`. The theory page and the code use\n  `(ρqⁱ + ρqʷⁱ)/ρnⁱ`: `p3_fall_speed_compute` indexes with\n  `properties.qⁱ_total`, which carries the liquid coating. Only differs when\n  `Fˡ > 0`, which the examples avoid, but the definition was wrong.\n- The riming claim held over roughly half the range it was stated for.\n  Evaluating `mean_diameter` across the plotted axis, rimed particles do carry\n  the smaller mean dimension for `m̄` between 1e-8 and 1e-6 kg, but below about\n  1e-10 kg every curve collapses onto the solid-ice sphere, and above about\n  1e-5 kg the unrimed curve flattens at 0.0145 m while `Fᶠ = 0.8` keeps growing\n  to 0.021 m, reversing the ordering. Stated with its range and its limits now,\n  in the prose and in the summary bullet.\n\n`p3_theory.md`:\n\n- \"up to twelve\" prognostic densities is eleven: the page's own lists sum to\n  eleven, `p3_scheme.jl` says eleven, and constructing with every option on\n  returns eleven.\n- The second Sedimentation section still said the velocities are diagnosed\n  \"once per RK stage\", the framing from the hook removed in the previous\n  commit. Only the other section had been updated, leaving the two disagreeing.\n- `cloud.number_concentration` was glossed as \"typical continental ~100 cm⁻³\",\n  which reads as the default. The default is 200e6 m⁻³, i.e. 200 cm⁻³.\n- The notation table pointed `μʳ` at `RainProperties.shape_parameter`, which is\n  passed through as `nothing` and never evaluated. `μʳ = 0` is structural,\n  baked into `rain_slope_parameter`.\n- Spelled out the rain fall-speed reference state as 1000 hPa, 273.15 K, so it\n  matches how the ice reference is already given.\n\nAlso qualifies the two `update_microphysical_auxiliaries!` cross-references\nadded in the previous commit. Documenter resolves an unqualified `@ref` against\n`Main`, so it only finds names `using Breeze` brings in; that function is\nexported from `Breeze.AtmosphereModels` and not re-exported by `Breeze`, so the\nbare form has no binding to resolve. `docs/make.jl` sets no `warnonly`, and\nDocumenter 1.x promotes the resulting warning to an error, so this would have\nfailed the docs build. Verified against a scoped Documenter build carrying a\ndeliberately unresolvable reference as a control.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01XbT15g9g4U1Ab4BseGQ2uW\n\n* Add P3 tendencies straight into Gⁿ, dropping the cache_* scratch fields\n\nThe rate kernel wrote its results to 9-12 `cache_*` `CenterField`s and follow-up\nkernels accumulated those into `Gⁿ`. It now adds into `Gⁿ` directly.\n\nThe staging was justified by keeping the rate kernel's argument list independent\nof configuration so one compiled kernel could serve all of them. That does not\nhold: the kernel is specialized on `typeof(μ)` and `typeof(p3)`, and both already\nvary with configuration.\n\n`p3_tendency_fields` passes only the `Gⁿ` slots P3 writes rather than the model's\nwhole tendency tuple, dispatching on type so the reduced tuple stays a\ncompile-time constant. `write_p3_tendency_cache!` becomes `add_p3_tendencies!`\nand `P3TendencyCacheResult` becomes `P3TendencyResult`.\n\nMeasured on an H100, 128x128x64 Float64, matched runs before and after:\n\n  microphysical fields   33 (9 cache)  ->  24 (0)\n  field memory           307.8 MiB     ->  221.5 MiB   -28.0%\n  kernel compile         25.1 s        ->  21.9 s      -12.7%\n  time step              65.29 ms      ->  55.40 ms    -15.1%\n\n`ρqʳ` after 21 steps is identical to all 17 digits, so this is a relocation\nrather than a change in the physics. The fused kernel is faster to compile and\nto run, so the register-pressure concern does not materialize.\n\nThe two integration assertions that read `cache_ρqʳ` now read `Gⁿ.ρqʳ`, which is\nthe microphysics source alone in those setups because `ρqʳ` is zero there; an\nassertion pins that. The post-`time_step!` check reads `μ.ρqʳ` instead.\n\nSeparately, corrects the `gas_phase_density` docstring. It described the return\nvalue as the gas-phase density `ρᵈ + ρᵛ` omitting condensate, but neither method\ncomputes that: the default reads the total-density field, and the anelastic\noverride returns `p / (Rᵐ(q) T)`, which is also the total, since\n`qᵈ = 1 - qᵛ - qˡ - qⁱ` is referenced to the total density. The two differ by\n`1 - qˡ - qⁱ`. Total is the correct choice, matching the density\n`saturation_specific_humidity` references `qᵛ⁺` to. The name is left alone.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01XbT15g9g4U1Ab4BseGQ2uW\n\n* Optimize P3 tendency evaluation and process-rate reuse\n\n* Reduce redundant P3 process calculations\n\n* Honor configured P3 floors and remove stale fallbacks\n\nThread per-scheme numerical floors through the PSD helpers, the Stokes prefactor,\nand the rain tabulation, retiring the module-level DEFAULT_FLOORS constant so that\nNumericalFloors(FT) is the single source of truth. Drop unused rain shape state and\nNothing tendency fallbacks, with regression coverage for configured floor\npropagation through both the process rates and the rain quadrature.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GYoBWDmKYbtsrqBWoKPua7\n\n* Tighten and tidy the P3 parity tests\n\nThe three tests carried over from the Fortran comparison work\n(p3_lookup_table_reader, p3_reference_process_routing,\np3_reference_trace_regressions) had accumulated assertions that no longer\ncheck what they claim.\n\nTwo coverage fixes in p3_lookup_table_reader:\n\n- The first-row spot check compared the table's printed uns = 0.15624E-03\n  and ums = 0.35587E-03 at rtol=1e-3, which would accept a reader off by\n  0.1% -- a wrong column, a unit slip, or an off-by-one row landing on a\n  neighbouring sample. All four coordinates sit on axis origins (rho_rime =\n  50 kg/m3 is index 1), so the weights are 1 and 0 and the stored entry\n  returns unrounded: measured relative error is exactly zero for both. The\n  assertion is now equality, and the mass coordinate is read off\n  range[1][1] rather than written as -14.807, which worked only by clamping\n  from below the axis.\n\n- \"Rime-density-indexed table transforms\" covered only the 4D wrapper.\n  5dc7d786 rewrote the 5D case down to 4D instead of adding one beside it,\n  leaving RimeDensityIndexedTable5D -- the ice-rain tables -- asserted by\n  isa alone, though the two wrappers place the rime index at different\n  argument slots. Both are now exercised, along with the prepared-index\n  path that the process code actually reads them through and that applies\n  the transform in its own method. 6 assertions become 16.\n\np3_reference_process_routing:\n\n- routing_thermodynamic_state took an air_density argument it never used;\n  dropped, with its 8 call sites.\n- Removed the unused P3ProcessRates import.\n- Fixed a p3_phase1_rates block indented 4 columns outside its testset.\n- The immersion-freezing testset built ThermodynamicConstants(FT) inline six\n  times; it now names constants once, as every other testset does.\n- The fast-routing testset spelled the air density as one(FT) at 15 call\n  sites and then redefined air_density halfway through. Named once.\n- Aliased the module as PPP, matching the other three P3 test files.\n\np3_reference_trace_regressions:\n\n- p3_with_warm_rain_scheme rebuilt the scheme from ten positional fields to\n  install KhairoutdinovKogan2000(), already the default, so p3_scheme was an\n  identical copy of p3 and a field reordering would have misassigned it\n  silently. The testset uses p3 and asserts the default it relied on.\n\nPer file: 42/42, 66/66, 34/34.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GYoBWDmKYbtsrqBWoKPua7\n\n* Bring P3 docs and comments back in line with the code\n\n2b4c02c1 corrected the P3 documentation, then bb11f61c, 69cda87f, 21a33f10 and\n0e0e1f38 changed the code; two of those four touched no documentation at all.\nThis closes what they left behind, plus the identifiers that no longer name\nanything.\n\nNames that resolve to nothing, each checked against its definition:\n\n- ice_properties.jl:330      read_p3_table -> read_lookup_tables\n- riming_rates.jl:260        RainCollectionNumber -> IceRainCollection.number\n- cloud_droplet_properties.jl:159  get_cloud_dsd2 -> cloud_slope_bounds, the\n                             sibling function 30 lines below\n- prognostic_tendencies.jl:461  cond_GM ->\n                             rates.predicted_supersaturation_adjustment\n- process_rates.jl:1095      qᶜˡ_adjusted was backticked as code; no such\n                             binding exists, so it reads as prose now\n- p3_theory.md:1126          mu_i_save -> the tabulated μ(λ) closure, stated\n                             directly\n- p3_theory.md:1550          RainEvaporation -> RainProperties.evaporation, via\n                             RainEvaporationVentilationEvaluator\n\nget_cloud_dsd2, mu_i_save and cond_GM are reference-implementation identifiers\nthat 40ce3e88 set out to remove; none contains the strings that sweep searched\nfor, so all three survived it.\n\nOne claim was wrong rather than stale. The architecture section had the\nformulations carrying energy through \"their prognostic thermodynamic variable\nθ_li\", which contradicts line 2105 of the same page and does not hold for\nStaticEnergyThermodynamics. It now says ρθ or ρs, whichever the formulation was\nbuilt with, and that P3 assembles a tendency for neither.\n\nNumericalFloors was undocumented. It is exported, settable, carries seven\nfields, and since 0e0e1f38 a configured floor is authoritative as far out as the\noffline rain tabulation -- yet it appeared nowhere in docs/, including under\n\"Threshold Handling\", which is its own topic and listed only the four\nscheme-level thresholds. That section gains a \"Numerical floors\" subsection: what\neach field bounds, why they are fields rather than literals (the defaults stay\nnormal in Float32 and do not in Float16), and the tabulation handoff that\ntest/p3_lookup_table_reader.jl pins.\n\nLeft alone as already current: the \"one kernel adds straight into Gⁿ\" overview\n(bb11f61c), the sedimentation account of fall speeds diagnosed in update_state!\n(3480e4bf), the ρθ/ρs phrasing at line 2105 (63c90c20), the f1pr* table column\nlabels 40ce3e88 deliberately kept, and p3_usage.md, which is live @example code\na docs build validates.\n\nVerified: Breeze loads, package doctests pass. The new manual jldoctest is not\ncovered by test/doctests.jl, which runs with manual = false; its output was\nchecked by evaluating the expression, and it extends the existing `thresholds`\nblock whose `parameters` binding is already in scope.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GYoBWDmKYbtsrqBWoKPua7\n\n* Share one Table-1 bracket per cell and inline the P3 device functions\n\nThe P3 tendency kernel compiled to 255 registers with a 6.9 KB local stack\nframe: every `@noinline` device function received `p3` (4.5 KB of table\nhandles), `ℳ`, `𝒰`, and `constants` by pointer to a local-memory copy, and\nptxas allocates registers over the whole call graph, so the call boundaries\nadded traffic without lowering pressure. Each cell also bracketed the same\nTable-1 coordinate about eight times and evaluated the fall-speed density\ncorrection about seven times.\n\n`compute_p3_process_rates`, the phase functions, `p3_tendency_compute`, and\n`p3_fall_speed_compute` are now `@inline`. `p3_ice_lookups` brackets the\nTable-1 coordinate of the bounded ice population once per cell and carries it\nwith the density correction and the two deposition ventilation values as a\n`P3IceLookups` in `P3DerivedState.lookups`; aggregation, cloud and rain\ncollection, melting, wet growth, shedding, the rime-density fall speed, and the\nvapor relaxation coefficient all read at that bracket. The λ-limiter and the\nmean-density read share a second bracket of the diagnostic population\n(`diagnostic_ice_bracket`). The standalone rate signatures remain, building\ntheir lookups through a trailing default argument, and the superseded\nsingle-table helpers are removed.\n\nMeasured on an idle H100, 168x168x40 Float32 mature supercell, Δt = 2 s:\ntimestep 38.5 -> 24.8 ms (1.55x), process kernel 6.05 -> 1.64 ms per call,\nthermodynamics kernel 1.76 -> 0.20 ms, summed kernel time 28.1 -> 10.2 ms. All\n13 prognostic fields are bitwise identical to the previous code at iteration\n1800 (14,704,704 values, 0 changed). At default floors no answer changes; with\n`minimum_number_mixing_ratio` below `floors.number_scale` the mean-density and\nin-phase fall-speed reads of a near-empty population may move by a last bit.\n\nDocs describe the shared bracketing and the inlined kernel; two tests that\nbuild `P3DerivedState` by hand gain the new field.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GYoBWDmKYbtsrqBWoKPua7\n\n* Measure the P3 bundle allocation from its own frame\n\n`predicted_particle_properties_processes.jl` asserted that\n`bundled_p3_tendencies` allocates nothing, with `@allocated` written directly in\nthe testset body. `@allocated` measures the code generated at its own call site,\nso that form measures the testset as much as the callee: inside a method body\nthat large, Julia 1.11 leaves the returned 12-field `P3TendencyResult` on the\nheap and reports 96 bytes, failing CI's `min` (v1.11.9) job on both the\n10-prognostic and 11-prognostic cases. Julia 1.12 elides it, which is why the\nsame file passes locally.\n\nThe bundle itself is allocation-free on both versions: called from an ordinary\nfunction on v1.11.9 it reports 0 bytes, and a 100-iteration loop allocates a\nconstant 16 bytes (the boxed `Float64` the loop returns), not 96 per call. So\nthis is a measurement artifact, not a regression, and removing the `Val`-indexed\n`ntuple` closure does not change it.\n\n`bundled_p3_tendency_allocations` now wraps the `@allocated`, marked `@noinline`\nso the measured frame stays small whatever the inliner decides. That is also the\nshape the parcel model uses: an ordinary caller of the bundle.\n\nVerified on Julia 1.11.9 and 1.12.6, both with `-O0 --check-bounds=yes` as CI\nruns them: 433/433 in this file on each.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01GYoBWDmKYbtsrqBWoKPua7\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-08-28T22:08:18-04:00",
+          "tree_id": "ca37d32b401df74d8160205f3d545aeb06b5e431",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/806f0f1e089a6b4d392c371742d2fb76d7be62b3"
+        },
+        "date": 1787970887441,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 123332861.54682855,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83945883.8398868,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 59176923.80048884,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 134629472.87769306,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 134629472.87769306,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130666791.10435115,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130666791.10435115,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130666791.10435115,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 119894105.14278388,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 119894105.14278388,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93793804.17409347,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93793804.17409347,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 89798292.24977252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 89798292.24977252,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 82096239.11609635,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 82096239.11609635,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68518705.80187823,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40375304.4567884,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7263120.8378788335,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26214017.22286931,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1026865551.6324403,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 853368751.4699911,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1302974832.5694625,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 731218342.0907001,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116378648.30780882,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 875058377.3308294,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 527160511.83762646,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24000376.24186007,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 596373574.944286,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6670251892.496103,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7579530966.93457,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8275841385.28412,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5270337852.889466,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10187458481.34317,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8309386310.911767,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4547957410.643131,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4601328298.641204,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5203654204.152325,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3513261787.1800623,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5395876711.738398,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5200221929.484696,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3125079747.2580757,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440286854.33277154,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3419915445.9877615,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2212743679.57572,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1791284754.3418636,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3421027024.888737,
             "unit": "points/s"
           }
         ]
