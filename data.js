@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788205582941,
+  "lastUpdate": 1788213134317,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -19944,6 +19944,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3408799086.8266454,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2cda551c48353ed7dd57cd4df78c11aaab2ebf4d",
+          "message": "Mass-weight the vertically implicit diffusion solve, fill closure-field halos, route the implicit solve by name (#925)\n\n* Mass-weight the vertically implicit diffusion solve and fill closure-field halos\n\nTwo fixes found while building #875, split out so they can merge on their own,\nplus the name-based routing of the implicit solve they need and the `DrySurface`\ntrait the #875 example introduced.\n\n- #871: the vertically implicit solve acted on the density-weighted prognostic\n  `ρc` with Oceananigans' unweighted coefficients, i.e. on ∂t(ρc) = ∂z(κ ∂z(ρc)),\n  relaxing a conserved tracer toward c ∝ 1/ρ (≈ +20 K/km over a deep column).\n  `MassWeightedImplicitDiffusion` routes every z-Center prognostic to mass-flux\n  weighted coefficients that form ∂t(ρc) = ∂z(ρ κ ∂z c), with the diagonal written\n  out explicitly so mass is conserved; `ρw` keeps the z-Face path. The solve now\n  runs whenever an implicit solver exists, not only under adaptive implicit\n  advection, so the weighting reaches the single-column configuration too.\n- #870: `fill_halo_regions!` was never called on `model.closure_fields`, so a\n  (Center, Center, Face) diffusivity read zero in the horizontal halos and the\n  viscous stress in the first column was halved.\n- The closure scalar index of the implicit solve is keyed on the prognostic's\n  name rather than its position (`closure_scalar_index`, `skip_vertical_diffusion`,\n  `acoustic_prognostic_names`), shared by both time steppers, so a prognostic\n  tuple that starts with the compressible dry density no longer shifts every\n  scalar's diffusivity by one.\n- `DrySurface`: a surface with no saturation humidity, for bulk surface-layer\n  schemes over land.\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* [test] Cover the closure-field halo fill\n\n`compute_closure_fields!` writes only the interior, so before the `fill_halo_regions!`\nin `compute_auxiliary_variables!` every closure-field halo sat at zero and the stress\nin the outermost column came out halved. Assert that the Smagorinsky viscosity matches\nits periodic image in x and y and its zero-flux mirror in z.\n\nNegative control: with that `fill_halo_regions!` line commented out, five of the eight\nassertions fail per thermodynamic formulation.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Rename implicit_step_advection to implicit_step_scheme\n\nThe function no longer returns an advection scheme. Before this branch it did —\neither `advection` unwrapped or `VerticalMomentumImplicitAdvection(advection)` —\nbut routing every z-Center prognostic through `MassWeightedImplicitDiffusion`\nmade it return an object that configures both halves of the tridiagonal row: the\nadvection coefficients and the mass-flux-weighted diffusion ones. The value still\ntravels in `implicit_step!`'s `advection` slot, which the new comment records.\n\nAlso renames the local `ρᵈ_diffusion` to `diffusion_density`, matching the struct\nfield it fills.\n\nTests on CPU: implicit_vertical_advection, vertical_diffusion, turbulence_closures,\nquality_assurance, acoustic_substepping_components — 483 passing.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Keep the mass-weighted get_coefficient methods matching the v0.110.20 seam\n\nOceananigans v0.110.20 (CliMA/Oceananigans.jl#5631) appends the field's top,\nbottom and immersed boundary conditions after `(advection, w, density)` when\n`implicit_step!` calls `get_coefficient`, and its own fallbacks absorb them with\n`args...`. #933 adapted the `VerticalMomentumImplicitAdvection` methods for `ρw`;\nthe `MassWeightedImplicitDiffusion` methods this branch introduces need the same\ntreatment, and #933 could not make it because they do not exist on main.\n\nWithout it the three methods fix the trailing count at three, stop matching, and\nthe solve falls through to Oceananigans' unweighted diffusion-only fallback. The\nweighting vanishes with no error: measured on the 4 km column, PR #925 merged with\n#933 on v0.110.20 reproduced the pre-#925 numbers exactly (implicit-vs-explicit\n5.8e-2, spread in c 0.353, spread in ρc 0.0), i.e. #871 silently reopens.\n\nAccept `args...` on the off-diagonals and take the boundary conditions on the\ndiagonal, adding upstream's `boundary_flux_diagonal` contribution for parity with\nthe implicit-explicit flux boundary conditions — mirroring #933.\n\nThe existing deep-column tests do catch this, because this particular fallthrough\nchanges the steady state; they failed 4/60 before the fix. But that is luck rather\nthan coverage, so `vertical_diffusion.jl` also gains a test that asserts the\ndispatch directly: the weighted method must match the argument list `implicit_step!`\nactually passes, and must return something the unweighted fallback does not.\nReverting only the signatures — leaving the weighting maths intact — fails it 3/6.\n\nTests: vertical_diffusion 66/66 on Oceananigans v0.110.20.\n\n* Apply suggestions from code review\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* [test] Wrap the dispatch test's coefficient reads in `@allowscalar`\n\n`get_coefficient` reads `ρ` and the closure fields at a point, which is scalar indexing\non a GPU array, so the testset passed on CPU and errored on both GPU jobs. Breeze's\n`runtests.jl` does not wrap tests in `allowscalar` the way Oceananigans' does.\n\nVerified on pcluster gpu-dev (Tesla T4): 66/66, matching CPU.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EkLHXPgfNAFV2ATrFL9kPJ\n\n* Revert the `implicit_step_advection` rename\n\n#936 deletes the function this PR renamed, so there is nothing left to rename. Keep the\nupstream name and drop one decision from this PR's surface; the `diffusion_density`\nargument it gained is unaffected.\n\n167/167 on vertical_diffusion + implicit_vertical_advection.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EkLHXPgfNAFV2ATrFL9kPJ\n\n* Forward `needs_implicit_solver` through `MassWeightedImplicitDiffusion`\n\nOceananigans v0.111.0 gives `implicit_step!` an early return keyed on\n`needs_implicit_solver(advection)` (CliMA/Oceananigans.jl#5903). This wrapper reaches that\nslot in place of the scheme and does not extend the trait, so it answers `false`: with an\nexplicitly-discretized closure `vi_closure` is `nothing` and the solve returns before it\nruns, silently dropping the mass weighting. Forwarding to the wrapped scheme keeps the\nanswer faithful — `true` for an adaptive-implicit scheme, `false` for a plain one.\n\nInert on 0.110.20, where nothing consults the trait with a wrapper: Breeze asks it only\nabout raw user schemes in `atmosphere_model.jl` and `cell_advection_timescale.jl`, and\nupstream's `implicit_step!` has no such guard until 0.111.\n\n214/214 on vertical_diffusion + implicit_vertical_advection + turbulence_closures.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EkLHXPgfNAFV2ATrFL9kPJ\n\n* Adapt the mass-weighted solve to Oceananigans 0.111\n\nCliMA/Oceananigans.jl#5903 inserted `ℓz` before `density` in `implicit_advection_*`. The\nmass-weighted helpers still called the 0.110 arity, so `ρ` landed in the `ℓz` slot, failed\non type, and the call fell through to the `Union{Nothing, AbstractAdvectionScheme}`\nzero-returning fallback: the implicit advection contribution was silently zero for every\nz-Center prognostic while the explicit half kept scaling by `s`. The split stopped\npartitioning one transport and the run went non-finite after ~20 steps. Measured at k=4:\ndiagonal 3.79487 with `ℓz`, 0.0 without.\n\nAlso give the diagonal `get_coefficient` an `args...` tail like its upper and lower\nsiblings, so a future trailing argument cannot bypass it and leave a partially weighted\nrow; and point the dispatch test's unweighted comparison at Oceananigans' own method with\n`advection = nothing`, since 0.111 removed the diffusion-only fallback it used to call.\n\n586/586 on vertical_diffusion, implicit_vertical_advection, acoustic_substepping and\nturbulence_closures.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EkLHXPgfNAFV2ATrFL9kPJ\n\n---------\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-08-31T15:18:25-06:00",
+          "tree_id": "e24abfb6415b0b9641a841e07bba9b3efb9044af",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/2cda551c48353ed7dd57cd4df78c11aaab2ebf4d"
+        },
+        "date": 1788213133434,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 122328156.13985898,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83103046.40676051,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 59753134.867295615,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 127847991.59397405,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 127847991.59397405,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130800078.70812309,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130800078.70812309,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130800078.70812309,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 116041599.14457774,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 116041599.14457774,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 93842450.7888527,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 93842450.7888527,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 86760888.17019036,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 86760888.17019036,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 76853022.99998489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 76853022.99998489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68813794.06632803,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40527672.7478606,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7285516.057016811,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26119062.479220144,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1020276857.0092674,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 852050715.4858643,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1302418708.7550724,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 732563237.6727992,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116376672.10842168,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 871646021.8186655,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 526649467.7207005,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24000992.7473616,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 598392176.5537007,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6598820917.449228,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7502562832.092686,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8373627580.258916,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5287997587.888435,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10240337511.124023,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8493597356.928999,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4578434840.501799,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4554417214.753331,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5084328396.655545,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3540824164.4915676,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5365975477.452766,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5125997642.5053,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3130322588.1535726,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440223406.10714805,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3400382657.1975226,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2223461690.845586,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1784779453.8009026,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3427085742.019775,
             "unit": "points/s"
           }
         ]
