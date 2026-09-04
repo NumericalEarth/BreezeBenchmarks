@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788508648577,
+  "lastUpdate": 1788557153191,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -20721,6 +20721,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3506195585.389403,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c1a09f11a7c7b2d287765ece61240ffe5d179634",
+          "message": "Support Lagrangian particles in AtmosphereModel (#876)\n\n* Support Lagrangian particles in AtmosphereModel\n\nAdd a `particles` field and constructor kwarg to AtmosphereModel,\nmirroring Oceananigans' NonhydrostaticModel and\nHydrostaticFreeSurfaceModel. The Oceananigans LagrangianParticleTracking\nmachinery (advection kernel, boundary bouncing, tracked fields, output)\nis reused via two hooks: `Models.total_velocities` returns the\ndiagnostic velocities, and `TimeSteppers.step_lagrangian_particles!`\nforwards to the model's particles.\n\nAlso fix the (previously dead) per-stage `step_lagrangian_particles!`\ncalls in the SSP RK3 and acoustic RK3 steppers: both schemes recombine\neach stage with the step-initial state, so per-stage pushes would have\nadvected particles by ~1.9x (SSP) or 11/6x (WS) the true displacement.\nParticles are now advected once per step with the full time step, after\nthe final update_state!.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Support Lagrangian particles on terrain-following grids\n\nParticle positions are physical (x, y, z), but Oceananigans interpolates\nagainst the grid's 1D vertical coordinate r. On a terrain-following grid\n\n    z(x, y, r) = r + Σₙ hₙ(x, y) bₙ(r),\n\nso the interpolation node must be built by inverting z(x, y, ·) for r.\n\nThat inversion is injected through `flattened_node`, the hook Oceananigans\nalready uses to build the particle interpolation node (`advect_particle` and\n`update_property!` are its only callers). This keeps velocity interpolation\nand `tracked_fields` sampling terrain-aware without touching the generic\n`Fields.interpolate` contract, whose third coordinate stays r for every other\ncaller — notably the wall-model reference height in `filtered_surface_state.jl`,\nwhere a physical-altitude reading would land below the terrain.\n\nThe inversion is exact for `LinearDecay` and uses a bracketed Newton solve for\n`TwoLevelDecay` (round-trip error ~1e-13 m even where the small-scale residual\nh₂ dominates). Both branches clamp to the grid's bounding r faces, so a\nposition outside the vertical domain cannot form an out-of-range index. It\nruns once per particle per step, and the SLEVE basis normalization sinh(z_top/s)\nis hoisted out of the Newton loop via new four-argument `b_two_level` forms.\n\n`advect_particle` mirrors upstream and differs only in the vertical walls:\nthe bounding coordinate surfaces z(x, y, r_bottom) — the local terrain — and\nz(x, y, r_top), evaluated at the post-wrap horizontal position, rather than\nthe reference levels stock uses. Both walls and the Newton bracket come from\nthe grid's own r faces, so no assumption about where r starts is duplicated\nhere.\n\nLagrangian particles are rejected on an `ImmersedBoundaryGrid` built over a\nterrain-following grid, via a new `validate_particles` hook: neither override\ndispatches through the immersed wrapper, so particle tracking would otherwise\nfall back to the generic implementation and read the stored altitude as r.\n\nAlso corrects the justification in the two time-stepper comments. Advecting\nonce per step over the full Δt is right — the previous stage-wise pushes\ntravelled 23/12 Δt (SSP) and 11/6 Δt (Wicker-Skamarock) — but a stage-wise\nparticle update is not impossible, merely unavailable without storing Xⁿ.\n\nTests cover the terrain path with compressible dynamics (the only dynamics\nthat support terrain grids), a `TwoLevelDecay` hill with h₂ > 100 m at three\nlevels, advection inside `time_step!`, both vertical walls, periodic wrapping,\nand the immersed-grid rejection. Documents the feature, including the\nvertical-only wall bounce and the first-order trajectory update.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Include test/setup.jl in the Lagrangian particles tests\n\nThe new test file used `test_float_types()` and `default_arch` without\nincluding `test/setup.jl`, where both are defined. Every test worker hit\n`UndefVarError: test_float_types` at load time, which aborted the entire\ntest run on every platform.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Fix the GPU failure in the immersed terrain-following particles test\n\n`GridFittedBottom((x) -> FT(400))` captured the type `FT`, and a closure\nholding a `Type{Float64}` is not isbits, so `compute_numerical_bottom_height!`\nfailed to compile on CUDA (\"passing non-bitstype argument\"). Pass the number\ndirectly instead. Also save and restore `Oceananigans.defaults.FloatType`\naround the float-type loop, following #932.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01CQKnHK63dDbpppr1ixUm6Y\n\n---------\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>\nCo-authored-by: Gregory Wagner <glwagner@Gregorys-MacBook-Pro.local>",
+          "timestamp": "2026-09-04T14:42:39-06:00",
+          "tree_id": "cfa6125aa73754ef47e0c2fd2aac0a77efca92ba",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/c1a09f11a7c7b2d287765ece61240ffe5d179634"
+        },
+        "date": 1788557152700,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121757997.0143064,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83484476.13524406,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 58867422.57785538,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 128505876.31584476,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 128505876.31584476,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128297281.47490369,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128297281.47490369,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128297281.47490369,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 114462667.87963934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 114462667.87963934,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 90478942.11461668,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 90478942.11461668,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84880579.90437227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84880579.90437227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75593833.45619172,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75593833.45619172,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 67610985.82978183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 39638430.11825678,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7290576.288261661,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26030816.61644523,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1039710012.9814702,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 858985366.8706558,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1285140680.379662,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 744325626.8562678,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116389828.66031101,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 877033599.7246556,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 536297317.6708528,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 23997000.718190078,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 602501896.6876074,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6572085579.159336,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7413057098.84862,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8238809957.355364,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5171959535.178317,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 9907028543.826685,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8360574992.051651,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4532836637.881889,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4570116069.70175,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5266870595.562788,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3516383722.670828,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5336767074.762764,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5244951755.943598,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3104069185.938051,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440254018.86363286,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3454820418.370339,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2200931074.0489073,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1779512565.9950206,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3441741424.4773455,
             "unit": "points/s"
           }
         ]
