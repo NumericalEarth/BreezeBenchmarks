@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788557153191,
+  "lastUpdate": 1788562943108,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -20980,6 +20980,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3441741424.4773455,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6318ea315bae2a841443464a8216b2adc84d5513",
+          "message": "Expose the hard-coded P3 empirical parameters (#954)\n\n* Expose the hard-coded P3 empirical parameters\n\nPromote the sixteen empirical scalars embedded in P3's cloud-width,\nrain-ventilation and rain-fall-speed formulas into three concrete,\nimmutable, isbits parameter containers reachable from the public\nconstructors. Defaults and physics are unchanged.\n\n- CloudShapeParameters: the Liu-Daum relative-dispersion coefficients\n  (now stated in SI) and the mu^cl bounds. Stored in\n  CloudDropletProperties.shape_parameters and read by all three paths\n  that diagnose mu^cl from a local droplet number: construction,\n  diagnose_cloud_dsd, and immersion_freezing_cloud_rate.\n\n- RainVentilationParameters: f1r and f2r, replacing the\n  RAIN_VENTILATION_CONSTANT/REYNOLDS module constants. Applied at\n  runtime by rain_ventilation_integral, so they survive lookup-table\n  materialization and reach both direct evaporation and the coupled\n  saturation-adjustment relaxation coefficient.\n\n- RainFallSpeedParameters: the three branch velocity scales, three mass\n  exponents, three transition diameters, and the plateau speed of the\n  piecewise Gunn-Kinzer/Beard law. Carried by all three startup\n  quadrature evaluators, so one configured law feeds the mass-weighted\n  velocity, number-weighted velocity, and evaporation velocity-diameter\n  tables alike.\n\nPredictedParticlePropertiesMicrophysics and read_lookup_tables gain a\n`rain` keyword; read_lookup_tables no longer discards it, and\ntabulate_rain_from_quadrature replaces only the lookup placeholders.\n\nAPI migration: RainProperties.fall_speed_coefficient and\nfall_speed_exponent are removed. They described a single power law that\nthe active piecewise calculation never read -- only stored, displayed,\ncopied at materialization, and asserted in tests. RainProperties.fall_speed\nreplaces them and Base.show now reports the active law.\nRainProperties.maximum_mean_diameter is likewise inactive but is not one\nof the sixteen literals; it is kept and documented as inactive pending a\ndecision on removing it.\n\nValidation happens on the host in the constructors. rain_fall_speed keeps\nnested ifelse for the four regimes but selects the branch scale and\nexponent before the power, so the parameterized law costs one generic ^\nrather than up to three specialized cbrt/sqrt calls: 3% slower per call,\nallocation-free, and confined to the startup tabulation.\n\nDefault output is not bitwise identical. The SI restatement of the cloud\ncoefficient perturbs chi in its last bits, and configurable exponents\nforce m^b in place of cbrt(m)^2, cbrt(m) and sqrt(cbrt(m)). Measured\nworst-case relative deviation over the tabulated range is 0 (Float64) and\n2.5e-7 (Float32) for liu_daum_shape_parameter, and 1.4e-15 / 8.3e-7 for\nrain_fall_speed. Parity tolerances are documented in the new test file.\n\nTests: new predicted_particle_properties_empirical_parameters.jl covers\ndefault parity against verbatim copies of the previous formulas plus\nrecorded quadrature outputs, parameter plumbing and sensitivity through\nevery prescribed, prognostic, quadrature, direct-rate and\ncoupled-adjustment path, individual activity of each of the sixteen\nscalars, type stability, allocation-free helpers, and architecture\nadaptation. Existing P3 tests updated for the new signatures.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01TaBjuhm4zDo2fK4ZN7eMpk\n\n* Drop Parameters/Properties suffixes and per-field docstrings in P3\n\nContainer types no longer carry a `Parameters` or `Properties` suffix:\n\n  CloudShapeParameters      -> CloudShape\n  RainFallSpeedParameters   -> RainFallSpeed\n  RainVentilationParameters -> RainVentilation\n  CloudDropletProperties    -> CloudDroplet\n  RainProperties            -> Rain\n  IceProperties             -> Ice\n  IceBulkProperties         -> IceBulk\n  ProcessRateParameters     -> ProcessRate\n\nThis makes the P3 containers consistent with the siblings that already\nfollowed the convention: IceFallSpeed, IceDeposition, IceCollection,\nIceLambdaLimiter, IceRainCollection, NumericalFloors.\n\nPredictedParticleProperties and PredictedParticlePropertiesMicrophysics\nare deliberately left alone -- \"Predicted Particle Properties\" is the\npublished name of the scheme, not a container suffix.\n\nStruct fields are now documented with inline `field :: T # comment`\nrather than per-field docstrings, so the `# Fields` / $(TYPEDFIELDS)\nblocks that relied on those strings are dropped from the three rain\nquadrature evaluators and the three new parameter containers. The\nconstructors already list every keyword with its units and default, so\nno information is lost.\n\nAlso add the missing docstring to tabulate_rain_from_quadrature. It is\nexported and now referenced with @ref from the Rain docstring, which\nmade the docs build fail to resolve the cross-reference.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01TaBjuhm4zDo2fK4ZN7eMpk\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Update src/Microphysics/PredictedParticleProperties/coupled_saturation_adjustment.jl\n\n* Update src/Microphysics/PredictedParticleProperties/lookup_table_reader.jl\n\n* Address review: compact validators, drop suffixes from instances\n\nReview feedback on #954:\n\n- Compact the `CloudShape` validation, and give `RainFallSpeed` and\n  `RainVentilation` the same treatment so the three constructors read\n  alike. Each check is one line, using the short symbols the docstrings\n  already use (`a`, `b`, `μ_min`, `μ_max`, `f₁ᵣ`, `f₂ᵣ`) so the messages\n  fit without string concatenation.\n- Put the one-argument `liu_daum_shape_parameter` wrapper on one line.\n\nExtend the no-`Parameters`/`Properties` convention from types to the\nobjects instantiated from them:\n\n  shape_parameters       -> shape\n  ventilation_parameters -> ventilation\n  fall_speed_parameters  -> fall_speed\n  bulk_properties        -> bulk\n\n`rain_evaporation_rate` and `rain_vapor_relaxation_coefficient` name the\nNamedTuple they get back from `rain_ventilation_integral` `integrals`,\nso the argument could take the name `ventilation` without shadowing it.\n\nThree renames that are more than suffix-stripping:\n\n  CloudDroplet                        -> Cloud\n  RainMassWeightedVelocityEvaluator   -> RainMassWeightedVelocity\n  RainNumberWeightedVelocityEvaluator -> RainNumberWeightedVelocity\n  RainEvaporationVentilationEvaluator -> RainVelocityDiameterIntegral\n\n`Cloud` because every sibling type already anchors on the bare category\nstem -- CloudShape, CloudTerminalVelocities, RainFallSpeed, IceBulk,\nIceFallSpeed -- leaving CloudDroplet the only outlier; Cloud/Rain/Ice\nalso keeps the three categories parallel, which plurals would not since\nIce and Rain are mass nouns.\n\n`RainVelocityDiameterIntegral` because the old name promised the\nventilation integral while the type computes only I_VD; the ventilation\ncoefficients are deliberately applied at runtime. Renaming it exposed a\ncontradiction in p3_theory.md, which called I_vent \"the ventilation\nintegral\" two lines above stating that only I_VD is tabulated. The\nequation was right; the prose and symbol are now I_VD throughout.\n\n`n_points` is now `points`, matching `TabulatedFunction(...; points)` in\nOceananigans, which is what these objects are fed into.\n\nThe renames shortened identifiers by ~10 characters, orphaning the\ncontinuation lines aligned under them. Those are re-aligned -- verified\nby diffing an alignment report against origin/main so only regressions\nthis PR introduced were touched -- and argument lists are joined onto one\nline where they fit.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01TaBjuhm4zDo2fK4ZN7eMpk\n\n* Name the category containers after their particles\n\nCloudDroplets, RainDrops and IceParticles, rather than the bare Cloud,\nRain and Ice.\n\nThe containers describe particle populations -- number concentration and\nPSD shape for cloud, fall speed and ventilation for rain, rime and\ncollection properties for ice -- and the docstrings already said so:\n\"Ice particles in P3 span a continuum from small pristine crystals to\nlarge heavily-rimed graupel\", \"Cloud droplets in P3 are treated simply\".\nThe type names now match that vocabulary.\n\nThis also repairs the argument for the bare names. Those were chosen partly\nbecause Ice and Rain are mass nouns with no natural plural; pluralising the\nparticle rather than the substance sidesteps that. `drops` rather than\n`droplets` for rain, since droplet is reserved for cloud-sized (<~100 um).\n\nThe field names stay `cloud`, `rain` and `ice`: they name the category, not\nthe type, and they are what appears at the use sites.\n\nNote that Cloud, Rain and Ice are ordinary English words, so this rename\ncould not be done or checked by pattern matching -- a blunt sweep rewrote\nprose (\"Cloud liquid mass fraction\" -> \"CloudDroplets liquid mass\nfraction\"), and a syntax-restricted one missed multi-name import lines and\nrenamed CloudMicrophysics' own `Rain`. What found each of those was loading\nthe code and running the tests.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01TaBjuhm4zDo2fK4ZN7eMpk\n\n* Remove the inactive `maximum_mean_diameter` from `RainDrops`\n\nNo rate read the field and it did not bound the rain spectrum: the mean\ndrop diameter is set by the `ProcessRate` slope limiter, which clamps λʳ\nto [`minimum_rain_slope`, `maximum_rain_slope`] and recomputes the\nDSD-consistent number from the clamped slope, giving ⟨D⟩ = (μʳ + 1) / λʳ.\nDocument that on the slope bounds, note where the spectrum is actually\nbounded in the `RainDrops` docstring, and drop the tests that asserted\nthe dead field.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Correct P3 docs and comments that no longer match the code\n\nAn audit of the P3 module docstrings, comments and prose pages against\nthe code they describe.\n\nBuild-breaking:\n\n- p3_usage.md imported `Cloud` and `Rain`, renamed to `CloudDroplets` and\n  `RainDrops` in 41a3cdc1 while the docs were left behind. The block below\n  already called the new names, so the `@example` failed on the import.\n\nWrong:\n\n- The notation table described `μʳ = 0` as living in a `RainDrops.shape_parameter`\n  placeholder \"that stays `nothing`\". No such field exists here or on main;\n  `RainProperties` never had one either.\n\n- The rain evaporation equation was inconsistent by a factor λ between its two\n  bracket terms: with a `nʳ/Γ(μʳ+1)` prefactor the first term matches the code\n  and the second is short by `λ^(μʳ+1)`. Restated in terms of `N₀ʳ`.\n\n- `RainVentilation` claimed the ice side \"carries the same pair\" in the\n  `*_ventilation_constant` / `*_ventilation_reynolds` fields of `IceDeposition`.\n  Those fields hold tabulated integrals, and the ice coefficients are 0.65/0.44,\n  folded into the tables at generation and so not configurable.\n\n- Three places put the fall-speed plateau above D ≈ 5 mm; `transition_diameters[3]`\n  is 3477.84 μm. Likewise \"below D ≈ 100 μm\" against a first edge of 134.43 μm.\n\n- The empirical-coefficient section listed numerical floors and sink-limiter\n  settings as \"deliberately not exposed\". Both are `ProcessRate` keywords, and\n  `read_lookup_tables` passes `process_rates.floors` into the rain quadrature —\n  there is a test named for it.\n\n- `psd_correction_spherical_volume` described its correction as ⟨D³⟩/⟨D⟩³. It is\n  M₆M₀/M₃², as the file's own header comment says. Also μ = 5 is ≈2.946, not 2.945.\n\nStale:\n\n- The three rain quadrature evaluator docstring headers omitted the `fall_speed`\n  type parameter this branch added.\n- `ice_properties.jl` still banners the container as `Ice`, the intermediate name\n  from 9148e2bf; its constructor keywords were left misaligned by the rename, and\n  its concept list omits ice-rain collection.\n- `lookup_table_reader.jl` pointed at `tabulation.jl`, deleted in 3a7ff620.\n- `tabulated_kernels.jl` carried a verbatim copy of the `process_rates.jl` banner.\n- `maximum_ice_nucleation_concentration` (1e5) and `maximum_ice_number_density`\n  (2e6) carried the same `Nⁱ_max` comment.\n\nVerified as correct and left alone: the Liu-Daum SI restatement and both its\ndoctests, the μᶜˡ three-path claim, the four branch conditions of\n`rain_fall_speed`, the quadrature transform scale, the rain slope algebra, the\nMason evaporation assembly, and every Cooper nucleation constant.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Fix rain slope parameter docs reference\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>\nCo-authored-by: kaiyuan-cheng <74800123+kaiyuan-cheng@users.noreply.github.com>",
+          "timestamp": "2026-09-04T16:31:34-06:00",
+          "tree_id": "9b9d00f5a44917b36187b9b40207b6a2c6933a79",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/6318ea315bae2a841443464a8216b2adc84d5513"
+        },
+        "date": 1788562942566,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 122128761.43815732,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 82713068.51182191,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 57845930.78395222,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 136843125.44092414,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 136843125.44092414,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 128137896.73049143,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 128137896.73049143,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 128137896.73049143,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 111994476.81557937,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 111994476.81557937,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 89828700.84864676,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 89828700.84864676,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 84611930.63544476,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 84611930.63544476,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 75754279.05751789,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 75754279.05751789,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 67953945.6971328,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 39953035.49827253,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7194739.812602586,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26283668.725434072,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1071689688.2834936,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 869635730.107773,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1327302361.708615,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 765875310.2766927,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116413140.88643874,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 887490110.6192958,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 551678496.3141785,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24002156.90158894,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 621456765.9905542,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6493596787.655892,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7453446436.012784,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8296475638.039571,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5250562423.9916935,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10108376402.483772,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8288777958.27059,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4531828535.050908,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4540358796.578198,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5202921562.400763,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3501853442.489656,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5327165750.61044,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5108258239.422811,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3108181326.2026715,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440186098.9566121,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3348350055.242973,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2194715112.9106307,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1777129986.322938,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3365010598.132611,
             "unit": "points/s"
           }
         ]
