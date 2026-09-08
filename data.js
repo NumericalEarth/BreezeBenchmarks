@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788766759369,
+  "lastUpdate": 1788908034731,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -22016,6 +22016,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3483085753.7668414,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "eeaa9ebe046617fb587a11604633e8fd01304db2",
+          "message": "Fold the thermodynamic AIVA remainder into the acoustic substep loop (#964)\n\n* WIP: port in-loop AIVA residual transport to current main — bolt-on falsified\n\nPort of glw/aiva-in-loop-wip onto post-#902 main (frozen stage-entry caches,\ncurrent implicit_substep! forms), with experiment toggles IN_LOOP_MOMENTUM /\nIN_LOOP_DENSITY. Verdict across three variants (full, theta+momentum,\ntheta-only) on the engaged fence cases (hill 600 m and flat bubble, cfl 0.01,\nalpha ~0.3): stability extends ~10x (step 4 -> 25-45) but every variant dies\nby density collapse with healthy rho-theta — the corruption routes through\nthe pressure coupling, at per-substep residual CFL ~0.05, far below the CN\nthreshold the prototype record hypothesized. The bolt-on approach is\nstructurally insufficient even in the guard regime; the CN-weighted fold-in\n(Step B-D) is the real fix. Regressions (disengaged, momentum-only) clean.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Fold the thermodynamic AIVA remainder into the acoustic loop\n\nReplace the falsified bolt-on with the CN-consistent fold-in: the\nwithheld transport of the stage-entry (rho-theta, rho-dry) state enters\nGs-rho-theta as a first-order upwind flux divergence (applied per substep\nthrough the predictors with the loop's own Crank-Nicolson factors), and\nthe perturbation's residual transport is solved implicitly on the theta\npredictor between Step B and Step C, inside the predictor-substitution\nchain — so the pressure solve and the Step D recovery always act on a\ntransport-consistent rho-theta-star. Post-loop, the thermodynamic\nvariable keeps only density-weighted closure diffusion.\n\nThe neglected cross-term (residual correction of the acoustic coupling\ncoefficient) is O(dtau^2 x residual), the order the loop already drops.\n\nProof (engaged fence, cfl = 0.01): flat 5 K bubble at alpha = 0.24 and\n600 m hill both survive 200 steps where the post-loop placement died at\nstep 4-5 and every bolt-on variant at 25-45; uniform theta over the hill\ndrifts 4 mK over 1000 s; disengaged and momentum-only regressions are\nbit-quiet (theta-dev = 0).\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Test engaged rho-theta AIVA under acoustic substepping (#897 regression)\n\nThe suite's engaged-split coverage stopped at momentum and passive\ntracers; the thermodynamic variable was only ever tested in the\nexplicit limit, which is how the post-loop placement survived a month\nof green CI while corrupting any engaged run within five steps. The\nflat-bubble and hill cases pin stability at alpha ~ 0.25 for 60 steps\nand the uniform-theta invariant to 10 mK.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Pass the adaptive-implicit scheme positionally to the substep loop\n\nPer review: replace the closure kwarg with a positional advection\nargument. The loop applies the per-substep residual solve natively\n(residual_predictor_substep!, Nothing-dispatch no-op) reading the frozen\nstage-entry caches it already owns; the TimeSteppers closure builder is\ndeleted. Behavior identical: fence 4/4 unchanged (theta drift 4 mK),\nsuite 108/108 in Float64 and Float32.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Name the split IMEX and dispatch on the scheme type per review\n\n'Residual' becomes 'the implicit half of the IMEX vertical-advection\nsplit' throughout (implicit_advection_substep!,\nadd_implicit_advection_tendency!, implicit_advective_base_flux). The\ncaller passes the thermodynamic scheme to the substep loop\nunconditionally; AIVA-vs-vanilla is distinguished by dispatch on\nAdaptiveImplicitVerticalAdvection down the chain — in the per-substep\nsolve, the base-tendency entry, and the post-loop demotion\n(postloop_thermodynamic_scheme) — replacing all three\nneeds_implicit_solver value guards. Fence 4/4 and suite 108/108 in both\nprecisions, unchanged.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Fix bounded-WENO and sedimentation pairing under the AIVA split\n\nTwo fixes that make moisture safe under adaptive-implicit vertical\nadvection (issues #913, #914):\n\n- The bounds-preserving flux path never applied the AVID scale s, so a\n  bounded tracer transported 1 + (1 - s) times (full explicit flux plus\n  the implicit remainder). div_ρUc for a bounds-preserving AVID WENO now\n  hands the bounded z-flux a lazily s-scaled face velocity\n  (ExplicitVerticalVelocity) — the explicit fraction wᵉ = s·w — without\n  duplicating the reconstruction. Model-level: a bounded tracer now\n  tracks its unbounded twin to 0.1% (engaged split, 60 steps).\n\n- scalar_substep! handed the implicit solve the dynamical transport\n  velocity only, while the explicit tendency advected precipitating\n  species with the combined air + terminal velocity: the withheld\n  fraction of the sedimentation flux vanished wherever the split\n  engaged. The solve now receives the same per-species\n  sum_of_velocities(velocities, Uᵖ), dispatched with Val(name) to match\n  the tendency convention.\n\nSuite: 110/110 in Float64 and Float32, including a new bounded-vs-plain\ntwin regression testset.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Fix Aqua ambiguity and ExplicitImports findings\n\nThe bounded-AVID div_ρUc method was ambiguous against the ZeroField\nshortcut — add the intersection method (a zero tracer advects to zero\nregardless of time discretization). Import Adapt explicitly and take\nAdaptiveVerticallyImplicitDiscretization from its owner\nOceananigans.Utils. QA: Aqua 33/33, ExplicitImports 5/5.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Spell out ExplicitVerticalVelocity field names and use literal zeros per review\n\nadvection_scheme, time_discretization, vertical_velocity replace the\nabbreviated fields, and the base-flux upwinding uses max(wⁱ, 0) /\nmin(wⁱ, 0). Fence 4/4 and QA (Aqua 33/33, ExplicitImports 5/5) unchanged.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Migrate to Oceananigans main: update_advection! hook and BoundsPreservation\n\nPoint the PR at Oceananigans#main (post-#5924) per review, so the\nbounds-preserving refactor and this PR land compatibly in one cycle.\nThe [sources] pin and the 0.111-0.112 compat drop to a plain 0.112\nbound when the release tags.\n\n- The Δt-pairing specialization moves to the new single extension\n  point: adaptive_advection_timestep(::AcousticRungeKutta3, clock).\n  Upstream's update_advection! now owns the NamedTuple iteration, the\n  FluxFormAdvection unwrapping, and composes the adaptive-Δt refresh\n  with the new precomputed bounds-preserving limiter refresh.\n- AtmosphereModel gets its own update_advection! orchestrator: Breeze's\n  advection container is keyed by prognostic name, so each scheme is\n  refreshed with the specific field its reconstruction acts on (θ,\n  specific moisture, tracers) — which is what the limiter rescales.\n- BoundsPreservingAVIDWENO tracks the new BoundsPreservation bounds\n  type. The #913 s-scaling wrapper is unchanged and still required: the\n  refactored bounded z-flux reads the raw face velocity (upstreaming\n  the scaling into the new structure is a planned follow-up PR to\n  Oceananigans).\n\nLadder on Oceananigans main: fence 4/4 (θ drift 4 mK), bounded-twin\nmismatch 0.0%, suite 110/110 in Float64 and Float32, Aqua 33/33,\nExplicitImports 5/5.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Pin Oceananigans main in the test project too\n\nCI activates --project=test, and a workspace sub-project does not inherit\nthe root's [sources], so the test environment resolved registry 0.111\nand failed to precompile on the renamed update_advection! hook. The test\nproject already had a [sources] block for the Breeze path-dep; add the\nOceananigans entry beside it. Both pins drop together when 0.112 tags.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Add specific_thermodynamic_field and pin OC main across workspace projects\n\nCI caught a real bug the local ladder could not: the update_advection!\norchestrator reached for model.formulation.potential_temperature, which\nonly exists on a potential-temperature formulation — a StaticEnergy\nmodel crashed on the first tendency computation. Breeze had no\nformulation-agnostic accessor for the specific field an advection\noperator reconstructs, so add specific_thermodynamic_field to the\nformulation interface with a method per formulation, and dispatch\ninstead of assuming. Both formulations now time-step.\n\nAlso pin Oceananigans main in the benchmarking and docs projects: a\nworkspace sub-project does not inherit the root [sources], which is why\nthose workflows failed to resolve rather than failing on anything real.\n\nFence 4/4 unchanged. Known artifact while pinned to an unreleased\nOceananigans: Aqua's test_persistent_tasks builds a fresh environment\nthat resolves the registry (0.111) and cannot precompile against the\nrenamed hook; it clears when 0.112 tags and the pins are removed.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Update the MoistAirBuoyancy doctest for Oceananigans' advection-scheme display\n\nOceananigans main renders a NonhydrostaticModel's advection scheme as a\nper-field tree (momentum plus each tracer) rather than a single line.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Depend on the released Oceananigans 0.112\n\nDrop the [sources] pins from the root, test, benchmarking, and docs\nprojects now that 0.112.0 is registered, and narrow compat to 0.112.\n\nLadder against the released version: engaged fence 4/4 (uniform-θ drift\n4 mK), doctests clean, Breeze precompiles. The unpin also resolves the\nValidation job, which had no way to see a git-sourced dependency.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Move every workspace project's Oceananigans bound to 0.112\n\nMain's #973 gives each workspace project its own Oceananigans compat\nbound, so setting only the root to 0.112 left the sub-projects at 0.111\n— an empty intersection in the merge CI builds, which is what\n'project compatibility ∅' was reporting. Align test, docs, benchmarking,\nand examples with the root.\n\nVerified through CI's own path: julia --project=test instantiate\nresolves Oceananigans v0.112.0 from a clean manifest.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Apply suggestion from @glwagner\n\n* Dispatch the advection refresh, and trim comments\n\nReplace the if/elseif chain over runtime symbols in update_advection!\nwith compile-time dispatch: pair each scheme with the specific field it\nreconstructs, then recurse pairwise over the tuples, mirroring\nOceananigans' own update_tracer_advection!. The chain was type-unstable\n(320 B and a dynamic dispatch per call); the recursion measures 0.54 µs\nand 64 B, and both formulations step. The cost was never significant —\nonce per stage against millisecond kernels — but runtime branch chains\nare the pattern that broke Reactant tracing in #902.\n\nAlso trim the comments and docstrings added by this PR.\n\nFence 4/4 unchanged, Aqua 33/33, ExplicitImports 5/5.\n\nCo-Authored-By: Claude Fable 5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>",
+          "timestamp": "2026-09-08T16:20:30-06:00",
+          "tree_id": "25d7288caab8427184eca673c7ab813dd5d0158d",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/eeaa9ebe046617fb587a11604633e8fd01304db2"
+        },
+        "date": 1788908034194,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 121353698.06536473,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 83742850.96833423,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 58677324.47681621,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 134738927.63500437,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 134738927.63500437,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130386392.94969983,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130386392.94969983,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130386392.94969983,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 117751693.85533254,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 117751693.85533254,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 91935229.09363547,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 91935229.09363547,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87522253.08092186,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87522253.08092186,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 79077962.98475489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 79077962.98475489,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 65760546.25665669,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40016792.87373974,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7202383.503622842,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26188260.675567634,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1031081519.8287327,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 862143768.3948957,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1324725452.8620317,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 742112315.6854013,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116399489.67213258,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 887726692.2756761,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 534381016.66345346,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24001349.013810616,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 603958028.6793033,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6759607726.000813,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7999000674.163517,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8961996538.535501,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5416609191.738636,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10346879016.40234,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8765424848.826189,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4665524893.774911,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4839599221.61254,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5597969715.230272,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3629089494.675289,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5633844134.89352,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5434933568.130325,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3242411119.077375,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440895345.82179976,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3605331618.761666,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2286123395.679107,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1828065748.9372468,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3637223249.832417,
             "unit": "points/s"
           }
         ]
