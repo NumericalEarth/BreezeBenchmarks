@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788966689192,
+  "lastUpdate": 1788995083717,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -22534,6 +22534,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3370684085.159457,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6a56b063d313f3d8940418609ad3c37846ca89fd",
+          "message": "Implement checkpointing for `AtmosphereModel` (#978)\n\n* Zero the pressure-solver storage before each anelastic solve\n\nThe anelastic pressure solve was not a pure function of its source term: it\ninherited part of its answer from the previous solve.\n\n`FourierTridiagonalPoissonSolver` solves each column with the Thomas algorithm\nin `Oceananigans.Solvers`, which refuses to divide by a vanishing pivot:\n\n    definitely_diagonally_dominant = abs(β) > 10 * eps(float_eltype(ϕ))\n    ϕ★ = (fᵏ - aᵏ⁻¹ * ϕ[i, j, k-1]) / β\n    ϕ[i, j, k] = ifelse(definitely_diagonally_dominant, ϕ★, ϕ[i, j, k])\n\nand instead leaves the previous contents of `ϕ` in place. The anelastic problem\ncarries homogeneous Neumann conditions in z, so its (λx=0, λy=0) column is\nexactly singular and always takes that branch. Back substitution and the\nsubsequent mean removal then spread the stale value over the whole field.\n\nThe contamination is O(1e-15) per solve, which is invisible in a single run but\nmakes the trajectory depend on solver history. That is what has blocked a\nbitwise checkpoint restart under `AnelasticDynamics`: a restarted run rebuilds\nthe solver with zeroed storage, so its first solve differs from the\ncorresponding solve in the continuous run, and the difference then amplifies.\n\nZeroing pins the null-space component to zero, which is the canonical choice for\na pure-Neumann Poisson problem whose mean is removed immediately afterwards.\nWith this, restoring the prognostic fields and the clock reproduces a continuous\nrun bit for bit, both in-process and across processes.\n\nMeasured at 64^3 on CPU the extra fill is below the run-to-run noise floor\n(median 43.33 ms/step with, 43.64 ms/step without).\n\nThe upstream fallback deserves the same treatment; that is a separate report\nagainst Oceananigans.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Rop45uGvCs2AiyKpgkQSSu\n\n* Implement `prognostic_state` for `AtmosphereModel` and its time steppers\n\nOceananigans checkpoints through the `prognostic_state` /\n`restore_prognostic_state!` pair, and `AtmosphereModel` implemented neither.\n`Checkpointer` therefore fell through the untyped fallback\n`prognostic_state(obj) = obj` and handed JLD2 the entire model, and pickup died\nin `restore_prognostic_state!`. Nothing warned about this, because the fallback\nis a silent catch-all.\n\nWhat is saved is the clock, the particles, `prognostic_fields(model)`, the\nclosure fields, and whatever the time stepper declares. Everything else is\ndiagnostic and comes back from `update_state!` on pickup. That was verified\nfield by field rather than assumed: after restoring only the prognostic fields\nand stepping `update_state!`, every other array in the model tree — Gⁿ, the\ntemperature, the velocities, and every microphysical auxiliary — is reproduced\nbit for bit.\n\n`SSPRungeKutta3` is self-starting and declares no state. `U⁰` is refilled by\n`store_initial_state!` at the top of `time_step!`, which runs after pickup has\noverwritten the prognostic fields, and `Gⁿ` is rebuilt by the `update_state!`\nthat `initialize!` performs on pickup.\n\n`AcousticRungeKutta3` is not self-starting. Its substepper carries the\nacoustic-mean `time_averaged_velocities` across the step boundary, and stage 1\ntransports moisture and tracers with them. A restart that leaves them zeroed\nsilently fails to advect those scalars for one stage, so they are declared and\nrestored before the pickup `update_state!` rebuilds the scalar tendencies.\n\n`TKEClosureFields` opts out: prognostic TKE travels as the tracer `ρe` and is\nalready inside `prognostic_fields`, while the diffusivities and the implicit\nlinear coefficient are recomputed every stage. Without the opt-out the generic\nfallback tries to serialize the struct and pickup throws a `MethodError`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Rop45uGvCs2AiyKpgkQSSu\n\n* Test bitwise checkpoint restart across dynamics, microphysics and closures\n\nEach case runs the same configuration twice: once continuously to\n`NSPIN + NRESTART` iterations, and once as a checkpoint at `NSPIN` followed by a\npickup in a freshly built model. The two are required to agree exactly, not\napproximately — an approximate check would pass on a contaminated restart and\nhide precisely the defect this feature exists to prevent.\n\nThe matrix covers both dynamics, the equilibrium and non-equilibrium\nmicrophysics paths at three different species counts, and the closure-free,\ndiagnostic-closure and prognostic-closure cases, because the set of checkpointed\nfields changes with every one of those knobs.\n\nRestarts are compared on `maximum(abs, ...) == 0` rather than `==` so a\nregression reports a single number instead of dumping both arrays.\n\nThe grid is 8^3 rather than smaller: a grid with too few interior points can\nreport a false pass on a reproducibility test, as CliMA/Oceananigans.jl#906\nfound for the terrain-following recovery path.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01Rop45uGvCs2AiyKpgkQSSu\n\n* Add comments\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-09-09T16:35:28-06:00",
+          "tree_id": "72ee54297dfc1243f83454ba8a0ddbf0b5c597fb",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/6a56b063d313f3d8940418609ad3c37846ca89fd"
+        },
+        "date": 1788995083098,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 118909968.36064231,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 82214594.09948818,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 57812931.63231227,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 132196911.30194347,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 132196911.30194347,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 124923399.19841325,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 124923399.19841325,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 124923399.19841325,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 108528793.1723874,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 108528793.1723874,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 85787372.87714067,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 85787372.87714067,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 82337965.34461099,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 82337965.34461099,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 72764435.29363984,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 72764435.29363984,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 67496579.26805975,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 39934403.349176094,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7124597.287291319,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 25854687.209437523,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1013266490.4544619,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 846083902.8873396,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1287222359.217957,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 723380095.8676051,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116352891.94000737,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 862651521.2437736,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 522269906.54467565,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 23998773.66801197,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 589324032.2241619,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6654433513.290004,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7574384400.1383295,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8267090043.451309,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5236652791.376217,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10073199522.074055,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8278552917.514561,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4554446570.818217,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4626094399.015289,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5168721764.484065,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3488365641.6745596,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5342102883.4311285,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5178514303.775511,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3094416025.995047,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440389227.98244953,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3399951282.245621,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2196641623.1043997,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1773619428.9012623,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3451173223.3382454,
             "unit": "points/s"
           }
         ]
