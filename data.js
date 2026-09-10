@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788995083717,
+  "lastUpdate": 1789015902819,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -22793,6 +22793,265 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 3451173223.3382454,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d7e22b8884318bd0c860d0f6b72a2927da92d7d2",
+          "message": "Add `ρE` and `ρqᵗ` interface keys, and validate boundary condition and forcing names (#974)\n\n* Add `ρE` energy key and validate boundary condition and forcing names\n\n`AtmosphereModel(grid; boundary_conditions=(; ρe=...))` constructed silently.\nSince the `e -> s` rename in #926 the energy-BC interface dispatches on `:ρs`,\nso a `:ρe`-keyed entry matched nothing and default no-flux conditions were\nmaterialized as if nothing had been passed. Closes #956.\n\nTwo changes:\n\nValidate names at construction. Every key of `boundary_conditions` and\n`forcing` must name something that can carry them; anything else raises an\n`ArgumentError` listing the valid names. A stale key now fails loudly instead\nof being merged in and never looked up.\n\nAdd a formulation-agnostic energy key. `ρE` denotes total energy density (with\nspecific alias `E` for forcings), so an energy input names the physical\nquantity without committing to the variable that carries it: a `ρE` entry is\nrouted onto whichever thermodynamic density the formulation evolves and\nconverted as that variable requires -- divided by `cᵖᵐ` (fluxes) or `cᵖᵐ Π`\n(forcings) for `ρθ`, passed through unconverted for `ρs`, which is itself an\nenergy per unit mass. `s` names static energy specifically and `e` is now\nturbulent kinetic energy, so neither doubles as the energy key: `ρs` and `s`\nare keys only when static energy is the prognostic variable, and are rejected\nelsewhere with a message pointing at `ρE`.\n\nSetting both `ρE` and the thermodynamic density is an error -- the two would\nsum into one flux on the same field.\n\nExamples, docs, the DCMIP2016 TC validation script, and tests are migrated to\n`ρE`/`E`. The new validation caught a live instance of the same bug in\n`examples/radiative_convection.jl`, which keyed its surface vapor flux `ρqᵗ`\nwhile the `SaturationAdjustment` moisture prognostic is `ρqᵉ`; both that\nboundary condition and its `scalar_advection` entry were silently dropped.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01SNUCtZ1LaKGL4rZbMNb2pa\n\n* Add `ρqᵗ` moisture key and document boundary conditions and forcing\n\nThe prognostic moisture name is scheme-dependent -- `:ρqᵛ` under non-equilibrium\ncloud formation, `:ρqᵉ` under saturation adjustment -- and `BulkMicrophysics`\nforwards it to its `cloud_formation` option. So changing how condensation is\nparameterized silently renames the key a surface evaporative flux must use,\nleaking an implementation detail into the user-facing interface. The name to\nreach for, `ρqᵗ`, was rejected outright; `examples/radiative_convection.jl` had\nalready made exactly that mistake.\n\nAdd `ρqᵗ` (total moisture density, specific alias `qᵗ` for forcings) as the\nscheme-agnostic water key, mirroring `ρE` for energy: a `boundary_conditions` or\n`forcing` entry under it is routed onto whichever moisture density the\nmicrophysics evolves. Unlike an energy input there is no conversion, since water\nadded to the prognostic moisture is water added to `qᵗ` under every scheme, so\nthe routing is a pure re-key. `ρqᵗ` is never itself prognostic, so the key is\nunambiguous.\n\nThe scheme-specific names stay valid where they are actually prognostic;\nsupplying both an interface key and its target is an error, and a name used\nwhere it is not prognostic gets a message pointing at `ρqᵗ`. The energy and\nmoisture paths now share `route_interface_bcs` rather than duplicating the\nstrip-validate-merge logic.\n\nAlso add a manual page, `AtmosphereModel documentation / Boundary conditions and\nforcing`, which had no coverage outside the examples: valid keys and the error\nraised for an unrecognized one, why the thermodynamic and moisture prognostic\nnames depend on the model, the two interface keys and their conversions, surface\nfluxes from bulk formulae, and density-versus-specific forcing keys.\n\nExamples, docs, and the DCMIP2016 TC validation script move to `ρqᵗ`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01SNUCtZ1LaKGL4rZbMNb2pa\n\n* [docs] Drop the duplicate bulk-flux `@docs` block\n\n`boundary_conditions_and_forcing.md` re-documented `BulkSensibleHeatFlux`,\n`BulkVaporFlux`, and `BulkDrag`, which `wall_fluxes.md` already documents.\nDocumenter treats a docstring appearing in two `@docs` blocks as a hard error\nand terminates before rendering, so `build-docs` failed with\n\n    duplicate docs found for 'Breeze.BoundaryConditions.BulkDrag' in `@docs`\n    block in docs/src/atmosphere_model/wall_fluxes.md:49-53\n\nreported against the older page because the new one comes first in the nav and\nclaims the binding first.\n\n`wall_fluxes.md` keeps the docstrings: its whole subject is those three\nconditions — placement on any of the six walls, the forms the wall state may\ntake, and where the stability correction applies — whereas the bulk formulae\nare one subsection of the boundary-conditions page. That page now links there\ninstead, with its cross-reference qualified to match the anchor `wall_fluxes.md`\nregisters.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EMDEKB4h56XEK7K9rbdHdE\n\n* Update src/AtmosphereModels/atmosphere_model.jl\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n* Update .agents/physics-debugging.md\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n* Update src/StaticEnergyFormulations/static_energy_tendency.jl\n\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>\n\n* Reject an interface key beside the variable's own name at one weighting\n\nBoth interface keys admit a forcing under two names, and each name may be\ndensity-weighted or specific. One source per weighting is expressible; the\nsame weighting under both names is not.\n\n`ρqᵗ` re-keys onto the prognostic moisture, so `(; ρqᵗ, ρqᵛ)` puts two\nvolumetric sources under one name and `NamedTuple{(:ρqᵛ, :ρqᵛ)}` throws\n\"duplicate field name\". Under `:StaticEnergy` the energy key needs no\nconversion, so `ρE` and `ρs` are the same quantity in the same units and\n`(; ρs, ρE)` summed one input twice -- measured as Δρs = 2 F Δt -- with\nnothing to stop it. Both are one source named twice, and both are now\nrejected.\n\nA density-weighted source beside a specific one is a different matter: they\nare two inputs whose conversion factor is the evolving density, so no single\nkey can carry both, and every other prognostic accepts the combination --\n`(; ρθ, θ)` was legal while `(; ρqᵉ, qᵉ)` was not. That asymmetry reached a\ncaller: a nested child keys its Davies moisture relaxation under the\nprognostic moisture name and merges the caller's forcing on top, so a\ncaller's own specific water forcing became an ArgumentError while the θ, u\nand v relaxations it is keyed to match combined as intended. `(; ρqᵗ, qᵛ)`,\n`(; qᵗ, ρqᵛ)`, `(; ρs, E)` and `(; s, ρE)` are all legal now, and one of each\npair is checked for the value it produces.\n\nThe rule is the same for water and energy, so one validator states it, keyed\nby the pair of names rather than by moisture or energy. Two assertions change\nmeaning: `(; ρqᵗ, qᵛ)` and `(; qᵗ, ρqᵛ)` no longer throw. `(; qᵗ, qᵛ)` joins\n`(; ρqᵗ, ρqᵛ)` as the pair that does.\n\nforcing_and_boundary_conditions passes, 128/128 at Float64.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EMDEKB4h56XEK7K9rbdHdE\n\n* Validate and route interface boundary conditions per side\n\n`validate_interface_bcs` compared whole `FieldBoundaryConditions`, so an\ninterface key and the variable it routes onto could not both carry a\ncondition, whatever sides they were on. A lateral Dirichlet value of the\nprognostic variable together with a surface energy flux -- the shape of a\nlimited-area domain nested in a coarser one and coupled to a surface below --\nwas rejected with the claim that the two would be summed into a single flux,\nwhich is only true when they land on the same side.\n\nCompare per side instead, and merge the two specifications side by side: each\nside the caller wrote under the interface key, and the variable's own condition\non every other side. A side written under both remains an error, and the\nmessage names the sides in contention.\n\nWhether the caller wrote a side is asked with a predicate of its own,\n`specified_bc`, rather than with `nondefault_bc`. The two answer different\nquestions: `nondefault_bc` gates whether an entry carries anything worth\nconverting, and so treats an explicit `FluxBoundaryCondition(nothing)` as\nnothing at all. On a side that is a statement -- no flux here -- and taking it\nfor silence would drop it in favour of whatever the other key said, quietly.\n`specified_bc` separates what the caller wrote from what the constructor filled\nin, so an explicit no-flux beside a condition under the other key is in\ncontention like any other pair. It is also invariant under the conversion,\nwhich wraps a no-flux side but leaves a `DefaultBoundaryCondition` alone, so\nthe merge can read it off the converted conditions.\n\n`has_nondefault_bcs` becomes `any(nondefault_bc, ...)` over the sides, since\nthe per-side predicate is now needed on its own.\n\nThis is what an interface key cannot currently express. A `Value` supplied\nunder `ρE` or `ρqᵗ` passes through unconverted, so it means a `ρθ` value under\none formulation and a `ρs` value under another, and total moisture under\nsaturation adjustment but vapor under non-equilibrium cloud formation. The way\nout is to key a boundary value by the prognostic name -- computable from the\nexported `thermodynamic_density_name` and `moisture_prognostic_name` -- and\nleave the interface key for the flux it is named after. That combination is\nonly expressible once validation is per side.\n\nforcing_and_boundary_conditions passes, 131/131 at Float64; boundary_conditions,\natmosphere_model_construction and kinematic_driver unchanged.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EMDEKB4h56XEK7K9rbdHdE\n\n* Check the energy conversions against the model, not against themselves\n\n\"Energy to θ flux conversion is correct\" sets `expected_θ_flux = 𝒬 / cᵖᵐ` and\nthen asserts that it equals `𝒬 / cᵖᵐ`, so it passes whatever the model does\nwith the boundary condition. It dates to #418 and was renamed from `ρs` here.\nRead the condition the model will apply instead, with the\n`BoundaryConditionOperation` the neighbouring testset already uses. It comes\nout bit-exact, and pins the moisture dependence rather than merely the presence\nof a division: the pre-`set!` value `𝒬 / cᵖᵈ` fails it. The two dropped\nassertions were a comparison of one expression with itself and a bound implied\nby the retained `cᵖᵐ > 1000`.\n\nThe `ρE` forcing test on `ρθ` asserted `0 < Δρθ < F Δt`, which holds whether or\nnot the conversion divides by the Exner function. Assert the conversion, and\nread it from the tendency rather than from a finite difference of the state.\nDifferencing does not work here: `F Δt / (cᵖᵐ Π)` is 9.8e-7 against `ρθ ≈ 350`,\na thirty-second of one ULP in Float32, so `Δρθ` is exactly zero there and the\nassertion fails at that precision whichever form it takes -- as `0 < Δρθ` also\ndid. At Float64 a difference resolves the increment to one ULP of `ρθ`, which\nleft the comparison good to 5.7e-8 at `Δt = 1e-3` but failing at `Δt = 1e-6`,\nthe step three neighbouring testsets use.\n\nAt rest with no closure and no radiation, every other term in the ρθ tendency\nis exactly zero, so `Gⁿ.ρθ` is the conversion itself. It matches\n`F / (cᵖᵐ Π)` bitwise at Float64 and at Float32, so no explicit tolerance is\nneeded; a wrong conversion is still rejected by the default one, by 2.5e-3 for\na missing Π and 0.999 for none at all. `update_state!` populates the tendency,\nwhich is zero after `set!` alone.\n\nΠ's denominator is read from the model under test. It had been taken from a\n`θ₀` bound to the `:StaticEnergy` model earlier in the testset -- equal in\nvalue today, but arithmetic rather than a `set!` argument now.\n\nThe conversion itself is not new here: `/(cᵖᵐ * Π)` dates to #413 and this\nbranch renamed `Fρs` to `FρE` on that line. What is new is the key routed into\nit, which is what the assertion covers.\n\nforcing_and_boundary_conditions: 130/130 at Float64. Both testsets also pass at\nFloat32 (11/11 and 12/12) under BREEZE_TEST_FLOAT32=true, where the file still\nfails later in \"getbc coverage for all boundary faces\", untouched here and\nfailing on the merge base too.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01EMDEKB4h56XEK7K9rbdHdE\n\n---------\n\nCo-authored-by: Gregory Wagner <glwagner@Gregorys-MacBook-Pro.local>\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>\nCo-authored-by: Eliot Quon <eliot@aeolus.earth>",
+          "timestamp": "2026-09-09T22:20:40-06:00",
+          "tree_id": "97ad7258fa11eb86945c0ff20b9607f1faf532ac",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/d7e22b8884318bd0c860d0f6b72a2927da92d7d2"
+        },
+        "date": 1789015902194,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 118707338.59795502,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 81629234.1519131,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 57512428.76506989,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 133627878.66501722,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 133627878.66501722,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129359650.38881811,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129359650.38881811,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129359650.38881811,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 116308084.95539568,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 116308084.95539568,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92044601.90507013,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92044601.90507013,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 85957666.84014939,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 85957666.84014939,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78825832.53976484,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78825832.53976484,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 68200628.194862,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40096383.3641183,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/64x64x32",
+            "value": 7299629.833605843,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26072274.720437124,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1047128502.732317,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 861883518.7409605,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1328886501.3895426,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 744783845.8261665,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 116404632.52973102,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 890799771.4756597,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 535093436.3756549,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 24001459.64534771,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 601905047.8220804,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6625714120.431817,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 7855995100.192265,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8556041169.648859,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5358090926.913045,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 10294640008.246897,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 8452296050.742343,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4624557894.497902,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 4623587959.479845,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5167031211.213887,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3575358733.665456,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5445380071.405388,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 5363302910.666048,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3180124973.326582,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 440634526.5602259,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3493675356.6305885,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2250071739.4342175,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 1809774707.146474,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3486197934.1992507,
             "unit": "points/s"
           }
         ]
