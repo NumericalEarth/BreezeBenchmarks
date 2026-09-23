@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790196423614,
+  "lastUpdate": 1790206874542,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -25931,6 +25931,275 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 4236698523.778187,
+            "unit": "points/s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6f6ff5124c275fec4ecd653ebe2558a0581362c",
+          "message": "Divide a prescribed energy flux by the Exner function (#1020)\n\n* Make the energy-flux coverage assertion representable in Float32\n\n`getbc coverage for all boundary faces` asserts that one step with a\nprescribed `ρE` surface flux moves `ρθ`. At Δt = 1e-6 the increment\n𝒬 Az Δt / (cᵖᵐ V) is about 9.9e-9 against ρθ ≈ 353, whose Float32\nspacing is 3.05e-5 — three thousand times larger. Measured Δρθ is\n9.85e-9 in Float64 and exactly 0.0 in Float32, so in single precision\nthe assertion could only ever pass on rounding noise from the rest of\nthe tendency.\n\nThis has been latent because `test_float_types()` returns `(Float64,)`\nunless `BREEZE_TEST_FLOAT32=true`, which is set nowhere in the repo, so\nCI has never exercised it. Raising Δt to 1 s puts the increment at\n9.9e-3, two orders above the spacing, and the test then measures what it\nclaims to in both precisions. One step of an anelastic single-cell model\nhas no stability constraint that 1 s approaches.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n* Divide a prescribed energy flux by the Exner function\n\nAn energy input reached the `ρθ` budget through two different\nconversions depending on how it arrived. The interior `ρE` forcing and\nthe radiative flux divergence divide by `cᵖᵐ Π`; a prescribed flux under\nthe same key divided by `cᵖᵐ` alone. Equating the two tendencies fixes\nthe conversion: Oceananigans adds `getbc * Az / V` to `Gρθ`, while a\nvolumetric source of the same strength enters as `FρE / (cᵖᵐ Π)`, so a\nflux must enter as `𝒬 / (cᵖᵐ Π)`. Physically, with `𝒬 = ρ cᵖᵐ ⟨w'T'⟩`\nand `T = Π θ + (ℒˡᵣ qˡ + ℒⁱᵣ qⁱ) / cᵖᵐ`, holding moisture fixed gives\n`δT = Π δθ`, so the condensate term cancels and the relation holds\nsaturated as well as dry. Closes #976.\n\nΠ comes from `dynamics_pressure`, reached through the `dynamics_fields`\nargument `getbc` already carried but these methods ignored. That is\nbit-identical to what the anelastic `diagnose_thermodynamic_state`\nreads, so flux and forcing divide by the same number. The compressible\ncore instead diagnoses a density state whose pressure is ρRᵐT — which is\nwhat `dynamics.pressure` holds, written by the same inversion during\n`update_state!`, so the two agree up to its staleness inside an RK\nstage.\n\nBoth wrapper structs gain `standard_pressure`, converted to the grid's\nfloat type at materialization: boundary conditions materialize from the\nstub dynamics, before `materialize_dynamics` normalizes, so on a Float32\ngrid the constructor would otherwise see a Float64 pˢᵗ and throw.\nOmitting the field is left a MethodError rather than given a convenience\nconstructor — unlike `density`, which resolves at runtime through the\n#777 `Nothing` fallback, there is nothing to fall back to.\n\n`Jᶿ_to_𝒬` takes the same factor so the inverse stays the inverse; a flux\nsupplied under `ρE` is unwrapped rather than reconverted, and round-trips\nexactly.\n\nMeasured: the flux is unchanged at 1000 hPa, 4.7% larger at 850 hPa and\n10.7% larger at 700 hPa. Every coupled NumericalEarth run picks this up\nthrough the `Jᵉ` field its coupler writes, so surface heating over\nelevated terrain changes by that much and existing baselines no longer\nreproduce.\n\nThe test now runs two base pressures. A single column would have caught\nthis change — at the default base pressure Π = 1.003, a relative\ndifference of 3.3e-3, about ten times isapprox's Float32 tolerance — but\nit cannot distinguish a Π that tracks the column's pressure from a\nconstant that happens to be right there. `𝒬 / cᵖᵐ` is identical at both\npressures, so the ratio between them tests that the conversion varies\ncorrectly, and being a ratio it depends on no tolerance.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n* Document one energy conversion rather than two\n\n#974 wrote the flux/forcing asymmetry into the docs as intended\nbehavior: `total_energy_density_name` said an energy input is divided\nby `cᵖᵐ` for fluxes and `cᵖᵐ Π` for forcings, and the boundary-condition\npage justified the split by noting the forcing \"is applied to a\npotential temperature rather than a temperature\" — which is equally true\nof the flux. Both now state the single conversion.\n\nThe page's derivation also went from a dynamic flux to a kinematic one,\ndropping the ρ that `Jᶿ` carries, and asserted `θ = T / Π`, which holds\nonly without condensate. The differential form is both correct and\nstronger.\n\n`Jᶿ` joins the notation table. It had `Jᵀ` but not `Jᶿ`, and they differ\nby exactly the Exner factor, so the distinction is now load-bearing. A\nbare `𝒬` needs no row: every `𝒬` in that table carries a superscript\nnaming its flux, and `𝒬 = cᵖᵐ Π Jᶿ = cᵖᵐ Jᵀ` is the `𝒬ᵀ` already there.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n* Say which energy flux the conversion takes\n\n`𝒬_to_Jᶿ` took a bare `𝒬`, which does not say which energy flux. Handing\nit a latent heat flux would be wrong — that energy is carried by the\nmoisture flux, as the coupler that writes this field notes — so the valid\ninput is specifically an enthalpy flux, `cᵖᵐ` times a temperature flux.\nThat is `𝒬ᵀ` as the notation table defines it, and the table gives every\n`𝒬` a superscript naming its flux: `𝒬ᵀ = cᵖᵐ Jᵀ`, `𝒬ᵛ = ℒˡ Jᵛ`.\n\nWhat arrives under `ρE` from a coupled model is `𝒬ᵀ`. NumericalEarth's\nsimilarity theory forms `θᵃᵗ` by lifting the lowest-level air\ndry-adiabatically through the MOST reference height — the cell-centre\nelevation above ground, per column on a terrain-following grid — and\ndifferences it against the skin temperature at that same ground. A\npotential temperature referenced to the ground is numerically the\ntemperature there, so `- ρ cᵖᵐ u★ θ★` is `ρ cᵖᵐ ⟨w'T'⟩`. Had it instead\nbeen referenced to `pˢᵗ`, the flux would already be `cᵖᵐ Jᶿ` and the\npreceding commit's division by `Π` would double-count.\n\nSame class of correction as that commit, applied to the other end of the\nsignature: the function returned `Jᵀ` while claiming `Jᶿ`; it accepted\n`𝒬ᵀ` while claiming an unspecified `𝒬`. Mechanical and confined —\n`𝒬ᵀ_to_Jᶿ` and `Jᶿ_to_𝒬ᵀ` are internal to this file and not exported, so\na maintainer preferring the bare spelling can revert it in one pass.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n* Assert each boundary face converts at its own cell\n\nThe six `getbc` methods differ in exactly one thing: which boundary cell\nthey hand to the conversion — `(i,j,1)` for bottom, `(i,j,Nz)` for top,\n`(1,j,k)` for west, and so on. Nothing asserted that. `getbc coverage\nfor all boundary faces` covers bottom and west, and asserts only that\n`ρθ` moved, which a conversion reading the wrong cell also satisfies.\n\nAdding `Π` raised the cost of getting that index wrong. It previously\nreached only `qᵛ` and density, which vary weakly, so a misread cell was\na percent. `Π` follows pressure: over the column used here it runs ≈0.97\nat the lowest cell to ≈0.53 at the highest, so the same mistake is now\nmost of a factor of two.\n\nSo this checks the value rather than the motion: for each of the six\nfaces, that the boundary condition returns `𝒬ᵀ / (cᵖᵐ Π)` with `Π` taken\nat that face's own cell, on a fully bounded 15 km column where the faces\ngenuinely disagree. That premise is asserted first rather than last: if\n`Π` barely varied, the six would pass under any index, so it belongs\nbefore them, not after.\n\nNo `θ` is set. Nothing the conversion reads depends on it — the density\nand pressure are the anelastic reference fields, built at construction,\nand `exner_function` ignores the state's `θ`, which is the property the\nwhole conversion rests on. Setting it would imply otherwise. That holds\nonly while the default microphysics is `nothing`: with one, `set!` would\nsplit `qᵗ` into condensate using temperature and the vapor-only\nexpectation here would stop matching.\n\nWhat it does not catch: the anelastic reference pressure is a column, so\n`Π` has no horizontal structure and a pure i↔j or 1↔N mix-up between two\nhorizontal faces is invisible. Errors in the vertical index, and errors\nconfusing a horizontal index with it, do show.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n* Make the boundary Π a grid-point `exner_function` method\n\nReview points from @glwagner: the helper was called `near_wall_exner_function`\nbut is valid at any `i, j, k`, and a grid-point Exner evaluation should\ncarry `grid` so it is usable from a `KernelFunctionOperation`.\n\nBoth resolve the same way. It is not a boundary-conditions helper that\nhappens to compute Π — it is Π at a grid point, so it becomes a method of\n`exner_function` itself with the signature\n`exner_function(i, j, k, grid, ef, q, dynamics_fields)`. Both call sites\nalready had `grid` in scope.\n\nThe `near_wall_` prefix was wrong for the reason given. Its neighbours\nearn it — `near_wall_velocity` reads `fields.u[i, j, 1]`, fixed to the\nfirst cell — while this takes an arbitrary index and the six `getbc`\nmethods are what choose a boundary cell. The prefix described the\ncallers, not the function.\n\nExtending a name imported through `using ... :` is not allowed, so\n`exner_function` moves to its own `import` line. Not piracy: `ef` is a\ntype this module owns.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\nClaude-Session: https://claude.ai/code/session_01D2fuRfqFoMFjvYyx3idQtQ\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-09-23T15:54:11-06:00",
+          "tree_id": "ae3e42462a4fa7429f562e57d7da065952c3a204",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b6f6ff5124c275fec4ecd653ebe2558a0581362c"
+        },
+        "date": 1790206874004,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 128870586.3840077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 86914632.71052794,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 61308686.665921986,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 137980688.6540267,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 137980688.6540267,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130941860.32906267,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130941860.32906267,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130941860.32906267,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115892307.61893071,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115892307.61893071,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 96670463.95765293,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 96670463.95765293,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 89767400.86561505,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 89767400.86561505,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 80252609.3335077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 80252609.3335077,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 72129870.99521655,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 40829571.71744874,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_2",
+            "value": 7083844.92002902,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_4",
+            "value": 8476498.113411564,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_8",
+            "value": 8918969.535494465,
+            "unit": "points/s"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 26270778.16925947,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1106589943.0022619,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 1069418294.1668786,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1425261109.026951,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 808667922.842268,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 679876395.9534239,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 989686790.609228,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 603616593.7032983,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 52727912.92715644,
+            "unit": "points/s"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 692373817.4558493,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 7265337724.1175995,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 8797249013.946844,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 9723070218.243229,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5855074374.739222,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 11912269117.110363,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 9972856015.141283,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 5114296955.27111,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 5739273338.054138,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 6180400385.473428,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 4068217290.2067657,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 7079053831.677905,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 6133942490.779279,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3772961586.2788506,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 273817802.7361451,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 4048096861.6011214,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2524603110.629841,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 275602460.5034578,
+            "unit": "points/s"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 4146322753.101114,
             "unit": "points/s"
           }
         ]
