@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791341955322,
+  "lastUpdate": 1791404299217,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -30675,6 +30675,324 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 4219842486.729688,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0e3d153f8f83fec670809e8d4ff0ba39b6e20e1e",
+          "message": "Unify sedimentation transport and correct condensate thermal coupling (#959)\n\n* Route all microphysics schemes through a shared sedimentation interface\n\nUnify precipitation and sedimentation across the 1-moment, 2-moment and P3\nschemes behind one interface. Each scheme declares, per condensate mass, its\nfall speed (`sedimentation_velocity`) and its thermodynamic phase\n(`condensate_phase`); the two are independent, so P3's liquid on ice falls at\nthe ice speed while carrying liquid enthalpy. At construction the model\nresolves the sedimenting constituents once, as `(; w, q, phase, advection)`\ntuples walked from `condensate_field_names`, so number moments and\nnon-additive particle properties are never consulted and a sedimenting mass\nwithout a phase is an error rather than heat left behind.\n\nSedimentation transports the condensate part of the thermodynamic variables.\nThe shared `condensate_sedimentation_divergence` forms, per cell, the mass\nfluxes the tracer tendency actually applies (the flux at the combined\ntransport and fall velocity minus the flux at the transport velocity alone,\nwith the tracer's own scheme, including the implicit remainder under adaptive\nimplicit vertical advection and the per-cell limited reconstructions of\nbounds-preserving WENO), weights each flux with the content of the cell it\ndrains, and bins constituents by phase. Both formulations supply only their\ncontent per unit falling mass, the partial derivative of the specific variable\nwith respect to the condensate mass fraction at fixed temperature with dry air\ntaking up the departed mass, so sedimentation alone leaves the temperature\nunchanged: (cˣ − cᵖᵈ) T − ℒˣᵣ for static energy and the full ∂θˡⁱ/∂qˣ for\npotential temperature. Rain-out thus leaves latent warming aloft and pre-cools\nthe layer that later evaporates the rain.\n\nThe bottom-outflow diagonal of the implicit sedimentation solve lives in\nBreeze's mass-weighted implicit seam, where Oceananigans 0.111 routes it.\n\nThe surface precipitation flux diagnostic is scheme-independent and built from\nthe same stored constituents the tendencies consume, so it cannot drift from\nthe boundary flux the tendency operator applies.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Let the dynamics say what takes up the mass sedimentation removes\n\nThe condensate content the thermodynamic tendencies transport with falling\ncondensate was the derivative of the specific variable at fixed temperature\nwith dry air taking up the departed mass. That is exact on the anelastic\ncore, whose total density is fixed, but not on the compressible core: the\nprognostic dry density has no sedimentation source, so the diagnosed total\ndensity falls with the condensate and every mass fraction renormalizes. The\nstatic-energy content there is the enthalpy of the condensate relative to\nthe mixture, not to dry air.\n\nAdd `sedimentation_replacement(dynamics, q)`, the composition that takes up\nthe departed mass: dry air by default, the local mixture for\n`CompressibleDynamics`. Both formulations differentiate along that\nreplacement, so `(cˣ − cʳ) T − (ℒˣᵣ − ℒʳ)` for static energy and the same\nclosed form with the replacement's heat capacity, gas constant and latent\ndeficit for potential temperature; anelastic results are unchanged.\n\nWeight the content fluxes by the total density, as the tracer operator\nweights the mass flux, and convert the change of the specific variable to\nthat of the coupling-weighted prognostic through the cell's ratio of\ncoupling to total density, one on the anelastic core and the dry mass\nfraction on the compressible core.\n\nTest the potential-temperature kernel on the compressible core against a\ncentral difference along the mixture direction, and check that the dry-air\nderivative fails that check. Static energy does not yet run on the\ncompressible core, so its mixture form is checked through a mock dynamics.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Move the implicit remainder of sedimentation heat after the solve\n\nUnder adaptive implicit vertical advection a constituent's sedimentation mass\nflux splits: the tendency applies a CFL-limited explicit fraction and the\ntridiagonal solve applies a first-order remainder. The thermodynamic\ntendencies carried the content of both parts, estimating the implicit\nremainder explicitly at the pre-solve state. That estimate is wrong precisely\nwhere the solve is needed: nothing enters the top cell, so backward Euler\nleaves it 1 / (1 + C) of its rain at implicit Courant number C, while the\nexplicit estimate removes C q, overstating a one-cell loss by the factor\n1 + C.\n\nSplit the content transport the same way the mass is split. The tendencies now\nselect `ExplicitSedimentationFluxes`, the part they apply, and\n`implicit_sedimentation_step!` moves the content of the remainder after the\nscalar solves of every stage, from the fluxes the solve actually applied: the\nfirst-order upwind fluxes of the implicit velocity at the solved humidity\nρq / ρ, with the same boundary treatment as `mass_weighted_advection_diagonal`\n(bottom outflow kept, no inflow through either boundary face). Both time\nsteppers call it, so the heat follows the mass at any fall Courant number on\nthe anelastic SSP path and the compressible acoustic path alike. Constituents\ncarry the prognostic density `ρq` alongside `q` so the post-solve step reads\nthe solved state.\n\nTest the top cell's solved mass against 1 / (1 + C), the moved content against\nχ times the solved mass increment cell by cell with the column losing deficit\nthrough the bottom, and that both time steppers stay finite with a fall speed\nabove the explicit CFL.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Rename the precipitation-flux interface to say \"bottom\", not \"surface\"\n\nThe diagnostic is the flux through the bottom boundary of the domain, which is\nthe surface only when the lowest face is the ground. Rename accordingly:\n\n  - `surface_precipitation_flux` -> `bottom_precipitation_flux` (export,\n    generic method, `DCMIP2016KM` and `InstantaneousPrecipitation` overrides)\n  - `surface_advective_tracer_flux` -> `bottom_advective_tracer_flux`, with\n    `implicit_surface_...` and `sedimenting_surface_flux` following suit\n\nTwo other renames for consistency with `docs/src/appendix/notation.md`, where a\nmoment weighting is a superscript rather than a subscript, and with the\nformulation each content belongs to:\n\n  - `wᶜˡₙ`, `wʳₙ`, `wⁱₙ` -> `wⁿᶜˡ`, `wⁿʳ`, `wⁿⁱ` (2M and P3)\n  - `theta_condensate_content` -> `potential_temperature_condensate_content`\n  - `energy_condensate_content` -> `static_energy_condensate_content`\n\nAlso add `phase_content(liquid_fraction::Number, χ)`, so a single condensate\nmass of mixed composition may declare its liquid fraction instead of a pure\nphase. The content is a directional derivative in composition space and hence\nlinear in the composition, so a mass leaving along `f eˡ + (1 - f) eⁱ` carries\n`f χˡ + (1 - f) χⁱ` exactly, with the pure phases as the `f = 1, 0` endpoints.\nNo scheme needs this yet; P3 still splits mixed-phase particles into ice `ρqⁱ`\nand the liquid on it `ρqʷⁱ`, which is the better representation when freezing\nhas its own rate that moves mass between them.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Transport the enthalpy of sedimenting condensate, not the content\n\nSedimentation moved each formulation's own content in flux form: every mass\nflux carried the content `χˣ = ∂φ/∂qˣ|_T` of the cell it drained, and the\ndivergence of `χ F` was the tendency. For `s` that is right, because `χˣ` is\nthe enthalpy `hˣ − hʳ` the falling mass physically carries. For `θˡⁱ` it is\nnot: `∂θˡⁱ/∂qˣ` is a Jacobian that varies with the Exner function, so moving\nit between pressure levels conserves `∫ρθ`, which precipitation does not —\nthe heat is released at one pressure and absorbed at another. The two\nformulations disagreed on the temperature change sedimentation causes by a\nfactor of two in a mid-column rain blob, and in sign in two cells.\n\nThe falling mass carries its enthalpy and each cell converts what it gains or\nloses locally. A flux out of a cell drains the cell itself and delivers `χ`\nalone, so the cell the condensate leaves keeps its temperature; a flux in\ndelivers `χ` plus `∂φ/∂h (h_upwind − h)`, the sensible heat brought from a\nlevel of different temperature:\n\n    cᵢ(w) = χᵢ + (∂φ/∂h) (hᵢ(w) − hᵢ) .\n\nFor `s`, `χ = h` and `∂s/∂h = 1`, so this collapses back to the flux form and\n`∫ρs` stays conserved. For `θˡⁱ`, `∂θˡⁱ/∂h = 1 / (cᵖᵐ Π)` is the same factor\nthat turns microphysical heating rates into `ρθ` tendencies.\n\n`condensate_content` accordingly returns `(; χ = (χˡ, χⁱ), h = (hˡ, hⁱ), ∂φ∂h)`\nrather than `(χˡ, χⁱ)`. `static_energy_condensate_content` returns its content\nas both `χ` and `h` with `∂φ∂h = 1`; `potential_temperature_condensate_content`\nadds `hˣ = Δcˣ T − (ℒˣᵣ − ℒʳ)` and `∂θ∂h = 1 / (cᵖᵐ Π)`. `upwind_content`\nbecomes `delivered_content`, which takes the cell's own `χ`, `h` and `∂φ∂h`\nalongside the enthalpies of the two cells flanking the face. `phase_content`\nblends `h` like `χ`, both being linear in the composition. The\n`ImplicitSedimentationFluxes` remainder moved after the solve goes through the\nsame path, so the split by Courant number is unaffected.\n\nTest that both formulations imply the same temperature change for a rain blob\nin an unsaturated column with non-equilibrium cloud formation, diagnosing it in\nFloat64 from each thermodynamic tendency and the sedimentation part of the mass\ntendency. Split the synthetic-content test into three cases that isolate the\nterms: an enthalpy content (`χ = h`, `∂φ∂h = 1`) recovering the flux form, a\npurely local content (`h = 0`) giving `χ` times the mass divergence, and a\ngeneral content exercising both. `expected_sedimentation_tendency` and\n`heating_response` in setup.jl build the reference for the column tests.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Solve the thermodynamic variable after the sedimented content is moved\n\nThe implicit sedimentation content was added to ρθ / ρs after that variable's\nown tridiagonal solve, so the moved content escaped the implicit transport and\ndiffusion that acted on the rest of the field. Both time steppers now order a\nstage as: the tracers' solves, `implicit_sedimentation_step!`, then the\nthermodynamic variable's solve, which keeps φ = χ q exactly for a uniform\ncontent χ.\n\nThe SSP RK3 stage loop skips the thermodynamic variable and calls the new\n`implicit_stage_step!` for it after the sedimentation step; the acoustic RK3\nsubstep runs `scalar_rk3_substep!` before `implicit_substep!`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Form the sedimentation content fluxes at the tracers' transport velocity\n\nThe condensate sedimentation term of the thermodynamic tendency is the\ndifference of two advective fluxes of each humidity, one at the combined\ntransport-and-fall velocity `Wᵢ = wᵗ + wᵢ` and one at `wᵗ` alone. It is the\nsedimentation part of the mass flux the tracer tendency applied to the cell\nonly when both are formed at the velocity that tendency used: upwind selection\nand the adaptive implicit split are nonlinear in the velocity, so fluxes formed\nat another one do not recombine into the applied flux.\n\nOn the acoustic time stepper the two velocities differ. The thermodynamic\nvariable advects with the RK stage-entry predictor, deliberately, since mixing\nthe two paths creates a feedback loop that destabilizes a rest atmosphere at\nproduction Δt, while moisture and tracers advect with the substepper's\nacoustic-mean velocity. The term read the predictor, so at a predictor Courant\nnumber that clips the explicit fraction of both velocities to the same speed it\nmoved no content at all while the rain tendency was moving mass.\n\n`compute_thermodynamic_tendency!` accordingly takes the vertical velocity the\nmoisture and tracer tendencies were built with: `advecting_velocities.w` on the\ngeneric path, and on the acoustic path the frozen acoustic-mean copy, as\n`implicit_sedimentation_step!` already reads for the implicit remainder. Being\na difference of those fluxes, zero wherever nothing sediments, the term forms\nno part of the feedback loop above.\n\nThat frozen copy is now needed whenever anything sediments, not only under\nadaptive-implicit advection, so `time_averaged_vertical_velocity_cache` is\nallocated unconditionally and the `Nothing` branches of\n`cache_transport_velocity!` and `tendency_transport_velocities` go away.\n\nTest that the acoustic stage's `ρθ` tendency moves the content\n`expected_sedimentation_tendency` builds from the mass flux the rain tendency\napplies, with the two velocities set apart, and that a transport velocity equal\nto the predictor moves none.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Add version-pinned CPU and GPU sedimentation energy probes\n\n* Record CPU and Metal evidence and energy-conservation limits\n\n* Record completed Tesla T4 Float64 suite and bounded CUDA limits\n\n* Keep the sedimentation PR focused; preserve campaign on a separate branch\n\n* Correct isolated compressible sedimentation thermal response\n\n* Document sedimentation thermal conventions and supported diagnosis\n\n* Return signed sedimentation tendencies and hide the flux split from the formulations\n\nThe thermodynamic formulations now call `sedimentation_tendency`, which returns the signed\ncell-local tendency of the coupling-weighted thermodynamic variable that they add, in place\nof `condensate_sedimentation_divergence`, which returned a divergence they subtracted and\ntook an `ExplicitSedimentationFluxes()` selector. The explicit/implicit split of each\nconstituent's mass fluxes is now internal: `sedimentation_content_tendency` takes the\nmass-flux function (`explicit_constituent_mass_fluxes` or\n`implicit_constituent_mass_fluxes`) in place of the two selector structs, and\n`implicit_sedimentation_step!` is one generic method that assembles the model's arguments\nitself instead of one method per formulation relaying `content, args...`.\n\nEach formulation supplies its content through one function with one signature,\n`condensate_content(i, j, k, grid, formulation, dynamics, constants, microphysics,\nmicrophysical_fields, specific_prognostic_moisture, temperature)`, dispatching on the\nformulation type; the potential temperature tendency kernel therefore also receives the\ntemperature field, which its content does not read. The arithmetic is unchanged: the\ntendency is the negation of the complete former divergence product, the constituent\nfluxes, donor choices, bounded WENO reconstructions, adaptive implicit split, post-solve\nordering, density factors and thermal response are untouched, and the bottom\nprecipitation diagnostic is not involved.\n\nDocs state that the potential temperature tendency is a cell-local response, not the\nnegative divergence of a unique conservative face flux, and that `1 / (cᵖᵐ Π)` is the\nprescribed-pressure coefficient with `β_cv` on the compressible core. Tests inject\nsynthetic contents through small dispatch types in place of the formulation and take the\nnegated tendency where they compare divergences.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Restore acoustic regression snapshots on the test architecture\n\nMove the saved host vectors to the selected architecture before broadcasting them into GPU field views. This fixes the one-moment GPU test setup without changing its assertions or the model implementation.\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\n\n* Apply suggestion from @glwagner\n\n* Evaluate the tested Kessler autoconversion at rest\n\nCloudMicrophysics 0.41 reads the vertical velocity of the thermodynamic state in the Kessler\nrain autoconversion; the one-moment scheme evaluates it at rest (see `liquid_autoconversion`).\nThe bottom-precipitation-flux test formed its expected rate with `nothing` in that place, so\nthe whole one-moment file aborted on CloudMicrophysics 0.41. Pass the same at-rest state.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Resolve the sedimenting condensates into `model.sedimentation`\n\n`sedimentation_constituents` read as \"the constituents of sedimentation\". What the model\nresolves at construction is the set of condensate masses that sediment, so it is now\n`model.sedimentation`, a NamedTuple keyed by prognostic name whose entries are\n`SedimentingCondensate`s: the signed `velocity` the mass falls with, its `specific_humidity`\nand prognostic `density` fields, its thermodynamic `phase`, and the `advection` scheme that\ntransports it. The struct documents its properties, adapts to the GPU as one object, and\nprints its phase and scheme. `materialize_sedimentation` builds it, `(;)` when nothing\nsediments (parcel models included); the scheme-author contract, `sedimentation_velocity` and\n`condensate_phase`, is unchanged.\n\nThe thermodynamic tendencies, the post-solve step and the bottom precipitation diagnostic\nreceive `values(model.sedimentation)` and read the named properties; the type-stable tuple\nrecursion is unchanged. No behavior change. Tests use keyed access\n(`model.sedimentation.ρqʳ.velocity`) in place of searching a tuple.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Shorten the outflow diagonal note and propose its seam in kernel form\n\nThe proposed upstream predicate now reads `active_implicit_face(i, j, k, grid, w, ℓx, ℓy)`,\nkernel form with the velocity after the grid, and the explanation is trimmed.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Express the condensate content as a derivative along the sedimentation composition increment\n\n`sedimentation_replacement` returned \"what takes up the mass that falls out\", a metaphor that\nonly made sense on a fixed-density core. It is replaced by\n`sedimentation_composition_increment(dynamics, q, phase)`: the change of the moisture mass\nfractions per unit mass of the phase that sediments, `q̂ˣ − q̂ᵈ` where the total density is fixed\n(dry air makes up the departed mass) and `q̂ˣ − q` where it falls with the condensate (every\nfraction renormalizes), with `q̂ˣ` the unit composition of the phase.\n\nBoth formulations now form the content as the directional derivative of their variable along\nthat increment, `∇_q φ · Δq`, through small helpers for the change of the mixture heat\ncapacity, gas constant, latent deficit and enthalpy along `Δq`. The formulas are unchanged in\nexact arithmetic (the former `cˣ − cʳ`, `−Rʳ`, `ℒˣ − ℒʳ` are these increments); floating-point\norder differs, so results agree to roundoff rather than bitwise. Tests, docs and the notation\ntable use `q̂ˣ` and `Δq`; the test helper's `replacement` keyword becomes `renormalize`.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Update test/cloud_microphysics_1M.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Read the diagnosed temperature in the explicit ρθ condensate content\n\nThe explicit sedimentation tendency is built right after the temperature field is diagnosed\nfrom the same state, so recover Π = (T - D) / θ from it instead of re-inverting θ for T\n(a Newton iteration on the compressible core) at k-1, k and k+1. The post-solve implicit step\nkeeps rediagnosing T, since the tracers' solves have moved q.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Add the condensate sedimentation tendency in its own kernel\n\nFused into the thermodynamic tendency kernel, the per-constituent flux reconstructions and\ncondensate contents raised that kernel's register use from 64 to 93-156 and cut its\noccupancy everywhere. In a kernel of its own the thermodynamic tendency kernel is unchanged\nfrom a model without sedimentation, and the sedimentation kernel runs only when some\ncondensate sediments.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Update the sedimentation tests for #997 and #1045\n\nSince #997, a density supplied to `set!` is the total density, with the dry density backed\nout from the condensate partial densities. Since #1045, the acoustic stage builds the\nthermodynamic tendency in `update_state!`'s `compute_tendencies!`.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Compare sedimentation test columns with ≈\n\nAddress review: compare whole columns with ≈ instead of element-wise absolute\ndifferences, drop the absolute tolerance from the bounds-preserving limiter test (a\ncolumn comparison needs none), and document why the isolated thermal-budget test keeps\none (its reference rate is exactly zero in the second cell and when nothing falls).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Call _advective_tracer_flux_z directly in sedimentation_mass_fluxes\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Declare sedimenting condensates by a numerical liquid fraction\n\ncondensate_phase, which returned Val(:liquid), Val(:ice) or a liquid fraction, becomes\ncondensate_liquid_fraction, which returns a number: 1 for liquid, 0 for ice, or a value in\nbetween for a mass of mixed composition. The fraction must match how moisture_fractions bins\nthe mass, which fixes the latent heat and heat capacity it carries.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Initialize the density of the compressible CBL benchmark\n\nconvective_boundary_layer set θ, u and v but not ρ, so a compressible model started with\nevery prognostic field zero and was NaN after one step. Build the compressible reference\nstate from the background θ profile and set ρ to the reference density rescaled by θ̄ / θ.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\nCo-authored-by: Greg Wagner <greg@aeolus.earth>",
+          "timestamp": "2026-10-07T13:50:08-06:00",
+          "tree_id": "3c31308d70a5b0c69ee6b515aa6a6a4fcfb6cb70",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/0e3d153f8f83fec670809e8d4ff0ba39b6e20e1e"
+        },
+        "date": 1791404298555,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 126593099.87911208,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 73863131.88398471,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 54133452.69509178,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 137214055.88251522,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 137214055.88251522,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 132287409.10517097,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 132287409.10517097,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 132287409.10517097,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115725901.79549643,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115725901.79549643,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 98744928.00277281,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 98744928.00277281,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 90767272.34717673,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 90767272.34717673,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 80271182.58432783,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 80271182.58432783,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 62170226.89631365,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 21789737.951123923,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_2",
+            "value": 6898474.439658803,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_4",
+            "value": 8345357.826301146,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_8",
+            "value": 8867595.287309637,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 28421524.384766854,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1113312638.915932,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 1181692642.1580415,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1466111304.5277674,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 819383295.0028595,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 131136090.7153357,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 977074767.7082258,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 606839479.4661298,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 19021665.7305275,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 680038711.0811849,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 7625602530.87476,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 10094290785.475767,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 10215732646.813112,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 6019796891.52107,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 12450106711.70623,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 10016930107.481941,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 5439480228.156704,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 5766269903.462536,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 6234774109.873611,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 4176594846.2959385,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 7100589472.116039,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 6520640201.481573,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3900436190.762445,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 94712240.29043524,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 4145736694.622497,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 2621188150.918171,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 2413657294.713012,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 4291941374.3245087,
             "unit": "points/s",
             "extra": "Oceananigans v0.113.5, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.291, Reactant_jll v0.0.416+0"
           }
