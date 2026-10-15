@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792004851491,
+  "lastUpdate": 1792083134514,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -32583,6 +32583,324 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 2261329008.688826,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "765740+giordano@users.noreply.github.com",
+            "name": "Mosè Giordano",
+            "username": "giordano"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d836ca662e46d77f2b8cdd3270c3830b421cd2f",
+          "message": "[benchmarking] Pin Reactant to a specific version (#1079)\n\n* [benchmarking] Pin Reactant to a specific version\n\n* Pin also in test environment",
+          "timestamp": "2026-10-15T18:22:59+02:00",
+          "tree_id": "ee12097d078dbf560a1a42bb4fd06873e28ca594",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/0d836ca662e46d77f2b8cdd3270c3830b421cd2f"
+        },
+        "date": 1792083133796,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 124439907.32022664,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 72846712.00408593,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 53727528.5000785,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 138924881.14525092,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 138924881.14525092,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 129380139.48239222,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 129380139.48239222,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 129380139.48239222,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 112098301.06359792,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 112098301.06359792,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 92150519.03670478,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 92150519.03670478,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 87550368.96549524,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 87550368.96549524,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 77137433.13938548,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 77137433.13938548,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 60809206.07993782,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 19421476.37112643,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_2",
+            "value": 5870098.285745345,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_4",
+            "value": 7418694.419982568,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_8",
+            "value": 7977707.52034633,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 28197817.56956577,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1046004896.2664286,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 1099291540.393153,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1351415339.0311627,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 773292143.1780388,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 49574325.22579622,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 917563225.8388427,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 569644103.9345706,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 17105007.956820596,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 640893335.0548899,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 7061160157.0992155,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 9919821768.339048,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 9138813173.4048,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5365364233.898574,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 9492930045.073439,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 6465761618.142284,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 5014462337.880136,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 5310482441.480041,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5716651026.748689,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3246740222.8978114,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 5138626895.221387,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3592219306.479572,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3619528676.936898,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 97228937.36079843,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3838865374.415551,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 1713073355.8666875,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 204572996.8925351,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 2358314056.9845233,
             "unit": "points/s",
             "extra": "Oceananigans v0.113.6, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
           }
