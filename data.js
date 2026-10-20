@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792210156132,
+  "lastUpdate": 1792456521743,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -33855,6 +33855,324 @@ window.BENCHMARK_DATA = {
           {
             "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
             "value": 2307418384.566613,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ea63a7d58480284a3236af86313760dc18650cfa",
+          "message": "Add the NumericalRadiation extension and validate radiation against analytic, line-by-line and RRTMGP references (#999)\n\n* Promote backend-agnostic radiation helpers from the RRTMGP extension\n\nSeveral pieces of ext/BreezeRRTMGPExt know nothing about RRTMGP: the column\nordering, the flux-divergence kernel, surface-fraction validation and\nmaterialization, the \"bind a surface temperature first\" check, the\nsingle-column (λ, φ) inference, and the cos(θ_z) evaluation from a solar\nposition specification. A second radiation backend needs all of them, so they\nnow live in src/AtmosphereModels, in radiation_interface.jl and\nsolar_position.jl, and the RRTMGP extension imports them.\n\n- `column_index(i, j, Nx)` replaces `rrtmgp_column_index`.\n- `compute_radiation_flux_divergence!` and its kernel move unchanged.\n- `surface_fraction_scalar`, `validate_surface_fractions`,\n  `constant_field_property`, `assert_bound_surface_temperature`, and\n  `maybe_infer_solar_position` move unchanged; the single-column grid alias\n  reuses `CelestialMechanics.SingleColumnGrid`, which already spells the same\n  `RectilinearGrid{<:Any, <:Flat, <:Flat, <:Bounded}`.\n- `resolve_surface_albedos` replaces the albedo-keyword block that the gray,\n  clear-sky and all-sky constructors each carried a copy of.\n- `initialize_cos_zenith!` and `update_cos_zenith!(cos_zenith, sp, grid, clock)`\n  take the per-column array directly instead of a shortwave solver, so the\n  RRTMGP extension passes `solver.bcs.cos_zenith`; `compute_datetime` and the\n  clock/epoch validation move with them. Non-kernel helpers drop their\n  underscore prefix (`validate_datetime`, `validate_diurnal_clock`,\n  `update_apparent_zenith!`) per the naming convention.\n- New boundary-face helpers `bottom_/top_face_pressure` (hydrostatic over the\n  half cell) and `bottom_/top_face_temperature` (linear extrapolation from the\n  two nearest centers) for column solvers that must not read the halo.\n\nCelestialMechanics is now included before AtmosphereModels so the solar\nposition code can call `cos_solar_zenith_angle`. Pure refactor: no radiative\nresult changes. Unit tests cover the promoted helpers; the two radiation tests\nthat reached into the extension now use the AtmosphereModels names.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Add ecCKD optics types and the column extension above the grid top\n\nBackend-agnostic types consumed by the forthcoming NumericalRadiation\nextension, defined in src so they work (and are documented) without it:\n\n- `EcCKDOptics{M, C}`: selects the ecCKD gas optics model (a reference\n  selector, a pair of definition files, or a preloaded model) and optional\n  `CloudScatteringTables` for all-sky radiation. Without the extension the\n  `RadiativeTransferModel` constructor raises an `ArgumentError` naming the\n  packages to load (NumericalRadiation and NCDatasets).\n- `ColumnExtension{FT, T, Q, O}`: the atmosphere above the grid top that a\n  column solver appends so the downwelling fluxes at the domain top include\n  stratospheric emission and ozone absorption. Layers are geometrically\n  stretched from a first layer as thick as the grid's top layer, with the\n  ratio solved by bisection (`geometric_stretching_ratio`) so the stack\n  lands on `top` (`column_extension_faces`); no layers are added when the\n  grid already reaches `top`. The temperature profile is anchored to the\n  grid-top temperature with an exponential decay over `blending_height`.\n- `standard_atmosphere_temperature`: the U.S. Standard Atmosphere 1976,\n  piecewise linear through its seven layers between 0 and 86 km and held\n  constant above; `standard_specific_humidity`: 10 g/kg decaying with a\n  2.5 km scale height to a 3 mg/kg stratospheric floor.\n\nBoth profiles thread the float type of their argument. Tests cover the ISA\nlayer bases and lapse rates, the geometry (monotone, geometric, exact top\nface, zero layers when the grid reaches `top`), `show`, and the fallback\nerror; docstrings carry `jldoctest` show blocks.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Wire NumericalRadiation into the package and test environments\n\nDeclare NumericalRadiation as a weak dependency of Breeze with the\nBreezeNumericalRadiationExt extension, and add it to the test, docs and\nexamples projects, pinned to the glw/breeze-coupling branch through a\n[sources] entry until the package is registered. The test runner installs\nthe lazy ecrad_data artifact (the ecCKD coefficient tables) up front, as\nit does for the P3 lookup tables, and the quality-assurance test loads\nNumericalRadiation and NCDatasets so Aqua and ExplicitImports analyse the\nnew extension alongside the RRTMGP one.\n\nThe RadiativeTransferModel show method is split into a reusable summary\n(everything up to the diffuse albedo line) so a backend with more to\nreport can append its own lines without duplicating the tree; the output\nfor the existing models is unchanged.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Add the NumericalRadiation extension with a host-loop ecCKD update\n\nRadiativeTransferModel(grid, EcCKDOptics(), constants; ...) now builds a\nfull-spectrum clear-sky radiation model solved column by column with\nNumericalRadiation's ecCKD gas optics. The extension stages every column\nof the grid into top-down SpectralColumns arrays (kernel A: layer and\ninterface pressure and temperature, molar amounts of dry air, water vapor\nand ozone, cloud water paths; boundary faces extrapolated from the\nadjacent cells rather than read from the halo), stacks the ColumnExtension\nabove the grid top (kernel B: the temperature profile anchored to the\ngrid's top face with an exponential decay, hydrostatic interface pressures\nwith the virtual temperature, log-mean layer pressures, and the moist\nmolar-mass gas amounts n_dry = Δp / (g (Mᵈ + Mᵛ χ)), n_h2o = χ n_dry), and\ncopies the solved fluxes back with Breeze's positive-upward sign\nconvention (kernel D). The per-column solve is a CPU host loop over\nNumericalRadiation's array optical_properties! and cloudless\nradiative_fluxes!, with the surface emission ε B_g(T_s) per g point and\n1 - ε as the longwave surface albedo; the column kernels replace it in the\nnext step.\n\nThe constructor takes the keyword surface of the RRTMGP all-sky\nconstructor plus column_extension, rejects background gases the ecCKD\ntables do not carry and non-constant effective radius models, and reports\na missing NCDatasets in its own terms.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Test the ecCKD radiation model\n\nConstruction errors (albedo keywords, unsupported gases, variable effective\nradii, all-sky optics, a background ozone field), concrete field types, the\nstaged columns (grid cells and boundary faces, dry-mass closure, the\nhydrostatic extension pressures against a host recomputation, the\nmoist-molar-mass gas amounts, the temperature anchor), flux signs, surface\nreflection, column energy closure, the top-of-atmosphere identities without\nan extension, the effect and convergence of the extension, a night column,\nthe apparent-sun path, several columns against single-column runs bit for\nbit, and scheduling. Both radiation extensions are loaded in one session.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Solve the ecCKD columns in a kernel with the streaming solvers\n\nReplace the host loop over NumericalRadiation's array optics and solvers\nwith one column kernel: per column it builds the gas optics stencils and\nPlanck brackets once per layer, then streams every g point through\n`streaming_longwave_fluxes!` (no-scattering, ecRad half-level Planck\nsources, surface reflection `1 - ε`) and `streaming_shortwave_fluxes!`\n(two-stream adding with Rayleigh scattering) on views of the column's\nrows. The layer optics are two concretely typed functors reading the\nstaged arrays and calling the scalar layer API, with cloud phases folded\nin through dispatch (`nothing` adds nothing), so all-sky optics are an\nadditive change. Night needs no branch: the irradiance `S₀ max(μ₀, 0)`\nis zero and the shortwave fluxes vanish.\n\nRayleigh scattering uses the staged molar amount of air, dry air plus\nwater vapor, rather than the hydrostatic `Δp / (g Mᵈ)` of the array\npath, since the staged amounts are the layer's actual mass. The tables\nare read in the grid's float type, and a preloaded gas optics model is\nconverted to it, so Float32 grids run Float32 optics throughout.\n\n`host_update.jl` keeps `column_atmosphere` as the host view of a staged\ncolumn for the round-trip test against the array path.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Test the ecCKD kernel against a gray column and the array path\n\nA one-g-point gray gas optics model turns the column kernel into a gray\nsolver with closed forms: an isothermal column emits σT⁴ upward and\nσT⁴ (1 - e^{-1.66 τ}) downward at every face, the shortwave beam obeys\nBeer–Lambert with the two-stream diffuse return e^{-2τ}, and the flux\ndivergence follows from the analytic face fluxes, all at rtol 1e-12\n(200 eps in Float32) including the boundary cells; a linear temperature\nprofile converges at second order, and night zeroes the shortwave\nwithout touching the longwave. The column is made isothermal by one\nfixed-point step of set!, since the temperature is linear in θ.\n\nThe round trip runs NumericalRadiation's array optical_properties! and\nradiative_fluxes! on the host view of a staged column and matches the\nkernel's four ZFaceFields bitwise in both float types, with the Rayleigh\nair amount of the reference set to the kernel's `n_dry + n_h2o`\n(the array path's hydrostatic Δp/(g Mᵈ) differs by 1e-4).\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Test the column extension on a BOMEX-like column and the kernel identities\n\nMove the flux gates of the ecCKD model onto a BOMEX-like 3 km, 32-layer\ncolumn in their own test file: the bare grid radiates to space, the\nextension emits 227 W m⁻² downward at the grid top and removes 132 W m⁻²\nof sunlight (66 water vapor, 51 Rayleigh and well-mixed gases, 14 ozone\non the μ₀ = 0.5 slant path), warms the top four cells by more than\n0.5 K day⁻¹, and doubling its layers or raising its top from 65 to\n80 km moves the grid-top fluxes by hundredths of a W m⁻². The upper\nbound on the shortwave effect was raised once from 120 to 150 W m⁻²\nafter decomposing the observed 132 into its physical parts. Float32\nfluxes agree with Float64 within 1 W m⁻².\n\nThe ecCKD model test keeps the surface longwave identity\n`ℐ_lw_up[1] = ε Σ w B_g(Tₛ) + (1 - ε) ℐ_lw_dn[1]`, the energy closure,\nand adds the allocation-scaling check: one and 64 columns allocate the\nsame within 1 KiB, so the kernel allocates nothing per column. A\npreloaded gas optics model is now converted to the grid's float type.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Compare ecCKD with RRTMGP clear sky and schedule the ecCKD optics\n\nBoth extensions solve the same 60-layer, 15 km clear-sky column on\nseparate AtmosphereModels with identical profiles. Observed against\nRRTMGP: OLR +3.10, surface longwave down -2.52, surface shortwave down\n+1.85, TOA shortwave up -0.28 W m⁻², heating RMSE 0.14 and maximum\n0.41 K day⁻¹ over the interior cells, and 2×CO₂ forcings of 4.97 versus\n5.01 W m⁻² at the top and 0.90 versus 0.86 at the surface. The OLR gate\nwas raised once from 3 to 3.9 W m⁻²: the offset is independent of the\nvertical resolution, persists in a much drier column and leaves the CO₂\nforcing agreement untouched, so it is the spread of the two gas-optics\nmodels rather than a staging error. The ecCKD update takes 0.3 ms per\ncolumn against 3.4 ms for RRTMGP on this machine.\n\nThe scheduling tests run over both `GrayOptics` and `EcCKDOptics`.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Add all-sky ecCKD radiation with cloud scattering tables on the g points\n\n`EcCKDOptics(clouds = CloudScatteringTables())` now builds an all-sky\nradiation model. The extension reads the Mie droplet and Baum\ngeneral-habit-mixture ice scattering tables from the ecRad data (or a\npath to a table in that format), maps them onto the longwave and\nshortwave g points of the selected gas model's ecCKD definition files\nwith NumericalRadiation's `SpectralCloudOptics` at the constant\neffective radii of the model, and moves the four phase-by-region optics\nto the grid's architecture in its float type. The layer optics functors\nalready fold the staged liquid and ice water paths through\n`add_scattering_layer` (shortwave, into the two-stream scattering) and\n`cloud_absorption_optical_depth` (longwave, absorption only), so the\ncolumn kernel is unchanged: a `nothing` phase adds nothing and the\nall-sky model reproduces the clear-sky fluxes bit for bit when there is\nno condensate.\n\nCloud optics need the definition files, so a preloaded gas optics model\ncannot take clouds and raises an `ArgumentError`, as does an unknown\ntable selector or a g-point count that does not match the gas model.\n\nTests: a 500 m cloud of 0.5 g/kg liquid at 1-1.5 km (prescribed exactly\nthrough a held prognostic cloud liquid) cuts the surface shortwave from\n490 to 82 W/m^2, raises the surface longwave by 91 W/m^2, reflects 350\nW/m^2 more to space and cools at its top; the cloud base is close to\nblack; 5 um droplets reflect 30% more than 20 um ones; the ice radius\ndoes not matter without ice; column energy closure and allocation\nscaling hold with clouds; Float32 agrees with Float64. Against RRTMGP's\n`AllSkyOptics` on the same cloud the boundary fluxes agree to 5.4, 1.5,\n0.3 and 4.9 W/m^2 (within twice the clear-sky spread), the heating of\nthe clear cells stays at the clear-sky spread, and the cloud-top cell,\nwhere the two cloud optics set the ~35 K/day longwave cooling and ~10\nK/day shortwave heating themselves, agrees to 15%; both models apply\nthe delta-Eddington scaling exactly once.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Compare ecCKD with RRTMGP in the single column radiation example\n\nAdd clear-sky (420 and 840 ppm CO₂) and all-sky ecCKD radiation models\nthrough the NumericalRadiation extension next to the RRTMGP ones, and plot\nthem on the same flux and heating-rate panels (colors for the scenario,\nsolid versus dashed for the gas optics). The seven radiation models are\ncollected in a NamedTuple so that the atmosphere models, initial condition,\nplotting and boundary-flux table are written once.\n\nThe initial profile was a 300 K dry adiabat to 20 km, which reached 107 K\nat the top of the domain and saturated the whole column above 1.4 km, so no\nfull-spectrum comparison was meaningful there. It is replaced by a tropical\nprofile with a 6.5 K/km lapse rate to a 196 K tropopause at 16 km and a\ndeliberate 1–2 km cloud layer, and the clock moves to local noon so that\nthe shortwave panel carries signal.\n\nThe prose records the observed differences: the two gas optics agree to a\nfew W/m² in the boundary fluxes and to 0.19 K/day (rms) in the clear-sky\nheating below 17 km, while the ecCKD column extension supplies the 6 W/m²\nof stratospheric longwave on the top face and absorbs the ultraviolet\nsunlight above 20 km that the RRTMGP models deposit in their top cells.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Run the radiative convection example with ecCKD all-sky optics\n\nSwitch the diurnal radiative convection example from RRTMGP's AllSkyOptics\nto EcCKDOptics(clouds = CloudScatteringTables()), solved by the\nNumericalRadiation extension. The prose now describes the ecCKD gas optics\nand the column extension that carries the radiation column from the 15 km\ngrid top (the grid was described as reaching 25 km; it never did) to 65 km,\nwhere the tropical ozone profile's 25 km peak is evaluated as well.\n\nVerified with a CPU Float32 smoke run at Nx = 16 for five time steps: the\nall-sky ecCKD model constructs on the stretched grid and all four flux\nfields and the flux divergence stay finite.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Document ecCKD radiation and include the NumericalRadiation extension in the docs\n\nAdd an \"ecCKD radiation with NumericalRadiation.jl\" section to the radiative\ntransfer page: the constructor (an @example building a model), the column\nextension above the grid top and when to disable it, the eight tabulated\ngases and the rejected ones, the cloud scattering tables and constant\neffective radii, the sign and units conventions of the four flux fields\nwith and without an extension, and coexistence with the RRTMGP optics. The\npage intro and the landing-page feature bullet now name both backends\ninstead of RRTMGP alone.\n\ndocs/make.jl loads NumericalRadiation (qualified, since it exports its own\nThermodynamicConstants) and NCDatasets, installs the ecrad_data artifact\nbefore the build, and adds BreezeNumericalRadiationExt to the modules list\nand the generated API page. The RadiativeTransferModel doctest gains an\nEcCKDOptics model, showing the optics and column extension summary lines.\n\nVerified with a local docs build (Literate examples limited to the three\npages other pages link to) and with the doctests and quality_assurance\ntests.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Stage the ecCKD gas amounts in the dry column-amount convention\n\nThe staging kernels formed the composite (dry-air) amount in a moist\nconvention: kernel A removed the water from the layer mass,\nρ (1 - qᵛ - qˡ - qⁱ) Δz / Mᵈ, and kernel B divided the hydrostatic\nΔp / g by the moist molar mass Mᵈ + Mᵛ χ. The ecCKD tables were derived\nwith the \"dry\" convention of ecRad, n_composite = Δp / (g Mᵈ), the total\nlayer mass over the dry molar mass with the water vapor counted on top\nof it; NumericalRadiation's CKDMIP and RFMIP validation passes its gates\nonly in that convention, and the moist form biases the surface\ndownwelling longwave by -0.2 W m⁻².\n\nKernel A now stages n_dry = ρ Δz / Mᵈ (h2o unchanged, ρ qᵛ Δz / Mᵛ),\nkernel B stages n_dry = Δp / (g Mᵈ) with n_h2o = χ n_dry, and the\nshortwave Rayleigh air amount is the composite amount alone, as in\nNumericalRadiation's array path (Δp / (g Mᵈ)), instead of composite +\nh2o which would count the vapor twice. Docstrings, the docs page and\nthe tests state the convention: the grid identity becomes\nΣ n_dry Mᵈ == Σ ρ Δz and the extension identity n_dry == Δp / (g Mᵈ).\n\nThe ecCKD-versus-RRTMGP differences move by hundredths of a W m⁻²\n(RRTMGP forms col_dry with the moist molar mass); the recorded observed\nvalues are refreshed and the OLR gate's comment now says the offset grows\nweakly with resolution (3.11, 3.27, 3.36 W m⁻² at Nz = 60, 120, 240)\nrather than calling it resolution-independent. No gate changes.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Copy staged columns to the host explicitly and fix scalar indexing in tests\n\ncolumn_atmosphere handed NumericalRadiation's host-only array path views\nof the column arrays and read the surface scalars and cos_zenith by\nscalar indexing, so the round-trip and staging tests, which build their\ngrids on default_arch, would error with \"scalar indexing is disallowed\"\non the CUDA CI runners. It now returns Array copies of the rows and\nreads the scalars under @allowscalar; the file is renamed from\nhost_update.jl to column_atmosphere.jl to match what it holds since the\nhost loop was removed.\n\nThe tests stop indexing device Fields and arrays on the host: the face\npressure and temperature helpers run under @allowscalar, the preloaded\ngas-optics table is compared as an Array, and the surface emission of\nthe identity test is evaluated on an adapt(Array, ...) copy of the gas\nmodel. The round-trip reference reads the surface albedos under\n@allowscalar.\n\nmaterialize_column_extension samples the extension in the grid's float\ntype rather than the ColumnExtension's, so a default ColumnExtension()\n(Float64) on a Float32 grid no longer puts Float64 vectors and scalars\ninto the column kernel; a test pins MaterializedColumnExtension{Float32}.\n\nThe gray-column and round-trip tests run both float types always\n(they are the tests that pin the Float32 kernel path), and the\nconvergence test asserts that every layer, the fine reference's\nincluded, stays above the solver's thin-layer branch.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Make the ecCKD fallback test order-independent and fix the loading hints\n\nThe \"Constructor without the extension\" testset assumed the\nNumericalRadiation extension was absent, but ParallelTestRunner reuses\nits workers across files, so a worker that had run any ecCKD test had\nthe extension active and the constructor succeeded instead of throwing.\nThe test now reaches the fallback method in src through invoke on its\nown signature, which works whichever methods are loaded, and only\nexercises the plain call (or skips it) depending on\nBase.get_extension(Breeze, :BreezeNumericalRadiationExt).\n\nEvery loading hint told users to run `using NumericalRadiation,\nNCDatasets`, which next to `using Breeze` makes ThermodynamicConstants\nambiguous because NumericalRadiation exports one too. The fallback\nArgumentError, the EcCKDOptics and RadiativeTransferModel docstrings and\nthe docs page now say `using NumericalRadiation: NumericalRadiation`\nand `using NCDatasets`, the form the examples and tests use; the RRTMGP\noptics docstrings name their backend and packages the same way.\n\nAlso: literal zero in the H2O guard of the stencil staging, no\nshadowing of Base.read in read_ecckd_tables, and the longwave\ncloud-scattering simplification is attributed to ecRad's\ndo_lw_cloud_scattering = false setting rather than to its default,\nwhich includes the scattering.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Fold cloud phases with NumericalRadiation's add_cloud_scattering_layer\n\nNumericalRadiation now provides add_cloud_scattering_layer with a\n`::Nothing` cloud no-op, the shortwave counterpart of\ncloud_absorption_optical_depth. The shortwave layer functor calls it\ninstead of the extension's own add_cloud_scattering wrapper, so the\nclear-sky and all-sky kernels share one code path with the no-op\ndispatched by the phase type, and the extension no longer imports\ncloud_layer_optics and add_scattering_layer.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Give the single column radiation example a tropical reference state\n\nThe example set a tropical temperature profile (300 K surface, 6.5 K/km\nto a 196 K tropopause, isothermal above) on a 300 K dry-adiabat\nReferenceState, whose temperature reaches 107 K at 20 km. Both radiation\nbackends read pressure and density from the reference state, so the\ncolumn they solved had about half the real stratospheric mass above\n12 km and a pressure of 2.7 kPa instead of 5.5 kPa at the grid top,\nwhere the ecCKD column extension starts its hydrostatic stack.\n\nThe reference state now follows the profile: the hydrostatic pressure of\nthe piecewise (power-law, exponential) temperature profile gives the\npotential temperature θᵣ(z) that ReferenceState integrates, and the\nreference temperature matches Tᵢ at every level. The prose numbers are\nrefreshed from the rerun: the ecCKD models now receive 10.2 W m⁻² of\nlongwave on the top face (11.5 with doubled CO₂), the surface shortwave\nis 8 W m⁻² lower in the ecCKD models because the stratosphere above the\ngrid absorbs before the beam enters the domain, the 2×CO₂ OLR reductions\nare 4.1 (RRTMGP) and 4.0 (ecCKD) W m⁻², and the cloud-top value is named\nwhat it is, the net radiative cooling at local noon.\n\nradiative_convection.jl divided the dry-air heat capacity, already in\nJ/(kg K), by the molar mass in its stratospheric sponge, making the\nrelaxation about 34 times stronger than the stated 6 h timescale; the\ndivision is removed.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Adapt the ecCKD extension to NumericalRadiation's renamed API\n\nNumericalRadiation (glw/breeze-coupling) now takes the float type as a\npositional `FT` in the Oceananigans style, spells water vapor out in its\nidentifiers, and threads physical constants instead of fixing them:\n\n* `read_reference_ecckd_gas_optics(FT, selector; names)`,\n  `read_ecckd_tabulated_gas_optics(FT, longwave, shortwave; names)` and\n  `SpectralCloudOptics(FT, table, mapping; effective_radius)` replace the\n  removed `float_type` keyword.\n* `GasOpticsStencil.h2o` is `water_vapor`.\n* `ColumnAtmosphere` carries `constants`, which `optical_properties!` reads\n  for the hydrostatic air amount. `column_atmosphere(rtm, model, i, j)` now\n  takes the `AtmosphereModel` the column was staged from and hands\n  NumericalRadiation a `PhysicalConstants` built from the model's\n  `ThermodynamicConstants` (gravity, heat capacity, molar masses, gas\n  constants), the gas model's Stefan–Boltzmann constant and the solar\n  constant, so the array path and the kernels see the same values.\n* Kernel B forms the extension's dry-air amount with the exported\n  `hydrostatic_air_moles(Δp, g, mᵈ)` and the dry-air gas constant with\n  Breeze's `dry_air_gas_constant`.\n\nThe same review rules are applied to the extension itself: field docstrings\nmove out of the struct definitions into a `Fields:` list of the type\ndocstring (`TYPEDFIELDS` is no longer imported), the stencil and flux\nfields of `SpectralColumns` get full names (`pressure_index`,\n`water_vapor_weight`, `source_index`, `longwave_up`, `shortwave_down`, …),\n`ig`/`ng_lw`/`ng_sw` become `gpoint`/`Nlongwave_gpoints`/`Nshortwave_gpoints`,\n`n_dry`/`n_h2o`/`n_o3` become `dry_air_moles`/`water_vapor_moles`/`ozone_moles`,\n`liquid_lw` and friends become `longwave_liquid`, the molar masses follow\nnotation.md (`mᵈ`, `mᵛ`) and the virtual temperature is `Tᵛ`.\n\nTests follow the renames; the gray-column and all-sky tests read the\nStefan–Boltzmann constant from the gas model instead of a literal, the\nstaged-column test checks the constants of the host column atmosphere, and\n`S0`/`μ0` are `S₀`/`μ₀`. The radiative transfer docs name where the constants\ncome from. Every recorded flux and gate is unchanged: these are renames.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Name the shortwave layer asymmetry factor ĝ as NumericalRadiation does\n\nNumericalRadiation writes the asymmetry factor as ĝ, since g is gravity in\nBreeze's notation, and documents the shortwave layer-optics contract as\n(τ_absorption, τ_scattering, ĝ). The ShortwaveLayerOptics functor still\ncalled its local `asymmetry`; rename it so the extension and the package\nread the same way. Pure rename, no behavior change.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Adopt NumericalRadiation's g, Ngˡʷ/Ngˢʷ and 𝒢 notation in the radiation extension\n\nA pure rename with every numerical result bitwise unchanged, matching the\nnotation NumericalRadiation now uses (NumericalEarth/NumericalRadiation.jl\nglw/breeze-coupling, 33e6adc):\n\n* The g-point index `gpoint` becomes `g`, so the layer-optics functors\n  `LongwaveLayerOptics` and `ShortwaveLayerOptics` are called as `(g, k)`\n  and the round-trip test loops read `for g in 1:Ngˢʷ`. The\n  cumulative-probability coordinate of the correlated-k method is literally\n  g; gravity is still `g` in the column-staging kernels, which never have a\n  g-point loop in scope.\n* The counts `Nlongwave_gpoints`/`Nshortwave_gpoints`/`Ngpoints` become\n  `Ngˡʷ`/`Ngˢʷ`/`Ng`, the short Oceananigans capital-N form.\n* The shortwave layer asymmetry factor `ĝ` becomes `𝒢` (U+1D4A2), because\n  `g` is the g-point index and `γ` is the two-stream coefficient family.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Adapt the radiation extension to NumericalRadiation's one-register notation\n\nNumericalRadiation renamed ShortwaveColumnScratch.direct_transmittance to\ndirect_flux, so the shortwave scratch key of SpectralColumns and the view\ncolumn_scratch hands to the solver follow. The layer optics functors name\ntheir tuples as NumericalRadiation's streaming column API now prescribes:\n(τ, Bₖ, Bₖ₊₁) for the longwave and (τₐ, τₛ, 𝒢) for the shortwave, with the\ninterface temperatures Tₖ, Tₖ₊₁ and the water paths Wˡ, Wⁱ from its\nnotation table.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Run the round-trip array-path reference on a host copy of the gas model\n\n`array_path_fluxes` hands NumericalRadiation's host-only `optical_properties!`,\n`rayleigh_optical_depth` and `surface_longwave_emission` the solver's gas model,\nwhose tables live on the grid's architecture; on GPU that indexes a CuArray\nfrom the host (`log_bracket` via `pressure_axis_bracket`). Adapt the gas model\nto `Array` first, as the ecCKD identities test already does. The columns were\nalready host copies through `column_atmosphere`.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Compare the round-trip kernel fluxes to the array path within Ng ulps\n\nOn GPU the column kernel's sums over g-points are fused and reordered, so\nits fluxes differ from the host array-path reference by a few Float32 ulps\n(up to about ten in the longwave-down sum over 32 g-points). Replace the\nfour bitwise comparisons with `≈` at `rtol = Ng * eps(FT)`, Ng being the\ng-point count of the loaded ecCKD model.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Cap Aqua below 0.8.17 in the test environment\n\nAqua 0.8.17 builds the persistent-tasks wrapper manifest by walking each\ndependency's own Project.toml `[deps]` and locating every entry in the\nenvironment. SpecialFunctions lists ChainRulesCore in both `[deps]` and\n`[weakdeps]`, so Pkg treats it as weak and it is not in the manifest, and\nthe check errors with \"Unable to locate `ChainRulesCore`\". Hold Aqua at\n0.8.16 so the check keeps running.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Add the GPU validation plan for ecCKD radiation\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Restore the default float type after the radiation tests that set it\n\nEach new radiation test file, and the radiation-helpers testset in unit_tests.jl,\nset Oceananigans.defaults.FloatType and left it changed; ParallelTestRunner\nreuses worker processes across files, so the next file inherited it. Save the\nvalue on entry and restore it on exit, as acoustic_substepping_stability.jl does.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Compare the RRTMGP and ecCKD formulations in the single column radiation example\n\nBuild the three ecCKD models with `column_extension = nothing` so that both\nformulations treat the 20 km grid top as the top of the atmosphere and every\ndifference is a difference in the optics. Add a figure of the ecCKD minus RRTMGP\nflux and heating-rate profiles for the three scenarios, a table of the boundary\nfluxes and the 2×CO₂ forcing per formulation with their differences, and rewrite\nthe prose from the run: the clear-sky boundary fluxes agree to 2 W/m², the CO₂\nforcing to 0.1 W/m², and the cloud-top cooling differs (11.0 versus 13.6 K/day)\nbecause the cloud optics differ in kind. The column extension moves to its own\nclosing section, with one extended clear-sky ecCKD model against the\nno-extension one. Drop the gray optics model, which has no ecCKD counterpart and\ntook part in no comparison.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Apply batched suggestions from code review\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Add radiation update GPU benchmark\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Count nested GPU storage in radiation benchmarks\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Handle partially initialized GPU benchmark objects\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Use the registered NumericalRadiation release\n\nNumericalRadiation 0.1.0 is now in the General registry, so the test, docs\nand examples environments no longer pin it through [sources].\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Update test/column_extension.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update test/numerical_radiation_column_extension.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update test/numerical_radiation_all_sky.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update test/numerical_radiation_column_extension.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update test/unit_tests.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Update test/ecckd_radiative_transfer.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Read model fields directly in the ecCKD column kernel\n\nThe NumericalRadiation extension staged a top-down copy of every column\n(pressure, temperature, gas amounts, water paths, interface values and\ngas-optics stencils) into per-column arrays, solved into its own flux\narrays, and copied the fluxes back onto the flux fields: about 30\ngrid-field equivalents of per-column storage, as much as RRTMGP.\n\nNow the layer optics compute each layer's state from the model's fields\non the fly (and the gas-optics stencils and Planck brackets from it), the\nsolvers accumulate directly into the radiation model's ZFaceFields, and\nthe only per-column storage is the solvers' scratch (shared by the\nlongwave and shortwave solutions) plus the column extension's pressures:\n7.8 grid-field equivalents with the extension, 4.6 without.\n\n- Interface temperatures interpolate the halo-filled temperature with\n  ℑzᵃᵃᶠ; the top face can no longer overshoot (a hot top cell had raised\n  OLR by 18 W m⁻² through linear extrapolation), and the bottom face\n  continues the resolved surface-layer gradient with ∂zᶜᶜᶠ.\n- The flux divergence uses ∂zᶜᶜᶜ of the net flux.\n- The extension's anchor weights are sampled once, and its layer and\n  interface vectors carry separate types (as the workspace's do) for\n  Reactant.\n- adapt_structure is type-stable, so kernel launches no longer allocate.\n- The radiation tests share one column grid helper.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Cache per-layer state in a pre-pass and solve columns in batches\n\nThe direct column kernel recomputed each layer's gas-optics stencil, gas\namounts and interface temperatures for every g point, which made the\nradiation update 1.5-2x slower than the staged design. A layer pass, one\nwork item per (column, layer), now stores these once, and the column\nkernel only does table lookups per g point. Fluxes are still accumulated\ndirectly into the flux fields and the model's fields are still read\ndirectly.\n\nColumns can be solved in batches of whole grid rows (`columns_per_batch`),\nwhich caps the per-column storage at one batch. The default is one batch\nof the whole grid: on a GPU every batch is a separate launch of a\nregister-limited kernel, so smaller batches cost time.\n\nThe fluxes are bit-for-bit identical to the direct kernel; the update is\nas fast as the staged design on CPU and on an A100 (whole-grid batch),\nwith about 30% less memory than the staged design.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Address review: tighter test assertions, no printing, drop ecCKD validation notes\n\n- Apply the suggested `all(predicate, collection)` forms and the array\n  `isapprox` for the geometric extension thicknesses\n- Compare the Float32 and Float64 fluxes to 100 eps(Float32) relative\n  instead of 1 W m⁻² absolute; they agree to about 2e-6\n- Stop printing tables and timings from the RRTMGP comparison and the\n  all-sky tests\n- Remove validation/ecckd_radiation, which documented work in progress\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Hoist flux column signs out of the kernel's closures for Julia 1.11\n\nA closure capturing `FT` stores it as a `DataType` field, which Julia 1.11\ndoes not infer through: the flux columns' types were unknown, the streaming\nsolver calls were dynamic, and every column boxed its layer optics. This\nbroke the allocation scaling tests on Julia min.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Construct the flux columns directly instead of through closures\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Address review: one ColumnExtension type, kernel-form accessors, constants\n\n- Merge MaterializedColumnExtension into ColumnExtension: the sampled layers\n  are `nothing` until a radiation model materializes the extension on its grid.\n  Samples use grid notation (`Δzᵃᵃᶜ`, `zᵃᵃᶜ`) and Breeze's symbols (`T`, `qᵛ`,\n  `O₃`); `base` becomes `bottom` and `join_temperature` becomes\n  `profile_temperature_at_bottom`.\n- Interpolate the extension's interface temperatures linearly in height from\n  its anchored layer temperatures, and compute the anchor weight inline. This\n  drops the interface temperature and both anchor weight vectors, and changes\n  the downwelling longwave by at most 0.02 W m⁻².\n- Profiles are a number or a function of height through one `profile_value`,\n  and the extension's ozone falls back to the background's by dispatch.\n- ColumnState carries the model's ThermodynamicConstants instead of copies.\n- Accessors take kernel-function form, `f(i, j, k, grid, ...)`, and the\n  workspace getters take their indices first.\n- Breeze-side gas names use subscripts (`CO₂`, ...); `layer_gas_amounts` is\n  the one place they map to the ecCKD table names, and the host column reuses it.\n- Rename the workspace's `temperature_interfaces` to `interface_temperatures`.\n- Move `adapt_structure` for ColumnExtension into src, next to the type.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Validate the solar position clock once; drop field strings from structs\n\n- The radiation's solar position is checked against the model clock once, in\n  the AtmosphereModel constructor, instead of on every radiation update.\n- Move the field descriptions of CloudScatteringTables, EcCKDOptics and\n  ColumnExtension from strings in the struct definitions into their docstrings.\n- Note why Oceananigans' ExponentialDiscretization does not yet replace the\n  extension's geometric stretching.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Rename ColumnExtension to OverlyingAtmosphereColumn\n\nThe type describes the atmosphere column lying over the resolved grid, which\nradiation solves on top of it. The RadiativeTransferModel keyword\n`column_extension` becomes `overlying_atmosphere`, `column_extension_faces`\nbecomes `overlying_atmosphere_faces`, and the files and tests follow. The\ninternal vocabulary of the extended column (`Nₑ`, `extension_pressure`,\n`extension_layer_state`) is unchanged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Remove the radiation-only update benchmark\n\nRadiation is nearly independent of the rest of Breeze, so timing its update\nalone says little; radiation belongs in the integrated benchmarks instead.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Cap the GPU test jobs by memory as well as cores\n\nThe GPU runners ran 14 test jobs on 59 GB, about 4 GB each, and the Julia 1.11\njob ran out of memory twice when the Reactant compilations (7.7 GB, beyond the\nrecycling threshold, which applies only between test files) overlapped with\nthe microphysics suites. Budget about 5 GB per job: 11 on these runners.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Keep the radiation and the 2D radiation example in the grid's precision\n\nMetal has no Float64, and these Float64 values reached its kernels:\n- the zenith cosine of `ApparentSolarPosition` with a coordinate, and of\n  `DiurnalSolarPosition`, broadcast into the Float32 `cos_zenith`;\n- the literals of `standard_ozone_profile` and of the example's ozone profile,\n  which the radiation kernels evaluate;\n- the example's sponge relaxation time and heat capacity.\n\nWith these, the radiation of `radiative_convection.jl` runs on Metal.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-10-19T17:50:57-06:00",
+          "tree_id": "3e7b8644f6c1ae9590c0883d437742aee8abdabe",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/ea63a7d58480284a3236af86313760dc18650cfa"
+        },
+        "date": 1792456521268,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/MixedPhaseEquilibrium",
+            "value": 125118938.62495801,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedEquilibrium",
+            "value": 73161026.74617371,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/1M_MixedNonEquilibrium",
+            "value": 53921711.57689357,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [256, 256, 128]",
+            "value": 138893829.8727232,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/256x256x128",
+            "value": 138893829.8727232,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]/Advection: WENO5/NVIDIA L4/nothing",
+            "value": 130210682.25693431,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [512, 512, 256]",
+            "value": 130210682.25693431,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 130210682.25693431,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO5 [768, 768, 256]",
+            "value": 115060683.15855622,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/768x768x256",
+            "value": 115060683.15855622,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [256, 256, 128]",
+            "value": 94637560.36089818,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/256x256x128",
+            "value": 94637560.36089818,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [512, 512, 256]",
+            "value": 88015629.47949943,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/512x512x256",
+            "value": 88015629.47949943,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Compare advections/NVIDIA L4/WENO9 [768, 768, 256]",
+            "value": 78227370.20801656,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: anelastic; Microphysics: nothing [Float32]/Advection: WENO9/NVIDIA L4/768x768x256",
+            "value": 78227370.20801656,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/vanilla 256x256x128",
+            "value": 61052368.575625464,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_explicit; Microphysics: 1M_MixedNonEquilibrium [Float32]/Compare backends/NVIDIA L4/reactant 256x256x128",
+            "value": 19397531.06043232,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_2",
+            "value": 5916966.323233621,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_4",
+            "value": 7463005.478587532,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; AD; Dynamics: compressible_explicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/128x128x32 binomial_8",
+            "value": 8017253.18771771,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Advection: WENO5/NVIDIA L4/512x512x256",
+            "value": 28425797.92765792,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 1065237959.9125036,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 1108640771.1816583,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 1396292901.3106525,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 784079620.8606733,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 49571490.899371155,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 929975730.1465459,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 574814541.3931563,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 17104844.02987131,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ModelTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 656102420.8956447,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 vanilla",
+            "value": 6771020032.035105,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=true",
+            "value": 9277555539.088879,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/F32 reactant raise=false",
+            "value": 8728749927.161634,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 vanilla",
+            "value": 5256593343.219803,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=true",
+            "value": 9190195206.28236,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO5/NVIDIA L4/BF16 reactant raise=false",
+            "value": 6327605610.854814,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 vanilla",
+            "value": 4727897512.523373,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=true",
+            "value": 5202221388.460811,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/F32 reactant raise=false",
+            "value": 5559349441.553854,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 vanilla",
+            "value": 3146411364.905516,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=true",
+            "value": 4900036683.357204,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO7/NVIDIA L4/BF16 reactant raise=false",
+            "value": 3553356636.602851,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 vanilla",
+            "value": 3478689471.8811865,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=true",
+            "value": 97214073.0279727,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/F32 reactant raise=false",
+            "value": 3786410983.5875406,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 vanilla",
+            "value": 1661730506.650529,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=true",
+            "value": 204570168.21287063,
+            "unit": "points/s",
+            "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
+          },
+          {
+            "name": "ScalarTendency; Grid: 256x256x128/Advection: WENO9/NVIDIA L4/BF16 reactant raise=false",
+            "value": 2310436477.7927184,
             "unit": "points/s",
             "extra": "Oceananigans v0.114.0, CUDA vunknown, GPUCompiler vunknown, Reactant v0.2.292, Reactant_jll v0.0.418+0"
           }
