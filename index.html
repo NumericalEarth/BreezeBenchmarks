@@ -508,7 +508,12 @@
               datasetIndex++;
             }
 
-            const yAxisLabel = "Grid points/s";
+            const unit = graphData.values().next().value[0].bench.unit;
+            const timeUnits = ["ns", "us", "μs", "ms", "s", "min", "h"];
+            const yAxisLabel =
+              unit === "points/s" ? "Grid points/s" :
+              timeUnits.includes(unit) ? `Time (${unit})` :
+              unit;
             const options = {
               legend: {
                 display: true,
@@ -539,7 +544,7 @@
                       callback: function (value, index, values) {
                         // Format as regular numbers with appropriate precision
                         if (value === 0) return "0";
-                        return value.toExponential(2);
+                        return unit === "points/s" ? value.toExponential(2) : value.toPrecision(3);
                       },
                     },
                   },
@@ -577,7 +582,7 @@
                     const datasetIndex = item.datasetIndex;
                     const variantName = variantIndices.get(datasetIndex);
                     let label = variantName + ": " + item.value;
-                    label += " points/s";
+                    label += " " + unit;
                     return label;
                   },
                   afterLabel: function (item) {
@@ -719,8 +724,15 @@
           }
 
           const main = document.getElementById("main");
-          const dataSet = dataSets[0].dataSet;
-          const benchmarkNames = [...dataSet.keys()].sort();
+          const dataSet = new Map();
+          const benchmarkNames = [];
+          for (const suite of dataSets) {
+            const suiteNames = [...suite.dataSet.keys()].sort();
+            for (const benchmarkName of suiteNames) {
+              dataSet.set(benchmarkName, suite.dataSet.get(benchmarkName));
+              benchmarkNames.push(benchmarkName);
+            }
+          }
 
           // Create table of contents
           createTableOfContents(benchmarkNames, main);
