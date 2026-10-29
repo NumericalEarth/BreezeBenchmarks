@@ -345,6 +345,12 @@
         // Keep track of created charts so they can be destroyed on re-render
         const activeCharts = [];
 
+        // Commit datetime in milliseconds since epoch (timestamps carry a
+        // timezone offset, so compare parsed values rather than strings)
+        function commitTime(commit) {
+          return Date.parse(commit.timestamp);
+        }
+
         function collectBenchesPerTestCase(entries) {
           const map = new Map();
           for (const entry of entries) {
@@ -390,7 +396,7 @@
           const data = window.BENCHMARK_DATA;
           return Object.keys(data.entries).map((name) => {
             const entries = [...data.entries[name]]
-              .sort((a, b) => a.date - b.date) // Oldest first
+              .sort((a, b) => commitTime(a.commit) - commitTime(b.commit)) // Oldest commit first
               .slice(-maxCommits); // Keep only the most recent commits
             return { name, dataSet: collectBenchesPerTestCase(entries) };
           });
@@ -457,7 +463,7 @@
               for (const result of variantData) {
                 allCommits.set(result.commit.id, {
                   id: result.commit.id,
-                  date: result.date,
+                  date: commitTime(result.commit),
                   commit: result.commit,
                 });
               }
