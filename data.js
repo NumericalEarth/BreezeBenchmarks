@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793394912354,
+  "lastUpdate": 1793394915096,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -47264,6 +47264,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.804935097694397,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "46269622+masonlee277@users.noreply.github.com",
+            "name": "mason",
+            "username": "masonlee277"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1f553241e8c777db5b718291740494bf8cbed691",
+          "message": "Borrow between species in partial densities, without a round trip through q (#1005)\n\n* Borrow between species in partial densities, without a round trip through q\n\nEvery reservoir the species-borrowing correction moves mass between is a partial\ndensity, and `total_condensate_density` sums them with no density weighting. The\ncorrection nevertheless divided each one by the local density, transferred in\nmass-fraction units, and multiplied back.\n\nThose two steps cancel exactly in real arithmetic but not in floating point:\n`ρ * (ρq / ρ)` does not return `ρq`. So a deficit that its donors fully cover\nsettled near zero rather than on it, and a donor drained to empty could be\npushed slightly below zero — the routine whose postcondition is \"no negative\npartial densities\" was leaving new ones behind, in fields that had been strictly\npositive. The result also depended on the reference density and was not\nidempotent.\n\nOver 400k randomized cells, 7.6% kept a spurious negative in Float32 (worst\n-9.3e-10 kg/m³) and 2.3% had a donor driven negative; both are zero after this\nchange, and bitwise-exact conservation gets more frequent rather than less.\n\nTransferring directly in partial densities removes the conversion, so `ρ` is no\nlonger read anywhere in the same-level chain and is dropped from it. Vertical\nborrowing still takes `ρ₀`, so the kernel signature is unchanged.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Zero the vertical deficit exactly too, and drop the density it no longer needs\n\nThe vertical phase had the same defect the species phase did, and runs after it,\nso it had the final say on the sign of the vapor density:\n\n    deficit = ifelse(qᵛ < 0, -ρqᵛ_k * Δz_k, zero(ρqᵛ_k))\n    ρqᵛᵉ[i, j, k] += deficit / Δz_k          # -> 0 when deficit > 0\n\n`ρqᵛ + fl(fl(-ρqᵛ Δz) / Δz)` is not zero unless Δz is a power of two, so the\nlevel this had just repaired kept a residual negative — the routine whose\npostcondition is that there are none emitting one on its last pass. The level\ngives up its whole deficit, so it is now assigned zero rather than having the\ndeficit added back. The bottom-level exchange gets the same treatment on its two\nsaturating cases: a fully funded recipient and a fully drained donor both land on\nzero.\n\nThe sign tests now read the partial density instead of dividing by ρ first. ρ is\npositive, so ρqᵛ and qᵛ always share a sign, and the division only cost a read of\nρ₀ and a divide — the same round trip this branch removes elsewhere, three lines\nbelow where it removed it. With those gone nothing in the correction needs the\ndensity, so `ρ₀` is dropped from `vertical_borrow!`, from\n`apply_vertical_correction!`, from the column kernel, and from\n`fix_negative_moisture!`.\n\nThe vertical test uses spacings and columns found by searching for cases the old\nformulation got wrong: it fails on 2 of 4 in Float32 and 3 of 4 in Float64\nbefore this change, and none after. With uniform Δz the multiply and divide\ncancel exactly and nothing is detectable, which is why the first draft of this\ntest passed against the old code.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Shorten the comments to describe only the code that is there\n\nCo-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Mason Lee <masonlee942@gmail.com>\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-30T14:24:37-06:00",
+          "tree_id": "26a8100145c5e2a136481159d2a3e2ddeb8b74d0",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/1f553241e8c777db5b718291740494bf8cbed691"
+        },
+        "date": 1793394914306,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.987159252166748,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.985272765159607,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.8816003799438477,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.849992036819458,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.7356554269790649,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.7306188344955444,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.585445761680603,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.5025535821914673,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.4400581121444702,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.3646165132522583,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.652807116508484,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.28091514110565,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 34.69590246677399,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 33.819788694381714,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 30.132952332496643,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 28.08818817138672,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 17.42502450942993,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.104217052459717,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.435286998748779,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.805888772010803,
             "unit": "ms/step"
           }
         ]
