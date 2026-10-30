@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793364035615,
+  "lastUpdate": 1793364037920,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -44800,6 +44800,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.804917216300964,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd7d348bc9339f67e3a4c167caf27c0872c57f0f",
+          "message": "Define θˡⁱ exactly from the enthalpy, with an expansion source (#1124)\n\n* Document the exact liquid-ice potential temperature\n\nFill in the empty \"Liquid-ice potential temperature\" section of the\nthermodynamics page with a top-down derivation of the new definition\nθˡⁱ = H / (ĉᵖ Π̂): the moist enthalpy and Kirchhoff latent heats, the\nvapor-equivalent properties, the closed-form inversion, the general\nprognostic equation for any state function χ(T, p, q) and its four\ncoefficients, why phase change needs no source, the expansion source on\nthe anelastic (exact) and compressible (hydrostatic estimate) cores,\nheating and boundary-flux conversions, the sedimentation content, the two\nExner-exponent choices, and what mixing and dissipation still leave\nunconserved. Relate the definition to Betts, Tripoli–Cotton and\nBryan–Fritsch and to the previous approximate definition.\n\nUpdate the governing-equation, anelastic, compressible, boundary\ncondition, radiation and microphysics developer pages for the new\nconversion factor 1 / (ĉᵖ Π̂), the expansion source, and the removed\nRᵐ/cᵖᵐ exponent; use θ₀ for the reference potential temperature on the\nanelastic page consistently with the notation appendix.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Define the liquid-ice potential temperature exactly from the enthalpy\n\nθˡⁱ = H / (ĉᵖ Π), H = cᵖᵐ T − ℒˡ₀ qˡ − ℒⁱ₀ qⁱ, with the vapor-equivalent\nheat capacity ĉᵖ = qᵈ cᵖᵈ + qᵗ cᵖᵛ and a modular Exner exponent\n(VaporEquivalentExponent, κ̂ = R̂ / ĉᵖ, the default; or DryExponent,\nκᵈ = Rᵈ / cᵖᵈ), selected by\nLiquidIcePotentialTemperatureFormulation(exponent = ...) and carried as a\ntype parameter by the formulation and by the thermodynamic states.\n\nPhase change at fixed θˡⁱ, p and qᵗ now conserves enthalpy exactly and\nreleases ℒ(T). The ρθ tendency gains the expansion-work source\nρᵈ (Rᵐ T − κ ĉᵖ Π θˡⁱ) / (ĉᵖ Π) D ln p / Dt with the hydrostatic\nD ln p / Dt = −g ρ w / p (reference state on the anelastic core, actual\nstate on the compressible core), heating converts with 1 / (ĉᵖ Π) and the\ndry-to-total density ratio, and 1 / (ĉᵖ Π) = θˡⁱ / H is read from the stored\ntemperature, so the tendency no longer evaluates the Exner function.\nBoundary-flux conversions, sedimentation content and the compressible\nthermal response, the θˡⁱ diagnostic, Kessler, instantaneous\nprecipitation and MoistAirBuoyancy follow the new definition.\n\nImplements NumericalEarth/Breeze.jl#1119.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Add ĉᵖ, R̂, κ̂, Π̂, H and Λ₀ to the notation table\n\nUpdate the Π, θˡⁱ and Jᶿ entries for the exact liquid-ice potential temperature.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Keep the θˡⁱ inversion exact in unsaturated air\n\nArrange the inversion as T = Π θ (ĉᵖ / cᵖᵐ) + Λ₀ / cᵖᵐ (and its inverse) so\nthat unsaturated air, where ĉᵖ = cᵖᵐ and Λ₀ = 0, gives T = Π θ bitwise as on\nmain; a hydrostatic rest state then stays balanced to roundoff.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Test the exact liquid-ice potential temperature and update tests for its definition\n\nNew test/liquid_ice_potential_temperature.jl covers, for both Exner exponents:\ninversion round trips (pressure- and density-closed states), enthalpy\nconservation under condensation, deposition and freezing at fixed θˡⁱ, p, qᵗ,\nθˡⁱ = T / Π in unsaturated air, the expansion source restoring\ncᵖᵐ dT / d ln p = Rᵐ T, the sedimentation content against finite differences,\nmodel construction and time steps (anelastic Float32/Float64, compressible),\nthe θˡⁱ diagnostic, boundary-condition exponent plumbing, and the compressible\nheating density ratio (#1010).\n\nExisting tests that restated the old definition θˡⁱ = (T − ℒᵣ qᶜ / cᵖᵐ) / Π\nwith Π = (p / pˢᵗ)^(Rᵐ / cᵖᵐ) now restate the exact one.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Resolve the θˡⁱ diagnostic's formulation reference and shorten the exponent docstring's first sentence\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use FixedIterations in the Reactant moisture-initialization gradient test\n\nOn Julia 1.13 GPU, XLA fuses the differentiated early-exit Newton iterations of the\nθˡⁱ → T inversion with the moisture check into a kernel that never finishes, so the\ngradient call hangs (H100) or the check's callback reads a stale false (CI L4).\nFixedIterations is the solver the docs recommend for Reactant runs; the test's\nassertions do not depend on T.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use the formulation's Exner exponent in the hydrostatically balanced column solve\n\nWith DryExponent, HydrostaticallyBalancedDensity integrated the moist column\nwith κᵐ = Rᵐ/cᵖᵐ while the model inverts θ with κᵈ, leaving a ~1e-3 relative\nhydrostatic residual. Thread the exponent through the column kernels; the\ndefault (vapor-equivalent) path is bitwise unchanged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Carry the specific energy forcing E with the total density\n\nFρE is now volumetric (W/m³) on every path, like ρE forcings and the radiative\nflux divergence: E = Ė becomes ρ Ė, and each formulation converts with ρᵈ / ρ.\nPreviously E was carried by ρᵈ and the θ tendency applied ρᵈ / ρ again, so\ncompressible moist heating ran low by 1 − qᵗ. The static-energy tendency gets\nthe same ρᵈ / ρ conversion (identity on anelastic).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply ρᵈ / ρ to wall energy fluxes on ρθ; show values in new doctests\n\nAn enthalpy flux on the compressible core now reaches ρθ = ρᵈ θ with the same\nρᵈ / ρ the interior heating takes (identity on anelastic), and the inverse\nThetaFlux conversion divides it back out. The conversion also uses the total\ndensity for moisture fractions. Docstrings use TYPEDSIGNATURES, and the\nexner_exponent and vapor_equivalent_heat_capacity doctests show values\nrather than booleans.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use the formulation's Exner exponent in set_to_mean!, apply ρᵈ / ρ to energy fluxes on ρs\n\nset_to_mean!(::ExnerReferenceState, model) integrated the mean column with the\nvapor-equivalent exponent, so with DryExponent the reset reference missed a balanced\nmean state by ~1e-3. It now uses liquid_ice_exner_exponent(model.formulation), for the\ncolumn and its surface density.\n\nA ρE flux on ρs = ρᵈ s now enters as (ρᵈ / ρ) 𝒬ᵀ through\nStaticEnergyFluxBoundaryConditionFunction, matching ρθ and interior heating (the\nidentity on anelastic dynamics).\n\nBulkSensibleHeatFlux no longer falls back to a vapor-equivalent θ flux when no\nformulation is set; the model constructor always sets one.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Thread the Exner exponent through the surface datum reduction, reject StaticEnergy on CompressibleDynamics\n\n- moist_hydrostatic_pressure and constant_moist_hydrostatic_pressure take the\n  Exner exponent, so set_to_mean! and HydrostaticallyBalancedDensity anchor a\n  raised domain on the column they integrate\n- CompressibleDynamics rejects formulation=:StaticEnergy at construction instead\n  of failing with a MethodError on the first state update\n- Model-level test of the compressible expansion-work source\n- Update the default_temperature_solver docstring to the exact θˡⁱ inversion\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Address review: κ̂ / exner_exponent naming, Hᶜ for the condensate latent energy, inline comments\n\n- Positional Exner-exponent arguments and locals are κ̂; struct fields and the\n  LiquidIcePotentialTemperatureFormulation keyword are exner_exponent\n- Rename Λ₀ to Hᶜ and drop D₀ in sedimentation_thermal_response\n- Move the heating and expansion-work comments in-line; D_ln_p → Dt_ln_p\n- Turn the StaticEnergyFluxBoundaryConditionFunction, vapor_equivalent_heat_capacity\n  and vapor_equivalent_gas_constant docstrings into comments\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>",
+          "timestamp": "2026-10-29T22:58:09-06:00",
+          "tree_id": "1cc86de80f4654757e6379d338659bed355c4482",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/fd7d348bc9339f67e3a4c167caf27c0872c57f0f"
+        },
+        "date": 1793364037336,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.9803941249847412,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.9584953784942627,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.8715212345123291,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.8304893970489502,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.7306456565856934,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.7203787565231323,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.575682520866394,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.4934966564178467,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.4334867000579834,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.3648430109024048,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.57635223865509,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.27648055553436,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 34.665265679359436,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 33.7488979101181,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 30.13179898262024,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 28.027987480163574,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 17.315420508384705,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.096697926521301,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.431877613067627,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.806058645248413,
             "unit": "ms/step"
           }
         ]
