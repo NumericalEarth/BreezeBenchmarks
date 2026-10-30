@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793378899520,
+  "lastUpdate": 1793378901845,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -46648,6 +46648,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.8041781187057495,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danielkytezable@gmail.com",
+            "name": "dkytezab",
+            "username": "dkytezab"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "90807275eabb4e5f71d2f02ff69c0d0952567882",
+          "message": "Benchmarks: per-kernel GPU times of the vanilla time step (#1140)\n\n* Benchmarks: per-kernel GPU times of the vanilla time step, for the Reactant vs vanilla entry\n\nbenchmarking/kernel_profiling/profile_kernels.jl builds run_benchmarks.jl's model from\nthe same arguments on the vanilla backend and profiles --time_steps steps with\nCUDA.@profile (CUPTI, no Nsight install), grouping launches by kernel name and keeping\nthe 10 kernels with the most GPU time. The Reactant vs vanilla matrix entry runs it\nafter its benchmarks (profile_kernels: true); the tables go to the job summary and each\nkernel's ms per step is charted on a new Breeze.jl Kernel Times page.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Kernel profiling: in run_benchmarks.jl, once every case is timed, instead of a second process\n\nrun_benchmarks.jl --profile_kernels records each vanilla time-stepping case's model\nbuilder and, once every case is timed and the results saved, rebuilds and profiles it\nin the same process. Its kernels are already compiled, the profiler cannot touch a\npublished timing, and a profiler failure is logged without failing the run. The\nstandalone profile_kernels.jl and its CI step go away; kernel_profiling/kernel_profiling.jl\nholds the profiling code, and the matrix flag passes --profile_kernels to Run benchmarks.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-29T17:01:15-04:00",
+          "tree_id": "4f75126d7f1373f3a1f60d0b5354bba83f80d1b8",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/90807275eabb4e5f71d2f02ff69c0d0952567882"
+        },
+        "date": 1793378901164,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.9715934991836548,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.9587218761444092,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.8747220039367676,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.8406460285186768,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.7322490215301514,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.7199794054031372,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.5722790956497192,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.49727559089660645,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.4331648349761963,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.36430656909942627,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.621800780296326,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.27308905124664,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 34.679195284843445,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 33.734118938446045,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 30.12990951538086,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 28.036323189735413,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 17.361173033714294,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.095437288284302,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.43431544303894,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.804935097694397,
             "unit": "ms/step"
           }
         ]
