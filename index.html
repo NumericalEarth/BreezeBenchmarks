@@ -646,6 +646,23 @@
         margin-bottom: 14px;
         font-size: 14px;
       }
+      .check {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--ink-2);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .check input {
+        margin: 0;
+        accent-color: var(--accent);
+      }
+      .check:has(input:disabled) {
+        opacity: 0.5;
+        cursor: default;
+      }
       .nav-pills {
         display: flex;
         flex-wrap: wrap;
@@ -1279,6 +1296,7 @@
           q: "",
           suite: null, // slug of the one suite shown, or null for all
           y: "abs",
+          zero: false, // y axes start at 0 (linear scales only)
           thr: 2,
           k: 5, // commits per chart table
           status: null,
@@ -1304,6 +1322,7 @@
           if (suites.some((x) => slug(x.label) === q.get("suite"))) state.suite = q.get("suite");
           if (q.get("q")) state.q = q.get("q");
           if (["abs", "log", "rel"].includes(q.get("y"))) state.y = q.get("y");
+          if (q.get("zero") === "1") state.zero = true;
           if (q.get("thr") && isFinite(+q.get("thr"))) state.thr = +q.get("thr");
           if ([5, 10, 20].includes(+q.get("rows"))) state.k = +q.get("rows");
           if (["better", "worse", "flat"].includes(q.get("status"))) state.status = q.get("status");
@@ -1328,6 +1347,7 @@
           }
           if (state.q) q.set("q", state.q);
           if (state.y !== "abs") q.set("y", state.y);
+          if (state.zero) q.set("zero", "1");
           if (state.thr !== 2) q.set("thr", state.thr);
           if (state.k !== 5) q.set("rows", state.k);
           if (state.status) q.set("status", state.status);
@@ -1772,6 +1792,9 @@
           let html = `<div class="panel chart-controls">
             <span class="window-label">Y axis</span>
             <div class="seg small" role="group" aria-label="Y axis">${yOpts}</div>
+            <label class="check"${state.y === "log" ? ' title="Not available with log scale"' : ""}><input type="checkbox" id="y-zero"${
+              state.zero ? " checked" : ""
+            }${state.y === "log" ? " disabled" : ""}> Start at 0</label>
             <span class="window-label">Table rows</span>
             <div class="seg small" role="group" aria-label="Commits per table">${kOpts}</div>
             <span class="muted" style="font-size:13px">Click a series name in a table to hide its line · click a point to open its commit</span>
@@ -1802,6 +1825,10 @@
               state.k = +b.dataset.k;
               update();
             };
+          main.querySelector("#y-zero").onchange = (ev) => {
+            state.zero = ev.target.checked;
+            update();
+          };
           for (const b of main.querySelectorAll("[data-y]"))
             b.onclick = () => {
               state.y = b.dataset.y;
@@ -2041,6 +2068,7 @@
                 },
                 y: {
                   type: state.y === "log" ? "logarithmic" : "linear",
+                  beginAtZero: state.zero && state.y !== "log",
                   grid: { color: grid },
                   border: { display: false },
                   title: {
