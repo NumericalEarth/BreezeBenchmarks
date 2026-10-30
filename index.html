@@ -1,806 +1,2172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/modern-normalize@2.0.0/modern-normalize.min.css"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Breeze.jl Benchmarks</title>
     <style>
+      /* ── Tokens ─────────────────────────────────── */
+      :root {
+        color-scheme: light;
+        --bg: #f6f6f3;
+        --surface: #fcfcfb;
+        --surface-2: #f0efeb;
+        --ink: #0b0b0b;
+        --ink-2: #52514e;
+        --muted: #7a7873;
+        --grid: #e1e0d9;
+        --axis: #c3c2b7;
+        --border: rgba(11, 11, 11, 0.1);
+        --accent: #2a78d6;
+        --accent-wash: rgba(42, 120, 214, 0.1);
+        --good: #006300;
+        --good-wash: rgba(12, 163, 12, 0.12);
+        --bad: #b8302f;
+        --bad-wash: rgba(208, 59, 59, 0.12);
+        --hero-1: #0d366b;
+        --hero-2: #1c5cab;
+        --series-1: #2a78d6;
+        --series-2: #eb6834;
+        --series-3: #1baf7a;
+        --series-4: #eda100;
+        --series-5: #e87ba4;
+        --series-6: #008300;
+        --series-7: #6250d6;
+        --series-8: #e34948;
+        --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0d0d0d;
+          --surface: #1a1a19;
+          --surface-2: #232321;
+          --ink: #f0efec;
+          --ink-2: #c3c2b7;
+          --muted: #8f8d87;
+          --grid: #2c2c2a;
+          --axis: #383835;
+          --border: rgba(255, 255, 255, 0.1);
+          --accent: #5598e7;
+          --accent-wash: rgba(85, 152, 231, 0.14);
+          --good: #2fbf2f;
+          --good-wash: rgba(12, 163, 12, 0.18);
+          --bad: #ef7676;
+          --bad-wash: rgba(230, 103, 103, 0.18);
+          --hero-1: #0a2a52;
+          --hero-2: #104281;
+          --series-1: #3987e5;
+          --series-2: #d95926;
+          --series-3: #199e70;
+          --series-4: #c98500;
+          --series-5: #d55181;
+          --series-6: #008300;
+          --series-7: #9085e9;
+          --series-8: #e66767;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0d0d0d;
+        --surface: #1a1a19;
+        --surface-2: #232321;
+        --ink: #f0efec;
+        --ink-2: #c3c2b7;
+        --muted: #8f8d87;
+        --grid: #2c2c2a;
+        --axis: #383835;
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #5598e7;
+        --accent-wash: rgba(85, 152, 231, 0.14);
+        --good: #2fbf2f;
+        --good-wash: rgba(12, 163, 12, 0.18);
+        --bad: #ef7676;
+        --bad-wash: rgba(230, 103, 103, 0.18);
+        --hero-1: #0a2a52;
+        --hero-2: #104281;
+        --series-1: #3987e5;
+        --series-2: #d95926;
+        --series-3: #199e70;
+        --series-4: #c98500;
+        --series-5: #d55181;
+        --series-6: #008300;
+        --series-7: #9085e9;
+        --series-8: #e66767;
+      }
+
+      /* ── Base ───────────────────────────────────── */
+      * {
+        box-sizing: border-box;
+      }
       html {
-        font-family: "Comic Sans", BlinkMacSystemFont, -apple-system, "Segoe UI",
-          Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
-          "Helvetica Neue", Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        background-color: #fff;
-        font-size: 14px;
+        -webkit-text-size-adjust: 100%;
       }
       body {
-        color: #4a4a4a;
-        margin: 4px;
-        font-size: 1em;
-        font-weight: 400;
-        line-height: 1.2;
-      }
-      header {
-        margin-bottom: 4px;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .header-item {
-        font-size: 0.9em;
-        line-height: 1.2;
-      }
-      .header-label {
-        margin-right: 4px;
-      }
-      main {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
       a {
-        color: #3273dc;
-        cursor: pointer;
+        color: var(--accent);
         text-decoration: none;
       }
       a:hover {
-        color: #000;
+        text-decoration: underline;
       }
-      button {
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.92em;
+      }
+      .wrap {
+        max-width: 1920px;
+        margin: 0 auto;
+        padding: 0 clamp(16px, 2vw, 40px);
+      }
+
+      /* ── Hero ───────────────────────────────────── */
+      .hero {
+        background: linear-gradient(135deg, var(--hero-1), var(--hero-2));
         color: #fff;
-        background-color: #3298dc;
-        border-color: transparent;
-        cursor: pointer;
-        text-align: center;
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 0.9em;
+        padding: 28px 0 22px;
       }
-      button:hover {
-        background-color: #2793da;
+      .hero-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .hero p {
+        margin: 6px 0 0;
+        max-width: 70ch;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .hero a {
+        color: #fff;
+        text-decoration: underline;
+        text-decoration-color: rgba(255, 255, 255, 0.4);
+      }
+      .theme-btn {
+        margin-left: auto;
         flex: none;
-      }
-      .spacer {
-        flex: auto;
-      }
-      .small {
-        font-size: 0.75rem;
-      }
-      footer {
-        margin-top: 8px;
-        display: flex;
-        align-items: center;
-      }
-      .header-label {
-        margin-right: 4px;
-      }
-      .commit-slider-container {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .commit-slider-container input[type="range"] {
-        width: min(300px, 50vw);
-        cursor: pointer;
-      }
-      .benchmarks-container {
-        width: 100%;
-      }
-      .table-of-contents {
-        margin: 16px 0 24px 0;
-        padding: 16px;
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #fff;
         border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 13px;
       }
-      .toc-header {
+      .theme-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .stat {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 10px;
+        padding: 10px 14px;
+        min-width: 0;
+      }
+      .stat-value {
+        display: block;
         font-size: 20px;
-        font-weight: bold;
-        color: #2c3e50;
-        margin: 0 0 12px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #3498db;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-      .toc-list {
+      .stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .stat.wide {
+        grid-column: span 2;
+      }
+      .stat.wide .stat-value {
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 1.3;
+        padding: 3px 0;
+      }
+
+      /* ── Toolbar ────────────────────────────────── */
+      .toolbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        z-index: 10;
+      }
+      @media (min-width: 900px) {
+        .toolbar {
+          position: sticky;
+          top: 0;
+        }
+      }
+      .toolbar .wrap {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 18px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 2px;
+      }
+      .seg button {
+        border: 0;
+        background: none;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--ink-2);
+        font-size: 14px;
+        white-space: nowrap;
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      }
+      .seg.small button {
+        padding: 3px 9px;
+        font-size: 13px;
+      }
+      .search {
+        flex: 1 1 220px;
+        max-width: 360px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface-2);
+      }
+      .search:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: -1px;
+      }
+      .window {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        flex: 2 1 420px;
+        min-width: 0;
+      }
+      .window-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .range {
+        position: relative;
+        flex: 1;
+        min-width: 120px;
+        height: 22px;
+      }
+      .range .track,
+      .range .fill {
+        position: absolute;
+        top: 50%;
+        height: 4px;
+        margin-top: -2px;
+        border-radius: 2px;
+      }
+      .range .track {
+        left: 0;
+        right: 0;
+        background: var(--grid);
+      }
+      .range .fill {
+        background: var(--accent);
+      }
+      .range input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        margin: 0;
+        background: none;
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .range input::-webkit-slider-runnable-track {
+        background: none;
+      }
+      .range input::-webkit-slider-thumb {
+        pointer-events: auto;
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 3px solid var(--accent);
+        cursor: grab;
+      }
+      .range input::-moz-range-thumb {
+        pointer-events: auto;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 3px solid var(--accent);
+        cursor: grab;
+      }
+      .window-readout {
+        font-size: 13px;
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+
+      /* ── Main ───────────────────────────────────── */
+      main {
+        padding: 20px 0 32px;
+      }
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+
+      /* Comparison bar */
+      .compare {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 16px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        font-size: 14px;
+        color: var(--ink-2);
+      }
+      .compare .arrow {
+        color: var(--muted);
+      }
+      .commit-ref {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .commit-ref .msg {
+        max-width: min(34ch, 45vw);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: bottom;
+      }
+      .compare .spacer {
+        flex: 1;
+      }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         gap: 8px;
       }
-      .toc-item {
-        display: inline-block;
-        padding: 6px 12px;
-        background-color: #ffffff;
-        color: #3498db;
-        text-decoration: none;
-        border: 1px solid #3498db;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-      }
-      .toc-item:hover {
-        background-color: #3498db;
-        color: #ffffff;
-        text-decoration: none;
-      }
-      .benchmark-section {
-        margin-bottom: 24px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 16px;
-        background-color: #f9f9f9;
-      }
-      .benchmark-header {
-        font-size: 18px;
-        font-weight: bold;
-        color: #2c3e50;
-        margin: 0 0 16px 0;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #3498db;
-      }
-      .device-section {
-        margin-bottom: 16px;
-      }
-      .device-header {
-        font-size: 14px;
-        font-weight: 600;
-        color: #34495e;
-        margin: 0 0 8px 0;
-        padding: 4px 8px;
-        background-color: #ecf0f1;
-        border-radius: 4px;
-        display: inline-block;
-      }
-      .device-charts {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(max(200px, 20vw), 1fr));
-        gap: clamp(6px, 1vw, 12px);
-        padding: clamp(4px, 1vw, 8px);
-      }
-      @media (max-width: 768px) {
-        .device-charts {
-          grid-template-columns: 1fr;
-          gap: clamp(6px, 1vw, 10px);
-          padding: clamp(3px, 0.5vw, 6px);
-        }
-        .benchmark-section {
-          padding: 12px;
-        }
-        .table-of-contents {
-          padding: 12px;
-        }
-        .toc-list {
-          gap: 6px;
-        }
-        .toc-item {
-          padding: 4px 8px;
-          font-size: 13px;
-        }
-        .chartCard {
-          max-width: 95vw;
-          height: clamp(280px, 35vh, 380px);
-        }
-      }
-      @media (max-width: 480px) {
-        .device-charts {
-          grid-template-columns: 1fr;
-          gap: clamp(4px, 0.8vw, 8px);
-          padding: clamp(2px, 0.5vw, 4px);
-        }
-        .benchmark-section {
-          padding: 8px;
-          margin-bottom: 16px;
-        }
-        .benchmark-header {
-          font-size: 16px;
-        }
-        .device-header {
-          font-size: 12px;
-        }
-        .table-of-contents {
-          padding: 8px;
-          margin: 8px 0 16px 0;
-        }
-        .toc-header {
-          font-size: 16px;
-        }
-        .toc-list {
-          gap: 4px;
-        }
-        .toc-item {
-          padding: 3px 6px;
-          font-size: 12px;
-        }
-        .chartCard {
-          max-width: 98vw;
-          height: clamp(240px, 30vh, 320px);
-          padding: 4px;
-        }
-        .chart-title {
-          font-size: 11px;
-          margin-bottom: 2px;
-        }
-        .chart-container {
-          margin-bottom: 8px;
-        }
-      }
-      .chartCard {
-        width: 100%;
-        max-width: min(95vw, 800px);
-        height: clamp(350px, 45vh, 550px);
-        padding: clamp(6px, 1vw, 12px);
-        margin: 0;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        background-color: #fafafa;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: box-shadow 0.2s ease;
-        overflow: hidden;
-      }
-      .chartCard:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      }
-      .chart-title {
+      .chip-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        border-radius: 999px;
+        padding: 3px 11px;
         font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .chip-btn b {
+        font-variant-numeric: tabular-nums;
+      }
+      .chip-btn[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: var(--accent-wash);
+      }
+      .chip-btn.better b {
+        color: var(--good);
+      }
+      .chip-btn.worse b {
+        color: var(--bad);
+      }
+      label.inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      select {
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        border-radius: 6px;
+        padding: 2px 4px;
+      }
+
+      /* ── Overview table ─────────────────────────── */
+      .table-scroll {
+        overflow-x: auto;
+      }
+      table.overview {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .overview th {
+        position: sticky;
+        top: 0;
+        text-align: left;
         font-weight: 600;
-        color: #333;
-        margin-bottom: 4px;
-        text-align: center;
-        border-bottom: 1px solid #3273dc;
-        padding-bottom: 2px;
-        width: 100%;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--axis);
+        background: var(--surface);
+        white-space: nowrap;
       }
-      .chart-container {
-        margin-bottom: 8px;
-        width: 100%;
+      .overview th.num,
+      .overview td.num {
+        text-align: right;
       }
-      .option-container {
-        display: flex;
+      .overview th[data-sort] {
+        cursor: pointer;
+        user-select: none;
       }
-      .option-label {
+      .overview th[data-sort]:hover {
+        color: var(--ink);
+      }
+      .overview th .dir {
+        display: inline-block;
+        width: 1em;
+        color: var(--accent);
+      }
+      .overview th .sub {
+        display: block;
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 400;
+        font-size: 11px;
+      }
+      .overview td {
+        padding: 6px 12px;
+        border-bottom: 1px solid var(--grid);
+        vertical-align: middle;
+      }
+      .overview tr.row {
+        cursor: pointer;
+      }
+      .overview tr.row:hover td {
+        background: var(--surface-2);
+      }
+      .overview tr.group td {
+        background: var(--surface-2);
+        padding: 12px 12px 10px;
+        border-top: 1px solid var(--axis);
+        border-bottom: 1px solid var(--axis);
+      }
+      /* A strip of page background between groups splits the table into blocks. */
+      .overview tr.gap td {
+        height: 18px;
+        padding: 0;
+        background: var(--bg);
+        border: 0;
+      }
+      .overview tr.suite td {
+        padding: 18px 12px 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        font-weight: 600;
+        border-bottom: 0;
+      }
+      .overview tr.suite:first-child td {
+        padding-top: 10px;
+      }
+      .group-title {
+        font-weight: 650;
+        font-size: 16px;
         margin-right: 8px;
+        padding-left: 9px;
+        border-left: 4px solid var(--accent);
       }
-      .option {
-        margin-right: 4px;
+      .chips {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        vertical-align: middle;
       }
-      .disabled {
-        color: #ccc;
-        cursor: default;
-        pointer-events: none;
+      .chip {
+        font-size: 12px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0 6px;
+        background: var(--surface);
+        color: var(--ink-2);
+        white-space: nowrap;
+      }
+      .chip .k {
+        color: var(--muted);
+      }
+      .bench-name {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .bench-name .series {
+        font-weight: 550;
+      }
+      .bench-name .ctx {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .bench-name .grp {
+        color: var(--muted);
+        font-size: 12px;
+        width: 100%;
+      }
+      .stale {
+        font-size: 11px;
+        color: var(--muted);
+        border: 1px dashed var(--axis);
+        border-radius: 4px;
+        padding: 0 4px;
+        white-space: nowrap;
+      }
+      .value {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .unit {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .delta {
+        display: inline-block;
+        min-width: 74px;
+        text-align: right;
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        font-weight: 550;
+      }
+      .delta.better {
+        color: var(--good);
+        background: var(--good-wash);
+      }
+      .delta.worse {
+        color: var(--bad);
+        background: var(--bad-wash);
+      }
+      .delta.flat {
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .delta.none {
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .spark {
+        display: block;
+      }
+      .spark polyline {
+        fill: none;
+        stroke: var(--ink-2);
+        stroke-width: 1.5;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+      .spark .base {
+        stroke: var(--axis);
+        stroke-dasharray: 2 2;
+        stroke-width: 1;
+      }
+      .spark circle.better {
+        fill: var(--good);
+      }
+      .spark circle.worse {
+        fill: var(--bad);
+      }
+      .spark circle.flat,
+      .spark circle.none {
+        fill: var(--ink-2);
+      }
+      .empty {
+        padding: 40px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .legend-note {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 12px 4px 0;
+      }
+
+      /* ── Charts view ────────────────────────────── */
+      .chart-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 16px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        font-size: 14px;
+      }
+      .nav-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+      }
+      .nav-pill {
+        font-size: 13px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--ink-2);
+        border-radius: 999px;
+        padding: 3px 10px;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nav-pill:hover {
+        color: var(--ink);
+        border-color: var(--accent);
+        text-decoration: none;
+      }
+      .nav-pill .n {
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .suite-head {
+        margin: 26px 0 4px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .section {
+        margin-top: 34px;
+        padding-top: 20px;
+        border-top: 1px solid var(--axis);
+        scroll-margin-top: 80px;
+      }
+      .suite-head + .section,
+      .chart-controls + .section {
+        border-top: 0;
+        padding-top: 0;
+        margin-top: 22px;
+      }
+      .section-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        margin: 0 0 14px;
+      }
+      .section-head h2 {
+        margin: 0;
+        padding-left: 12px;
+        border-left: 4px solid var(--accent);
+        font-size: 21px;
+        font-weight: 650;
+        line-height: 1.2;
+      }
+      .section-count {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+        gap: 14px;
+      }
+      .card {
+        padding: 14px 14px 8px;
+        min-width: 0;
+        container-type: inline-size;
+        scroll-margin-top: 80px;
+        transition: box-shadow 0.3s;
+      }
+      .card.flash {
+        box-shadow: 0 0 0 3px var(--accent);
+      }
+      .card-head {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .card-head h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .card-head .device {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .chart-box {
+        position: relative;
+        height: 280px;
+        min-width: 0;
+      }
+      /* Wide screens: one panel per row, table to the right of the chart. */
+      @media (min-width: 1200px) {
+        .cards {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      @container (min-width: 1000px) {
+        .card-body {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) fit-content(55%);
+          gap: 24px;
+          align-items: stretch;
+        }
+        .chart-box {
+          height: auto;
+          min-height: clamp(300px, 22vw, 420px);
+        }
+        .card-body .card-table {
+          margin-top: 0;
+          align-self: start;
+        }
+      }
+      .card-table {
+        overflow-x: auto;
+        margin-top: 10px;
+      }
+      table.commits {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .commits th {
+        font-weight: 500;
+        font-size: 12px;
+        color: var(--ink-2);
+        text-align: right;
+        padding: 4px 6px;
+        border-bottom: 1px solid var(--axis);
+        vertical-align: bottom;
+      }
+      .commits th.s {
+        cursor: pointer;
+        min-width: 64px;
+      }
+      .commits th.s:hover {
+        color: var(--ink);
+      }
+      .commits th:first-child,
+      .commits td:first-child {
+        text-align: left;
+        padding-left: 2px;
+      }
+      .commits td {
+        padding: 4px 6px;
+        border-bottom: 1px solid var(--grid);
+        text-align: right;
+        white-space: nowrap;
+        vertical-align: top;
+      }
+      .commits .off {
+        opacity: 0.35;
+      }
+      .commits .when {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .commits .d {
+        display: block;
+        font-size: 11px;
+        line-height: 1.3;
+        font-variant-numeric: tabular-nums;
+      }
+      .commits .d.better {
+        color: var(--good);
+        font-weight: 600;
+      }
+      .commits .d.worse {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .commits .d.flat,
+      .commits .d.none {
+        color: var(--muted);
+      }
+      .commits tr.since td {
+        border-bottom: 0;
+        border-top: 1px solid var(--axis);
+        padding-top: 6px;
+        vertical-align: middle;
+      }
+      .commits tr.since .delta {
+        min-width: 0;
+        padding: 1px 6px;
+      }
+      .lg-name {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+      .lg-name .swatch {
+        width: 18px;
+      }
+      .lg-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .commits.rows td {
+        vertical-align: middle;
+        padding-top: 3px;
+        padding-bottom: 3px;
+      }
+      .commits.rows td:first-child {
+        white-space: normal;
+        min-width: 14em;
+      }
+      .commits.rows .series-label {
+        max-width: 26em;
+      }
+      .commits.rows tr.s {
+        cursor: pointer;
+      }
+      .commits.rows tr.s:hover td {
+        background: var(--surface-2);
+      }
+      .commits.rows .delta {
+        min-width: 0;
+        padding: 1px 6px;
+      }
+      .commits tr.total td {
+        font-weight: 600;
+        border-bottom: 1px solid var(--axis);
+      }
+      .swatch {
+        display: inline-block;
+        width: 14px;
+        height: 3px;
+        border-radius: 2px;
+        flex: none;
+      }
+      .swatch.dashed {
+        background: none !important;
+        border-top: 3px dotted;
+        height: 0;
+      }
+      .series-label {
+        overflow-wrap: break-word;
+      }
+      .commits .series-label {
+        display: block;
+        max-width: 13em;
+      }
+
+      /* ── Footer ─────────────────────────────────── */
+      footer {
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      footer .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding-top: 14px;
+        padding-bottom: 20px;
+      }
+      footer .spacer {
+        flex: 1;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .btn:hover {
+        border-color: var(--accent);
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .hero h1 {
+          font-size: 24px;
+        }
+        .stat.wide {
+          grid-column: auto;
+        }
+        .window {
+          flex-basis: 100%;
+          flex-wrap: wrap;
+        }
+        .range {
+          flex-basis: 100%;
+          order: 3;
+        }
+        .overview .hide-sm {
+          display: none;
+        }
+        .overview td:first-child {
+          max-width: 42vw;
+        }
+        .bench-name {
+          flex-direction: column;
+          gap: 0;
+        }
+        .overview td,
+        .overview th {
+          padding-left: 8px;
+          padding-right: 8px;
+        }
+        .delta {
+          min-width: 0;
+        }
+        .chart-box {
+          height: 240px;
+        }
       }
     </style>
-    <title>Breeze.jl Benchmarks</title>
   </head>
 
   <body>
-    <header id="header">
-      <div class="header-item">
-        <strong class="header-label">Last Update:</strong>
-        <span id="last-update"></span>
+    <header class="hero">
+      <div class="wrap">
+        <div class="hero-top">
+          <div>
+            <h1>Breeze.jl Benchmarks</h1>
+            <p>
+              Performance of <a id="repo-link" rel="noopener" target="_blank">Breeze.jl</a>
+              tracked across commits on <code>main</code>.
+            </p>
+          </div>
+          <button class="theme-btn" id="theme-btn" type="button" title="Toggle colour theme">
+            Theme: auto
+          </button>
+        </div>
+        <div class="stats" id="stats"></div>
       </div>
-      <div class="header-item">
-        <strong class="header-label">Repository:</strong>
-        <a id="repository-link" rel="noopener"></a>
-      </div>
-      <div class="header-item commit-slider-container">
-        <strong class="header-label">
-          <label for="commit-slider">Commits shown:</label>
-        </strong>
-        <input type="range" id="commit-slider" min="2" step="1" />
-        <span id="commit-slider-value"></span>
-      </div>
-      <!-- Only time plots shown -->
     </header>
-    <main id="main"></main>
+
+    <nav class="toolbar" aria-label="View controls">
+      <div class="wrap">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" data-view="charts">Charts</button>
+          <button type="button" data-view="table">Overview table</button>
+        </div>
+        <div class="seg" role="group" aria-label="Suite" id="suites" hidden></div>
+        <input
+          class="search"
+          id="search"
+          type="search"
+          placeholder="Filter benchmarks (e.g. WENO9 reactant)"
+          aria-label="Filter benchmarks"
+        />
+        <div class="window">
+          <span class="window-label">History</span>
+          <div class="range" id="range">
+            <div class="track"></div>
+            <div class="fill" id="range-fill"></div>
+            <input type="range" id="from" min="0" step="1" aria-label="First commit in window" />
+            <input type="range" id="to" min="0" step="1" aria-label="Last commit in window" />
+          </div>
+          <span class="window-readout" id="window-readout"></span>
+          <div class="seg small" role="group" aria-label="Window presets" id="presets">
+            <button type="button" data-n="10">10</button>
+            <button type="button" data-n="30">30</button>
+            <button type="button" data-n="100">100</button>
+            <button type="button" data-n="all">All</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <div class="wrap" id="main"></div>
+    </main>
+
     <footer>
-      <button id="dl-button">Download data as JSON</button>
-      <div class="spacer"></div>
-      <div class="small">
-        Powered by
-        <a
-          rel="noopener"
-          href="https://github.com/marketplace/actions/continuous-benchmark"
-          >github-action-benchmark</a
-        >
+      <div class="wrap">
+        <button class="btn" id="dl-button" type="button">Download data as JSON</button>
+        <span class="spacer"></span>
+        <span>
+          Powered by
+          <a rel="noopener" target="_blank" href="https://github.com/marketplace/actions/continuous-benchmark"
+            >github-action-benchmark</a
+          >
+        </span>
       </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.2/dist/Chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="data.js"></script>
-    <script id="main-script">
+    <script>
       "use strict";
       (function () {
-        // Get option from query string
-        const pageOption = "time";
+        const DATA = window.BENCHMARK_DATA;
+        const DEFAULT_WINDOW = 30;
+        const MIN_SPAN = 2;
+        const SERIES_SLOTS = 8;
 
-        // Color palette for cycling
-        const colorPalette = [
-          "#00add8",
-          "#a270ba",
-          "#dea584",
-          "#f1e05a",
-          "#5D6D7E",
-          "#EC7063",
-          "#F4D03F",
-          "#52BE80",
-          "#FF5733",
-          "#33FF57",
-          "#3357FF",
-          "#FF33A1",
-          "#A133FF",
-          "#33FFF6",
-          "#FFC133",
-          "#FF3333",
-        ];
+        /* ── Utilities ──────────────────────────────── */
+        const naturalCompare = (a, b) =>
+          a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 
-        // Maximum number of commits to show in plots (controlled by the slider)
-        let maxCommits = 20;
-
-        // Keep track of created charts so they can be destroyed on re-render
-        const activeCharts = [];
-
-        // Commit datetime in milliseconds since epoch (timestamps carry a
-        // timezone offset, so compare parsed values rather than strings)
-        function commitTime(commit) {
-          return Date.parse(commit.timestamp);
+        function esc(s) {
+          return String(s).replace(
+            /[&<>"']/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+          );
         }
 
-        function collectBenchesPerTestCase(entries) {
-          const map = new Map();
-          for (const entry of entries) {
-            const { commit, date, tool, benches } = entry;
-            for (const bench of benches) {
-              const result = { commit, date, tool, bench };
-              const splitted_name = bench.name.split("/");
-              const benchmarkName = splitted_name[0];
-              const variant = splitted_name[3];
-              const device = splitted_name[2];
-              const passes = splitted_name[1];
+        function slug(s) {
+          return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        }
 
-              if (map.get(benchmarkName) === undefined) {
-                map.set(benchmarkName, new Map());
-              }
+        function timeAgo(t) {
+          const s = Math.floor((Date.now() - t) / 1000);
+          if (s < 60) return "just now";
+          const m = Math.floor(s / 60);
+          if (m < 60) return `${m} min ago`;
+          const h = Math.floor(m / 60);
+          if (h < 48) return `${h} h ago`;
+          return `${Math.floor(h / 24)} days ago`;
+        }
 
-              const mapBenchmarkName = map.get(benchmarkName);
-              if (mapBenchmarkName.get(device) === undefined) {
-                mapBenchmarkName.set(device, new Map());
-              }
+        function shortDate(t) {
+          const d = new Date(t);
+          const opts = { month: "short", day: "numeric" };
+          if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+          return d.toLocaleDateString("en-US", opts);
+        }
 
-              const mapDevice = mapBenchmarkName.get(device);
-              if (mapDevice.get(passes) === undefined) {
-                mapDevice.set(passes, new Map());
-              }
+        const SI = [
+          [1e12, "T"],
+          [1e9, "G"],
+          [1e6, "M"],
+          [1e3, "k"],
+        ];
+        // Number without unit, three significant figures, SI prefix for throughput.
+        function fmtNumber(v, unit) {
+          if (v == null || !isFinite(v)) return "–";
+          if (unit === "points/s") {
+            const a = Math.abs(v);
+            for (const [f, p] of SI) if (a >= f) return `${(v / f).toPrecision(3)} ${p}`;
+          }
+          if (v === 0) return "0";
+          const a = Math.abs(v);
+          if (a >= 1000) return Math.round(v).toLocaleString("en-US");
+          if (a < 0.001) return v.toExponential(2);
+          return v.toPrecision(3);
+        }
+        function fmtUnit(unit) {
+          return unit === "points/s" ? "pts/s" : unit || "";
+        }
+        function fmtValue(v, unit) {
+          return `${fmtNumber(v, unit)} ${fmtUnit(unit)}`.trim();
+        }
 
-              const mapPasses = mapDevice.get(passes);
-              if (mapPasses.get(variant) === undefined) {
-                mapPasses.set(variant, [result]);
-              } else {
-                mapPasses.get(variant).push(result);
+        function pct(d) {
+          const p = d * 100;
+          if (Math.abs(p) < 0.05) return "±0.0%";
+          const digits = Math.abs(p) >= 100 ? 0 : 1;
+          return `${p > 0 ? "+" : "−"}${Math.abs(p).toFixed(digits)}%`;
+        }
+
+        // Relative change classified by direction: "better" / "worse" / "flat".
+        function status(d, bigger, thr) {
+          if (d == null) return "none";
+          if (Math.abs(d) * 100 < thr) return "flat";
+          return (bigger ? d > 0 : d < 0) ? "better" : "worse";
+        }
+
+        function deltaHTML(d, bigger, thr, title) {
+          const st = status(d, bigger, thr);
+          if (st === "none") return `<span class="delta none">–</span>`;
+          const icon = st === "better" ? "▲ " : st === "worse" ? "▼ " : "";
+          const t = title ? ` title="${esc(title)}"` : "";
+          return `<span class="delta ${st}"${t}>${icon}${pct(d)}</span>`;
+        }
+
+        // "CBL; Dynamics: anelastic; Grid: 512x512x256 [Float32]" →
+        // title "CBL", chips Dynamics=anelastic, Grid=512x512x256, Float32
+        function parseGroup(name) {
+          let rest = name;
+          const tags = [];
+          const m = rest.match(/\s*\[([^\]]+)\]\s*$/);
+          if (m) {
+            tags.push(m[1]);
+            rest = rest.slice(0, m.index);
+          }
+          const titles = [];
+          const chips = [];
+          for (const tok of rest.split(";").map((t) => t.trim()).filter(Boolean)) {
+            const i = tok.indexOf(":");
+            if (i > 0) chips.push({ k: tok.slice(0, i).trim(), v: tok.slice(i + 1).trim() });
+            else titles.push(tok);
+          }
+          for (const t of tags) chips.push({ k: "", v: t });
+          const title = titles.join(" · ") || name;
+          const short = [title, ...chips.map((c) => c.v)].join(" · ");
+          return { title, chips, short };
+        }
+
+        function chipsHTML(chips) {
+          return `<span class="chips">${chips
+            .map((c) =>
+              c.k
+                ? `<span class="chip"><span class="k">${esc(c.k)}:</span> ${esc(c.v)}</span>`
+                : `<span class="chip">${esc(c.v)}</span>`
+            )
+            .join("")}</span>`;
+        }
+
+        function cssVar(name) {
+          return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        /* ── Data model ─────────────────────────────── */
+        // commits: every distinct commit across suites, oldest first by commit
+        // datetime (timestamps carry a timezone offset, so compare parsed values;
+        // a re-run benchmark keeps its commit's place in history).
+        function commitTime(e) {
+          const t = Date.parse(e.commit.timestamp);
+          return Number.isFinite(t) ? t : e.date;
+        }
+        const commitsById = new Map();
+        for (const entries of Object.values(DATA.entries)) {
+          for (const e of entries) {
+            if (!commitsById.has(e.commit.id))
+              commitsById.set(e.commit.id, { id: e.commit.id, date: commitTime(e), commit: e.commit });
+          }
+        }
+        const commits = [...commitsById.values()].sort((a, b) => a.date - b.date);
+        commits.forEach((c, i) => (c.idx = i));
+        const LAST = commits.length - 1;
+
+        // suites → groups → panels → series → points
+        const suites = [];
+        const panels = [];
+        for (const [suiteName, entries] of Object.entries(DATA.entries)) {
+          const tool = (entries[0] && entries[0].tool) || "";
+          const suite = {
+            name: suiteName,
+            label: suiteName.replace(/^Breeze\.jl\s+/, ""),
+            bigger: /BiggerIsBetter/i.test(tool),
+            groups: new Map(),
+          };
+          suites.push(suite);
+          for (const e of entries) {
+            const idx = commitsById.get(e.commit.id).idx;
+            for (const b of e.benches) {
+              const parts = b.name.split("/");
+              const group = parts[0];
+              const panelName = parts.length > 3 ? parts[1] : parts.length > 1 ? parts[1] : "";
+              const device = parts.length > 3 ? parts[2] : "";
+              const seriesName = parts.length > 3 ? parts.slice(3).join("/") : parts[parts.length - 1];
+              if (!suite.groups.has(group))
+                suite.groups.set(group, { name: group, suite, info: parseGroup(group), panels: new Map() });
+              const g = suite.groups.get(group);
+              const pkey = `${panelName}\u0000${device}`;
+              if (!g.panels.has(pkey)) {
+                const panel = {
+                  id: `p-${slug(suite.label)}-${slug(group)}-${slug(panelName)}-${slug(device)}`,
+                  group: g,
+                  suite,
+                  name: panelName,
+                  device,
+                  series: new Map(),
+                  hidden: new Set(),
+                };
+                g.panels.set(pkey, panel);
+                panels.push(panel);
               }
+              const panel = g.panels.get(pkey);
+              if (!panel.series.has(seriesName))
+                panel.series.set(seriesName, { name: seriesName, panel, unit: b.unit, byIdx: new Map() });
+              const s = panel.series.get(seriesName);
+              s.unit = b.unit;
+              s.byIdx.set(idx, { idx, value: b.value, extra: b.extra });
             }
           }
-          return map;
+        }
+        // Finalize: sorted point arrays; colour slot follows the series' name
+        // order across full history, so changing the window never repaints.
+        for (const suite of suites) {
+          suite.groupList = [...suite.groups.values()].sort((a, b) => naturalCompare(a.name, b.name));
+          for (const g of suite.groupList) {
+            g.panelList = [...g.panels.values()].sort(
+              (a, b) => naturalCompare(a.name, b.name) || naturalCompare(a.device, b.device)
+            );
+            for (const p of g.panelList) {
+              const series = [...p.series.values()];
+              for (const s of series) {
+                s.points = [...s.byIdx.values()].sort((a, b) => a.idx - b.idx);
+                // Kernel names: drop the "gpu_" prefix and trailing underscores.
+                s.label = s.name.replace(/^gpu_+/, "").replace(/_+$/, "") || s.name;
+                s.haystack = `${suite.label} ${g.name} ${p.name} ${p.device} ${s.name}`.toLowerCase();
+              }
+              // Panels with more lines than colour slots (e.g. per-kernel times) are
+              // ordered by their most recent value, largest first, and show only the
+              // top lines by default; the rest can be toggled on from the table.
+              p.many = series.length > SERIES_SLOTS;
+              if (p.many) {
+                const last = (s) => s.points[s.points.length - 1].value;
+                series.sort((a, b) => last(b) - last(a));
+                series.slice(SERIES_SLOTS).forEach((s) => p.hidden.add(s.name));
+              } else series.sort((a, b) => naturalCompare(a.name, b.name));
+              p.seriesList = series;
+              series.forEach((s, i) => (s.slot = i));
+            }
+          }
+        }
+        const devices = [...new Set(panels.map((p) => p.device).filter(Boolean))];
+        const seriesCount = panels.reduce((n, p) => n + p.seriesList.length, 0);
+
+        /* ── View state & URL ───────────────────────── */
+        const state = {
+          view: "charts",
+          from: Math.max(0, LAST - DEFAULT_WINDOW + 1),
+          to: LAST,
+          q: "",
+          suite: null, // slug of the one suite shown, or null for all
+          y: "abs",
+          thr: 2,
+          k: 5, // commits per chart table
+          status: null,
+          sort: null, // { key, dir }
+        };
+
+        function commitIndex(sha) {
+          if (!sha) return -1;
+          const p = sha.toLowerCase();
+          return commits.findIndex((c) => c.id.startsWith(p));
         }
 
-        // Pre-filter the database to the N most recent commits (globally),
-        // then group the surviving entries for charting. Benchmarks whose
-        // data is entirely older than the selected window drop out here and
-        // are not rendered at all.
-        function buildDataSets() {
-          const data = window.BENCHMARK_DATA;
-          return Object.keys(data.entries).map((name) => {
-            const entries = [...data.entries[name]]
-              .sort((a, b) => commitTime(a.commit) - commitTime(b.commit)) // Oldest commit first
-              .slice(-maxCommits); // Keep only the most recent commits
-            return { name, dataSet: collectBenchesPerTestCase(entries) };
-          });
+        function clampWindow(from, to) {
+          const span = Math.min(MIN_SPAN, LAST + 1);
+          to = Math.min(Math.max(to, span - 1), LAST);
+          from = Math.max(0, Math.min(from, to - span + 1));
+          return [from, to];
         }
 
-        function init() {
-          const data = window.BENCHMARK_DATA;
+        (function readUrl() {
+          const q = new URLSearchParams(location.search);
+          if (q.get("view") === "table") state.view = "table";
+          if (suites.some((x) => slug(x.label) === q.get("suite"))) state.suite = q.get("suite");
+          if (q.get("q")) state.q = q.get("q");
+          if (["abs", "log", "rel"].includes(q.get("y"))) state.y = q.get("y");
+          if (q.get("thr") && isFinite(+q.get("thr"))) state.thr = +q.get("thr");
+          if ([5, 10, 20].includes(+q.get("rows"))) state.k = +q.get("rows");
+          if (["better", "worse", "flat"].includes(q.get("status"))) state.status = q.get("status");
+          const f = commitIndex(q.get("from"));
+          const t = commitIndex(q.get("to"));
+          const n = parseInt(q.get("n"), 10);
+          let to = t >= 0 ? t : LAST;
+          let from = f >= 0 ? f : Number.isFinite(n) ? to - n + 1 : to - DEFAULT_WINDOW + 1;
+          [state.from, state.to] = clampWindow(Math.min(from, to), Math.max(from, to));
+        })();
 
-          // Render header
-          document.getElementById("last-update").textContent = new Date(
-            data.lastUpdate
-          ).toString();
-          const repoLink = document.getElementById("repository-link");
-          repoLink.href = data.repoUrl;
-          repoLink.textContent = data.repoUrl;
+        function writeUrl() {
+          const q = new URLSearchParams();
+          if (state.view !== "charts") q.set("view", state.view);
+          if (state.suite) q.set("suite", state.suite);
+          if (state.to !== LAST) q.set("to", commits[state.to].id.slice(0, 7));
+          if (state.to !== LAST || state.from !== Math.max(0, LAST - DEFAULT_WINDOW + 1)) {
+            const n = state.to - state.from + 1;
+            if (state.to === LAST && [10, 100].includes(n)) q.set("n", n);
+            else if (state.to === LAST && state.from === 0) q.set("n", commits.length);
+            else q.set("from", commits[state.from].id.slice(0, 7));
+          }
+          if (state.q) q.set("q", state.q);
+          if (state.y !== "abs") q.set("y", state.y);
+          if (state.thr !== 2) q.set("thr", state.thr);
+          if (state.k !== 5) q.set("rows", state.k);
+          if (state.status) q.set("status", state.status);
+          const s = q.toString();
+          history.replaceState(null, "", s ? `?${s}${location.hash}` : location.pathname + location.hash);
+        }
 
-          // Only time option, so no links to render
+        /* ── Window statistics ──────────────────────── */
+        function windowPoints(s) {
+          return s.points.filter((p) => p.idx >= state.from && p.idx <= state.to);
+        }
 
-          // Render footer
+        // Last commit in the window that has any data for this suite; series
+        // that stopped before it are flagged stale.
+        function suiteLastIdx(suite) {
+          let best = -1;
+          for (const g of suite.groupList)
+            for (const p of g.panelList)
+              for (const s of p.seriesList)
+                for (let i = s.points.length - 1; i >= 0; i--) {
+                  const idx = s.points[i].idx;
+                  if (idx <= state.to) {
+                    if (idx >= state.from && idx > best) best = idx;
+                    break;
+                  }
+                }
+          return best;
+        }
+
+        function seriesStats(s, lastIdx) {
+          const wp = windowPoints(s);
+          if (wp.length === 0) return null;
+          const latest = wp[wp.length - 1];
+          const prev = wp.length > 1 ? wp[wp.length - 2] : null;
+          const base = wp[0];
+          return {
+            s,
+            wp,
+            latest,
+            prev,
+            base,
+            dPrev: prev ? latest.value / prev.value - 1 : null,
+            dBase: wp.length > 1 ? latest.value / base.value - 1 : null,
+            stale: latest.idx < lastIdx,
+          };
+        }
+
+        function visibleSuites() {
+          return state.suite ? suites.filter((x) => slug(x.label) === state.suite) : suites;
+        }
+
+        function matches(s) {
+          if (!state.q) return true;
+          return state.q
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean)
+            .every((t) => s.haystack.includes(t));
+        }
+
+        function commitLink(idx, withMsg) {
+          const c = commits[idx];
+          const msg = c.commit.message.split("\n")[0];
+          const sha = `<a class="mono" href="${esc(c.commit.url)}" target="_blank" rel="noopener" title="${esc(
+            msg
+          )}">${c.id.slice(0, 7)}</a>`;
+          if (!withMsg) return sha;
+          return `<span class="commit-ref">${sha}<span class="msg" title="${esc(msg)}">${esc(
+            msg
+          )}</span><span class="muted">${shortDate(c.date)}</span></span>`;
+        }
+
+        /* ── Header ─────────────────────────────────── */
+        function renderHeader() {
+          const repo = document.getElementById("repo-link");
+          repo.href = DATA.repoUrl;
+          const latest = commits[LAST];
+          const msg = latest ? latest.commit.message.split("\n")[0] : "";
+          const stats = [
+            [commits.length, "Commits tracked"],
+            [seriesCount, "Benchmark series"],
+            [devices.join(", ") || "–", devices.length > 1 ? "GPUs" : "GPU"],
+            [timeAgo(DATA.lastUpdate), "Last update"],
+          ];
+          let html = stats
+            .map(
+              ([v, l]) =>
+                `<div class="stat"><span class="stat-value" title="${esc(v)}">${esc(
+                  v
+                )}</span><span class="stat-label">${l}</span></div>`
+            )
+            .join("");
+          if (latest) {
+            html += `<div class="stat wide"><span class="stat-value" title="${esc(msg)}"><a class="mono" href="${esc(
+              latest.commit.url
+            )}" target="_blank" rel="noopener">${latest.id.slice(0, 7)}</a> ${esc(
+              msg
+            )}</span><span class="stat-label">Latest commit · ${shortDate(latest.date)}${
+              latest.commit.author && latest.commit.author.username
+                ? ` · @${esc(latest.commit.author.username)}`
+                : ""
+            }</span></div>`;
+          }
+          document.getElementById("stats").innerHTML = html;
           document.getElementById("dl-button").onclick = () => {
-            const dataUrl = "data:," + JSON.stringify(data, null, 2);
+            const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: "application/json" });
             const a = document.createElement("a");
-            a.href = dataUrl;
+            a.href = URL.createObjectURL(blob);
             a.download = "benchmark_data.json";
             a.click();
+            URL.revokeObjectURL(a.href);
           };
         }
 
-        function renderAllChars(dataSets) {
-          function renderGraph(parent, name, graphData) {
-            const canvas = document.createElement("canvas");
-            canvas.style.width = "100%";
-            canvas.style.height = "100%";
-            canvas.style.maxWidth = "100%";
-            canvas.style.maxHeight = "100%";
-            canvas.style.display = "block"; // Ensure canvas is block level
-            parent.appendChild(canvas);
+        /* ── Toolbar ────────────────────────────────── */
+        const fromInput = document.getElementById("from");
+        const toInput = document.getElementById("to");
+        function syncToolbar() {
+          for (const b of document.querySelectorAll("[data-view]"))
+            b.setAttribute("aria-pressed", String(b.dataset.view === state.view));
+          for (const b of document.querySelectorAll("[data-suite]"))
+            b.setAttribute("aria-pressed", String((b.dataset.suite || null) === state.suite));
+          fromInput.max = toInput.max = LAST;
+          fromInput.value = state.from;
+          toInput.value = state.to;
+          const pos = (i) => (LAST > 0 ? (i / LAST) * 100 : 0);
+          const fill = document.getElementById("range-fill");
+          fill.style.left = `${pos(state.from)}%`;
+          fill.style.right = `${100 - pos(state.to)}%`;
+          // Keep the left thumb grabbable when both sit at the right end.
+          fromInput.style.zIndex = state.from > LAST / 2 ? 2 : 1;
+          toInput.style.zIndex = state.from > LAST / 2 ? 1 : 2;
+          const n = state.to - state.from + 1;
+          document.getElementById("window-readout").innerHTML = `<b>${n}</b> of ${
+            commits.length
+          } commits · ${shortDate(commits[state.from].date)} → ${shortDate(commits[state.to].date)}`;
+          for (const b of document.querySelectorAll("#presets button")) {
+            const want = b.dataset.n === "all" ? commits.length : +b.dataset.n;
+            b.setAttribute(
+              "aria-pressed",
+              String(state.to === LAST && n === Math.min(want, commits.length))
+            );
+          }
+        }
 
-            // Ensure canvas has dimensions before creating chart
-            const setCanvasDimensions = () => {
-              const rect = canvas.getBoundingClientRect();
-              if (rect.width > 0 && rect.height > 0) {
-                canvas.width = rect.width * window.devicePixelRatio;
-                canvas.height = rect.height * window.devicePixelRatio;
-                canvas.style.width = rect.width + "px";
-                canvas.style.height = rect.height + "px";
-                const ctx = canvas.getContext("2d");
-                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-                return true;
-              }
-              return false;
-            };
-
-            // Try to set dimensions immediately, fallback to next frame
-            if (!setCanvasDimensions()) {
-              requestAnimationFrame(setCanvasDimensions);
-            }
-
-            const datasets = [];
-            // Compute min value for y-axis
-            let minY = Infinity;
-            const allCommits = new Map();
-            for (const variantData of graphData.values()) {
-              for (const result of variantData) {
-                allCommits.set(result.commit.id, {
-                  id: result.commit.id,
-                  date: commitTime(result.commit),
-                  commit: result.commit,
-                });
-              }
-            }
-            // Entries are already pre-filtered to the most recent commits
-            const sortedCommits = Array.from(allCommits.values())
-              .sort((a, b) => a.date - b.date);  // Oldest first, so latest appears on right
-
-            const data = {
-              labels: sortedCommits.map((c) => c.id.slice(0, 7)),
-              datasets,
-            };
-
-            const variantIndices = new Map();
-            const variantNames = [...graphData.keys()].sort();
-            let datasetIndex = 0;
-
-            for (const variantName of variantNames) {
-              const variantData = graphData.get(variantName);
-              const color = colorPalette[datasetIndex % colorPalette.length];
-              // Extract variant for the label
-              const displayLabel = variantName.trim();
-
-              // Create data points aligned with sorted commits
-              const commitMap = new Map(
-                variantData.map((result) => [result.commit.id, result])
-              );
-              const alignedData = sortedCommits.map((commit) => {
-                const result = commitMap.get(commit.id);
-                if (result) {
-                  const val = result.bench.value;
-                  if (val < minY) minY = val;
-                  return val;
-                }
-                return null; // Missing data point
-              });
-
-              const lineData = {
-                label: displayLabel,
-                data: alignedData,
-                borderColor: color,
-                fill: false,
-                lineTension: 0,
-                spanGaps: true, // Connect across missing data points
+        function setupToolbar() {
+          if (suites.length > 1) {
+            const box = document.getElementById("suites");
+            box.hidden = false;
+            box.innerHTML = [["", "All"], ...suites.map((x) => [slug(x.label), x.label])]
+              .map(([k, l]) => `<button type="button" data-suite="${k}">${esc(l)}</button>`)
+              .join("");
+            for (const b of box.querySelectorAll("[data-suite]"))
+              b.onclick = () => {
+                state.suite = b.dataset.suite || null;
+                update();
               };
-              datasets.push(lineData);
-              variantIndices.set(datasetIndex, variantName);
-              datasetIndex++;
-            }
+          }
+          for (const b of document.querySelectorAll("[data-view]"))
+            b.onclick = () => {
+              state.view = b.dataset.view;
+              update();
+              window.scrollTo({ top: 0 });
+            };
+          const search = document.getElementById("search");
+          search.value = state.q;
+          let t = null;
+          search.addEventListener("input", () => {
+            clearTimeout(t);
+            t = setTimeout(() => {
+              state.q = search.value.trim();
+              update();
+            }, 120);
+          });
+          let rt = null;
+          const onRange = (which) => () => {
+            let f = +fromInput.value;
+            let to = +toInput.value;
+            if (which === "from") f = Math.min(f, to - MIN_SPAN + 1);
+            else to = Math.max(to, f + MIN_SPAN - 1);
+            [state.from, state.to] = clampWindow(f, to);
+            syncToolbar();
+            clearTimeout(rt);
+            rt = setTimeout(update, 120);
+          };
+          fromInput.addEventListener("input", onRange("from"));
+          toInput.addEventListener("input", onRange("to"));
+          for (const b of document.querySelectorAll("#presets button"))
+            b.onclick = () => {
+              const n = b.dataset.n === "all" ? commits.length : +b.dataset.n;
+              [state.from, state.to] = clampWindow(LAST - n + 1, LAST);
+              update();
+            };
+        }
 
-            const unit = graphData.values().next().value[0].bench.unit;
-            const timeUnits = ["ns", "us", "μs", "ms", "s", "min", "h"];
-            const yAxisLabel =
-              unit === "points/s" ? "Grid points/s" :
-              timeUnits.includes(unit) ? `Time (${unit})` :
-              unit;
-            const options = {
-              legend: {
-                display: true,
-                position: "bottom",
-                labels: {
-                  boxWidth: 4,
-                  fontSize: 12,
-                  padding: 4,
-                },
-              },
-              scales: {
-                xAxes: [
-                  {
-                    scaleLabel: {
-                      display: true,
-                      labelString: "commit",
-                    },
-                  },
-                ],
-                yAxes: [
-                  {
-                    scaleLabel: {
-                      display: true,
-                      labelString: yAxisLabel,
-                    },
-                    ticks: {
-                      maxTicksLimit: 5,
-                      callback: function (value, index, values) {
-                        // Format as regular numbers with appropriate precision
-                        if (value === 0) return "0";
-                        return unit === "points/s" ? value.toExponential(2) : value.toPrecision(3);
-                      },
-                    },
-                  },
-                ],
-              },
-              tooltips: {
-                enabled: true,
-                mode: "index",
-                intersect: true,
-                callbacks: {
-                  afterTitle: function (items) {
-                    const item = items[0];
-                    const datasetIndex = item.datasetIndex;
-                    const dataIndex = item.index;
-                    const variantName = variantIndices.get(datasetIndex);
-                    const variantData = graphData.get(variantName);
-                    const commitId = sortedCommits[dataIndex].id;
+        /* ── Overview table ─────────────────────────── */
+        function sparkline(st, bigger) {
+          const W = 110,
+            H = 26,
+            P = 3;
+          const vals = st.wp.map((p) => p.value);
+          if (vals.length < 2) return "";
+          const lo = Math.min(...vals),
+            hi = Math.max(...vals);
+          const span = hi - lo || 1;
+          const x = (i) => P + (i / (vals.length - 1)) * (W - 2 * P);
+          const y = (v) => H - P - ((v - lo) / span) * (H - 2 * P);
+          const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+          const cls = status(st.dBase, bigger, state.thr);
+          const by = y(vals[0]).toFixed(1);
+          return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="base" x1="${P}" x2="${
+            W - P
+          }" y1="${by}" y2="${by}"/><polyline points="${pts}"/><circle class="${cls}" cx="${x(
+            vals.length - 1
+          ).toFixed(1)}" cy="${y(vals[vals.length - 1]).toFixed(1)}" r="3"/></svg>`;
+        }
 
-                    // Find the result for this variant and commit
-                    const result = variantData.find(r => r.commit.id === commitId);
-                    if (!result) return ""; // No data for this commit
-
-                    const commit = result.commit;
-                    return (
-                      "\n" +
-                      commit.message.split('\n')[0] +
-                      "\n\n" +
-                      commit.timestamp +
-                      " committed by @" +
-                      commit.author.username +
-                      "\n"
-                    );
-                  },
-                  label: function (item) {
-                    const datasetIndex = item.datasetIndex;
-                    const variantName = variantIndices.get(datasetIndex);
-                    let label = variantName + ": " + item.value;
-                    label += " " + unit;
-                    return label;
-                  },
-                  afterLabel: function (item) {
-                    const datasetIndex = item.datasetIndex;
-                    const dataIndex = item.index;
-                    const variantName = variantIndices.get(datasetIndex);
-                    const variantData = graphData.get(variantName);
-                    const commitId = sortedCommits[dataIndex].id;
-
-                    // Find the result for this variant and commit
-                    const result = variantData.find(r => r.commit.id === commitId);
-                    if (!result || !result.bench.extra) return "";
-
-                    return "\n" + result.bench.extra;
-                  },
-                },
-              },
-              onClick: function (_mouseEvent, activeElems) {
-                if (activeElems.length === 0) {
-                  console.log("got here");
-                  return;
+        function collectRows() {
+          const out = [];
+          for (const suite of visibleSuites()) {
+            const lastIdx = suiteLastIdx(suite);
+            for (const g of suite.groupList)
+              for (const p of g.panelList)
+                for (const s of p.seriesList) {
+                  if (!matches(s)) continue;
+                  const st = seriesStats(s, lastIdx);
+                  if (st) out.push(st);
                 }
+          }
+          return out;
+        }
 
-                const datasetIndex = activeElems[0]._datasetIndex;
-                const dataIndex = activeElems[0]._index;
-                const variantName = variantIndices.get(datasetIndex);
-                const variantData = graphData.get(variantName);
-                const commitId = sortedCommits[dataIndex].id;
+        function rowHTML(st, flat) {
+          const s = st.s;
+          const p = s.panel;
+          const bigger = p.suite.bigger;
+          const ctx = [p.name, p.device].filter(Boolean).join(" · ");
+          const stale = st.stale
+            ? ` <span class="stale" title="Not run since this commit">last run ${commits[
+                st.latest.idx
+              ].id.slice(0, 7)}</span>`
+            : "";
+          const grp = flat ? `<span class="grp">${esc(p.group.info.short)}</span>` : "";
+          const prevTitle = st.prev
+            ? `${fmtValue(st.prev.value, s.unit)} at ${commits[st.prev.idx].id.slice(0, 7)}`
+            : "";
+          const baseTitle = `${fmtValue(st.base.value, s.unit)} at ${commits[st.base.idx].id.slice(0, 7)}`;
+          return `<tr class="row" data-panel="${p.id}">
+            <td><div class="bench-name">${grp}<span class="series" title="${esc(s.name)}">${esc(s.label)}</span><span class="ctx">${esc(
+              ctx
+            )}</span>${stale}</div></td>
+            <td class="num"><span class="value">${fmtNumber(st.latest.value, s.unit)}</span> <span class="unit">${esc(
+              fmtUnit(s.unit)
+            )}</span></td>
+            <td class="num">${deltaHTML(st.dPrev, bigger, state.thr, prevTitle)}</td>
+            <td class="num">${deltaHTML(st.dBase, bigger, state.thr, baseTitle)}</td>
+            <td class="hide-sm">${sparkline(st, bigger)}</td>
+          </tr>`;
+        }
 
-                // Find the result for this variant and commit
-                const result = variantData.find(r => r.commit.id === commitId);
-                if (!result) return; // No data for this commit
+        function sortValue(st, key) {
+          const sign = st.s.panel.suite.bigger ? 1 : -1;
+          if (key === "prev") return st.dPrev == null ? null : sign * st.dPrev;
+          if (key === "base") return st.dBase == null ? null : sign * st.dBase;
+          return null;
+        }
 
-                window.open(result.commit.url, "_blank");
-              },
+        function renderTable(main) {
+          const all = collectRows();
+          const counts = { better: 0, worse: 0, flat: 0 };
+          for (const st of all) {
+            const k = status(st.dBase, st.s.panel.suite.bigger, state.thr);
+            if (k in counts) counts[k]++;
+          }
+          const rows = state.status
+            ? all.filter((st) => status(st.dBase, st.s.panel.suite.bigger, state.thr) === state.status)
+            : all;
+
+          const chip = (key, label) =>
+            `<button type="button" class="chip-btn ${key}" data-status="${key}" aria-pressed="${
+              state.status === key
+            }"><b>${counts[key]}</b> ${label}</button>`;
+          const thrOpts = [1, 2, 5, 10]
+            .map((t) => `<option value="${t}"${t === state.thr ? " selected" : ""}>±${t}%</option>`)
+            .join("");
+
+          let html = `<div class="panel compare">
+            <span>Comparing</span> ${commitLink(state.from, true)}
+            <span class="arrow">→</span> ${commitLink(state.to, true)}
+            <span class="spacer"></span>
+            <div class="filters">
+              ${chip("better", "improved")}${chip("worse", "regressed")}${chip("flat", "unchanged")}
+              <label class="inline">Noise band <select id="thr">${thrOpts}</select></label>
+            </div>
+          </div>`;
+
+          if (rows.length === 0) {
+            html += `<div class="panel empty">No benchmarks match the current filter.</div>`;
+            main.innerHTML = html;
+            bindTable(main);
+            return;
+          }
+
+          const dirMark = (key) =>
+            state.sort && state.sort.key === key ? (state.sort.dir > 0 ? "↑" : "↓") : "";
+          html += `<div class="panel table-scroll"><table class="overview"><thead><tr>
+            <th data-sort="name"><span class="dir">${dirMark("name")}</span>Benchmark</th>
+            <th class="num">Latest<span class="sub">${commits[state.to].id.slice(0, 7)}</span></th>
+            <th class="num" data-sort="prev"><span class="dir">${dirMark("prev")}</span>vs previous run<span class="sub">last two runs in window</span></th>
+            <th class="num" data-sort="base"><span class="dir">${dirMark("base")}</span>vs window start<span class="sub">first run since ${commits[
+              state.from
+            ].id.slice(0, 7)}</span></th>
+            <th class="hide-sm">Trend</th>
+          </tr></thead><tbody>`;
+
+          if (state.sort && state.sort.key !== "name") {
+            const { key, dir } = state.sort;
+            const sorted = [...rows].sort((a, b) => {
+              const va = sortValue(a, key),
+                vb = sortValue(b, key);
+              if (va == null && vb == null) return 0;
+              if (va == null) return 1;
+              if (vb == null) return -1;
+              return dir * (va - vb);
+            });
+            html += sorted.map((st) => rowHTML(st, true)).join("");
+          } else {
+            const rev = state.sort && state.sort.dir < 0;
+            let lastSuite = null,
+              lastGroup = null;
+            const ordered = rev ? [...rows].reverse() : rows;
+            for (const st of ordered) {
+              const p = st.s.panel;
+              if (suites.length > 1 && p.suite !== lastSuite) {
+                lastSuite = p.suite;
+                html += `<tr class="suite"><td colspan="5">${esc(p.suite.label)} · ${
+                  p.suite.bigger ? "higher is better" : "lower is better"
+                }</td></tr>`;
+              }
+              if (p.group !== lastGroup) {
+                if (lastGroup && lastGroup.suite === p.suite) html += `<tr class="gap"><td colspan="5"></td></tr>`;
+                lastGroup = p.group;
+                html += `<tr class="group"><td colspan="5"><span class="group-title">${esc(
+                  p.group.info.title
+                )}</span>${chipsHTML(p.group.info.chips)}</td></tr>`;
+              }
+              html += rowHTML(st, false);
+            }
+          }
+          html += `</tbody></table></div>
+            <p class="legend-note">▲ green = faster / better, ▼ red = slower / worse; changes inside the noise band are grey.
+            Drag the left history handle to move the baseline. Click a row to open its chart.</p>`;
+          main.innerHTML = html;
+          bindTable(main);
+        }
+
+        function bindTable(main) {
+          for (const b of main.querySelectorAll("[data-status]"))
+            b.onclick = () => {
+              state.status = state.status === b.dataset.status ? null : b.dataset.status;
+              update();
+            };
+          const thr = main.querySelector("#thr");
+          if (thr)
+            thr.onchange = () => {
+              state.thr = +thr.value;
+              update();
+            };
+          for (const th of main.querySelectorAll("th[data-sort]"))
+            th.onclick = () => {
+              const key = th.dataset.sort;
+              const cur = state.sort;
+              // Deltas start with the worst regressions; a third click resets.
+              if (!cur || cur.key !== key) state.sort = { key, dir: key === "name" ? -1 : 1 };
+              else if (cur.dir === (key === "name" ? -1 : 1)) state.sort = { key, dir: -cur.dir };
+              else state.sort = null;
+              update();
+            };
+          for (const tr of main.querySelectorAll("tr.row"))
+            tr.onclick = (ev) => {
+              if (ev.target.closest("a")) return;
+              state.view = "charts";
+              pendingFocus = tr.dataset.panel;
+              update();
+            };
+        }
+
+        /* ── Charts view ────────────────────────────── */
+        let charts = []; // { panel, canvas, chart, visible, dirty }
+        let observer = null;
+        let pendingFocus = null;
+
+        function seriesColor(slot) {
+          return cssVar(`--series-${(slot % SERIES_SLOTS) + 1}`);
+        }
+
+        function destroyCharts() {
+          for (const c of charts) if (c.chart) c.chart.destroy();
+          charts = [];
+          if (observer) observer.disconnect();
+        }
+
+        function renderCharts(main) {
+          const yOpts = [
+            ["abs", "Absolute"],
+            ["log", "Log scale"],
+            ["rel", "% vs window start"],
+          ]
+            .map(
+              ([k, l]) => `<button type="button" data-y="${k}" aria-pressed="${state.y === k}">${l}</button>`
+            )
+            .join("");
+
+          const kOpts = [5, 10, 20]
+            .map((k) => `<button type="button" data-k="${k}" aria-pressed="${state.k === k}">${k}</button>`)
+            .join("");
+
+          // Visible sections, honouring the search filter.
+          const sections = [];
+          for (const suite of visibleSuites()) {
+            const lastIdx = suiteLastIdx(suite);
+            for (const g of suite.groupList) {
+              const cards = [];
+              for (const p of g.panelList) {
+                if (!p.seriesList.some(matches)) continue;
+                const stats = p.seriesList.map((s) => seriesStats(s, lastIdx)).filter(Boolean);
+                if (stats.length) cards.push({ panel: p, stats });
+              }
+              if (cards.length) sections.push({ suite, g, cards });
+            }
+          }
+
+          const pills = sections
+            .map(
+              ({ g, cards }) =>
+                `<a class="nav-pill" href="#s-${slug(g.suite.label)}-${slug(g.name)}" title="${esc(g.name)}">${esc(
+                  g.info.short
+                )}<span class="n">${cards.length}</span></a>`
+            )
+            .join("");
+
+          let html = `<div class="panel chart-controls">
+            <span class="window-label">Y axis</span>
+            <div class="seg small" role="group" aria-label="Y axis">${yOpts}</div>
+            <span class="window-label">Table rows</span>
+            <div class="seg small" role="group" aria-label="Commits per table">${kOpts}</div>
+            <span class="muted" style="font-size:13px">Click a series name in a table to hide its line · click a point to open its commit</span>
+            ${pills ? `<div class="nav-pills">${pills}</div>` : ""}
+          </div>`;
+
+          if (!sections.length) html += `<div class="panel empty">No benchmarks match the current filter.</div>`;
+
+          let lastSuite = null;
+          for (const { suite, g, cards } of sections) {
+            if (suites.length > 1 && suite !== lastSuite) {
+              lastSuite = suite;
+              html += `<div class="suite-head">${esc(suite.label)} · ${
+                suite.bigger ? "higher is better" : "lower is better"
+              }</div>`;
+            }
+            html += `<section class="section" id="s-${slug(suite.label)}-${slug(g.name)}">
+              <div class="section-head"><h2>${esc(g.info.title)}</h2>${chipsHTML(g.info.chips)}<span class="section-count">${
+                cards.length
+              } chart${cards.length === 1 ? "" : "s"}</span></div>
+              <div class="cards">${cards.map(cardHTML).join("")}</div>
+            </section>`;
+          }
+          main.innerHTML = html;
+
+          for (const b of main.querySelectorAll("[data-k]"))
+            b.onclick = () => {
+              state.k = +b.dataset.k;
+              update();
+            };
+          for (const b of main.querySelectorAll("[data-y]"))
+            b.onclick = () => {
+              state.y = b.dataset.y;
+              update();
             };
 
-            activeCharts.push(
-              new Chart(canvas, {
-                type: "line",
-                data,
-                options,
-              })
-            );
-          }
-
-          function renderDevice(benchmarkName, device, deviceData, parent) {
-            // Create device section
-            const deviceSection = document.createElement("div");
-            deviceSection.className = "device-section";
-            parent.appendChild(deviceSection);
-
-            // Device header
-            const deviceHeader = document.createElement("h4");
-            deviceHeader.textContent = device.toUpperCase();
-            deviceHeader.className = "device-header";
-            deviceSection.appendChild(deviceHeader);
-
-            // Container for charts in this device
-            const deviceCharts = document.createElement("div");
-            deviceCharts.className = "device-charts";
-            deviceSection.appendChild(deviceCharts);
-
-            const passes = [...deviceData.keys()].sort();
-            for (const pass of passes) {
-              const chartContainer = document.createElement("div");
-              chartContainer.className = "chart-container";
-              deviceCharts.appendChild(chartContainer);
-
-              const graphTitle = pass;
-
-              const titleElem = document.createElement("h6");
-              titleElem.textContent = graphTitle.toUpperCase();
-              titleElem.className = "chart-title";
-              chartContainer.appendChild(titleElem);
-
-              const graphsElem = document.createElement("div");
-              graphsElem.className = "chartCard";
-              chartContainer.appendChild(graphsElem);
-
-              renderGraph(
-                graphsElem,
-                `${benchmarkName} - ${device} - ${pass}`,
-                deviceData.get(pass)
-              );
+          observer = new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                const c = charts.find((x) => x.canvas === e.target);
+                if (!c) continue;
+                c.visible = e.isIntersecting;
+                if (c.visible && c.dirty) buildChart(c);
+              }
+            },
+            { rootMargin: "600px 0px" }
+          );
+          for (const { cards } of sections)
+            for (const { panel, stats } of cards) {
+              const el = document.getElementById(panel.id);
+              const canvas = el.querySelector("canvas");
+              const c = { panel, stats, canvas, el, chart: null, visible: false, dirty: true };
+              charts.push(c);
+              observer.observe(canvas);
+              bindLegend(c);
             }
+        }
+
+        // Transposed table: the newest k commits as rows, one column per series,
+        // each cell showing the value and its change from the previous commit.
+        // Many-series panels: one row per series with its share of the total.
+        function seriesRowsTable(panel, stats) {
+          const bigger = panel.suite.bigger;
+          const unit = stats[0].s.unit;
+          // Totals are only meaningful for additive quantities such as times.
+          let total = "";
+          if (!bigger) {
+            const sumAt = (idx) => {
+              let t = 0;
+              for (const st of stats) {
+                const p = st.wp.find((q) => q.idx === idx);
+                if (p) t += p.value;
+              }
+              return t;
+            };
+            const idxs = [...new Set(stats.flatMap((st) => st.wp.map((p) => p.idx)))].sort((a, b) => a - b);
+            const lastT = sumAt(idxs[idxs.length - 1]);
+            const prevT = idxs.length > 1 ? sumAt(idxs[idxs.length - 2]) : null;
+            const firstT = sumAt(idxs[0]);
+            stats.totalLatest = lastT;
+            total = `<tr class="total"><td>Total of ${stats.length}</td><td><span class="value">${fmtNumber(
+              lastT,
+              unit
+            )}</span></td><td>100%</td><td>${deltaHTML(prevT ? lastT / prevT - 1 : null, bigger, state.thr)}</td><td>${deltaHTML(
+              idxs.length > 1 ? lastT / firstT - 1 : null,
+              bigger,
+              state.thr
+            )}</td></tr>`;
           }
+          const rows = stats
+            .map((st, j) => {
+              const s = st.s;
+              const color = seriesColor(s.slot);
+              const dashed = s.slot >= SERIES_SLOTS ? " dashed" : "";
+              const share = stats.totalLatest && !st.stale ? `${((st.latest.value / stats.totalLatest) * 100).toFixed(1)}%` : "";
+              const stale = st.stale ? ` <span class="stale">stale</span>` : "";
+              return `<tr class="s${panel.hidden.has(s.name) ? " off" : ""}" data-col="${j}" title="${esc(
+                s.name
+              )} — click to hide or show this line"><td><span class="lg-row"><span class="swatch${dashed}" style="background:${color};color:${color}"></span><span class="series-label">${esc(
+                s.label
+              )}</span>${stale}</span></td><td><span class="value">${fmtNumber(st.latest.value, unit)}</span></td><td>${share}</td><td>${deltaHTML(
+                st.dPrev,
+                bigger,
+                state.thr
+              )}</td><td>${deltaHTML(st.dBase, bigger, state.thr)}</td></tr>`;
+            })
+            .join("");
+          return `<table class="commits rows"><thead><tr><th>${stats.length} series · largest first</th><th>Latest</th><th>${
+            bigger ? "" : "Share"
+          }</th><th>vs prev</th><th>vs ${commits[state.from].id.slice(0, 7)}</th></tr></thead><tbody>${total}${rows}</tbody></table>`;
+        }
 
-          function renderBenchmark(benchmarkName, benchmarkData, parent) {
-            // Create benchmark section
-            const benchmarkSection = document.createElement("div");
-            benchmarkSection.className = "benchmark-section";
-            benchmarkSection.id = `benchmark-${benchmarkName
-              .toLowerCase()
-              .replace(/[^a-z0-9]/g, "-")}`;
-            parent.appendChild(benchmarkSection);
+        function cardHTML({ panel, stats }) {
+          const bigger = panel.suite.bigger;
+          const unit = stats[0].s.unit;
+          const idxs = [...new Set(stats.flatMap((st) => st.wp.map((p) => p.idx)))].sort((a, b) => a - b);
+          const byIdx = stats.map((st) => new Map(st.wp.map((p) => [p.idx, p])));
+          const off = (st) => (panel.hidden.has(st.s.name) ? " off" : "");
 
-            // Benchmark header
-            const benchmarkHeader = document.createElement("h3");
-            benchmarkHeader.textContent = benchmarkName;
-            benchmarkHeader.className = "benchmark-header";
-            benchmarkSection.appendChild(benchmarkHeader);
+          const head = stats
+            .map((st, j) => {
+              const color = seriesColor(st.s.slot);
+              const dashed = st.s.slot >= SERIES_SLOTS ? " dashed" : "";
+              const stale = st.stale ? ` <span class="stale">stale</span>` : "";
+              return `<th class="s${off(st)}" data-col="${j}" title="Click to hide or show this line"><span class="lg-name"><span class="swatch${dashed}" style="background:${color};color:${color}"></span><span class="series-label">${esc(
+                st.s.label
+              )}</span></span>${stale}</th>`;
+            })
+            .join("");
 
-            const devices = [...benchmarkData.keys()].sort();
-            for (const device of devices) {
-              renderDevice(
-                benchmarkName,
-                device,
-                benchmarkData.get(device),
-                benchmarkSection
-              );
-            }
-          }
-
-          function createTableOfContents(benchmarkNames, parent) {
-            const tocSection = document.createElement("div");
-            tocSection.className = "table-of-contents";
-
-            const tocHeader = document.createElement("h2");
-            tocHeader.textContent = "Benchmark Groups";
-            tocHeader.className = "toc-header";
-            tocSection.appendChild(tocHeader);
-
-            const tocList = document.createElement("div");
-            tocList.className = "toc-list";
-
-            benchmarkNames.forEach((benchmarkName) => {
-              const tocItem = document.createElement("a");
-              tocItem.href = `#benchmark-${benchmarkName
-                .toLowerCase()
-                .replace(/[^a-z0-9]/g, "-")}`;
-              tocItem.textContent = benchmarkName;
-              tocItem.className = "toc-item";
-              tocList.appendChild(tocItem);
+          let body = "";
+          const first = Math.max(0, idxs.length - state.k);
+          for (let r = idxs.length - 1; r >= first; r--) {
+            const idx = idxs[r];
+            const prevIdx = r > 0 ? idxs[r - 1] : null;
+            const c = commits[idx];
+            const msg = c.commit.message.split("\n")[0];
+            body += `<tr><td><a class="mono" href="${esc(c.commit.url)}" target="_blank" rel="noopener" title="${esc(
+              msg
+            )}">${c.id.slice(0, 7)}</a><span class="when">${shortDate(c.date)}</span></td>`;
+            stats.forEach((st, j) => {
+              const p = byIdx[j].get(idx);
+              const q = prevIdx != null ? byIdx[j].get(prevIdx) : null;
+              let cell = `<span class="muted">–</span>`;
+              if (p) {
+                const d = q ? p.value / q.value - 1 : null;
+                const stt = status(d, bigger, state.thr);
+                const icon = stt === "better" ? "▲ " : stt === "worse" ? "▼ " : "";
+                cell = `<span class="value">${fmtNumber(p.value, unit)}</span><span class="d ${stt}">${
+                  d == null ? "&nbsp;" : icon + pct(d)
+                }</span>`;
+              }
+              body += `<td class="${off(st).trim()}" data-col="${j}">${cell}</td>`;
             });
-
-            tocSection.appendChild(tocList);
-            parent.appendChild(tocSection);
+            body += `</tr>`;
           }
+          body += `<tr class="since"><td class="muted" title="Latest run vs first run in the history window">vs ${commits[
+            state.from
+          ].id.slice(0, 7)}</td>${stats
+            .map(
+              (st, j) =>
+                `<td class="${off(st).trim()}" data-col="${j}">${deltaHTML(
+                  st.dBase,
+                  bigger,
+                  state.thr,
+                  `${fmtValue(st.base.value, unit)} at ${commits[st.base.idx].id.slice(0, 7)}`
+                )}</td>`
+            )
+            .join("")}</tr>`;
 
-          const main = document.getElementById("main");
-          const dataSet = new Map();
-          const benchmarkNames = [];
-          for (const suite of dataSets) {
-            const suiteNames = [...suite.dataSet.keys()].sort();
-            for (const benchmarkName of suiteNames) {
-              dataSet.set(benchmarkName, suite.dataSet.get(benchmarkName));
-              benchmarkNames.push(benchmarkName);
-            }
-          }
-
-          // Create table of contents
-          createTableOfContents(benchmarkNames, main);
-
-          const container = document.createElement("div");
-          container.className = "benchmarks-container";
-          main.appendChild(container);
-
-          for (const benchmarkName of benchmarkNames) {
-            renderBenchmark(
-              benchmarkName,
-              dataSet.get(benchmarkName),
-              container
-            );
-          }
+          return `<article class="panel card" id="${panel.id}">
+            <div class="card-head"><h3>${esc(panel.name || panel.group.info.title)}</h3><span class="device">${esc(
+              [panel.device, fmtUnit(unit)].filter(Boolean).join(" · ")
+            )}</span></div>
+            <div class="card-body"><div class="chart-box"><canvas role="img" aria-label="${esc(
+              `${panel.group.name} ${panel.name}`
+            )}"></canvas></div>
+            <div class="card-table">${
+              panel.many
+                ? seriesRowsTable(panel, stats)
+                : `<table class="commits"><thead><tr><th>Commit</th>${head}</tr></thead><tbody>${body}</tbody></table>`
+            }</div></div>
+          </article>`;
         }
 
-        function renderPage() {
-          // Destroy previous charts and clear the page before re-rendering
-          for (const chart of activeCharts) {
-            chart.destroy();
-          }
-          activeCharts.length = 0;
-          document.getElementById("main").innerHTML = "";
-          renderAllChars(buildDataSets());
+        function bindLegend(c) {
+          for (const th of c.el.querySelectorAll(".s[data-col]"))
+            th.onclick = () => {
+              const j = +th.dataset.col;
+              const name = c.stats[j].s.name;
+              const hidden = c.panel.hidden;
+              if (hidden.has(name)) hidden.delete(name);
+              else hidden.add(name);
+              for (const el of c.el.querySelectorAll(`[data-col="${j}"]`))
+                el.classList.toggle("off", hidden.has(name));
+              if (c.chart) {
+                c.chart.setDatasetVisibility(j, !hidden.has(name));
+                c.chart.update();
+              }
+            };
         }
 
-        function setupCommitSlider() {
-          // Total number of distinct commits in the database
-          const allCommitIds = new Set();
-          for (const entries of Object.values(
-            window.BENCHMARK_DATA.entries
-          )) {
-            for (const entry of entries) {
-              allCommitIds.add(entry.commit.id);
-            }
-          }
-          const totalCommits = Math.max(allCommitIds.size, 2);
-          maxCommits = Math.min(maxCommits, totalCommits);
+        function buildChart(c) {
+          c.dirty = false;
+          if (c.chart) c.chart.destroy();
+          const { panel, stats } = c;
+          const unit = stats[0].s.unit;
+          const rel = state.y === "rel";
+          const idxs = [...new Set(stats.flatMap((st) => st.wp.map((p) => p.idx)))].sort((a, b) => a - b);
+          const ink2 = cssVar("--ink-2");
+          const muted = cssVar("--muted");
+          const grid = cssVar("--grid");
+          const axis = cssVar("--axis");
+          const surface = cssVar("--surface");
 
-          const slider = document.getElementById("commit-slider");
-          const sliderValue = document.getElementById("commit-slider-value");
-          slider.max = totalCommits;
-          slider.value = maxCommits;
-          const updateLabel = () => {
-            sliderValue.textContent = `${maxCommits} / ${totalCommits}`;
-          };
-          updateLabel();
+          const datasets = stats.map((st) => {
+            const s = st.s;
+            const color = seriesColor(s.slot);
+            const by = new Map(st.wp.map((p) => [p.idx, p]));
+            const base = st.base.value;
+            return {
+              label: s.label,
+              data: idxs.map((i) => {
+                const p = by.get(i);
+                if (!p) return null;
+                return rel ? (p.value / base - 1) * 100 : p.value;
+              }),
+              borderColor: color,
+              backgroundColor: color,
+              pointBackgroundColor: color,
+              pointBorderWidth: 0,
+              borderWidth: 2,
+              borderDash: s.slot >= SERIES_SLOTS ? [4, 3] : [],
+              pointRadius: idxs.length > 40 ? 0 : 2.5,
+              pointHoverRadius: 5,
+              pointHitRadius: 8,
+              tension: 0,
+              spanGaps: true,
+              hidden: panel.hidden.has(s.name),
+              _series: s,
+              _by: by,
+            };
+          });
 
-          let renderTimer = null;
-          slider.addEventListener("input", () => {
-            maxCommits = Number(slider.value);
-            updateLabel();
-            // Debounce re-rendering while the slider is being dragged
-            clearTimeout(renderTimer);
-            renderTimer = setTimeout(renderPage, 150);
+          const tickNum = (v) => (rel ? `${v > 0 ? "+" : ""}${+v.toFixed(1)}%` : fmtNumber(v, unit));
+
+          c.chart = new Chart(c.canvas, {
+            type: "line",
+            data: { labels: idxs.map((i) => commits[i].id.slice(0, 7)), datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              interaction: { mode: "index", intersect: false },
+              layout: { padding: { top: 4, right: 6 } },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  border: { color: axis },
+                  ticks: {
+                    color: muted,
+                    maxRotation: 0,
+                    autoSkip: true,
+                    maxTicksLimit: 6,
+                    font: { family: "ui-monospace, Menlo, monospace", size: 11 },
+                  },
+                },
+                y: {
+                  type: state.y === "log" ? "logarithmic" : "linear",
+                  grid: { color: grid },
+                  border: { display: false },
+                  title: {
+                    display: true,
+                    text: rel ? `% vs ${commits[state.from].id.slice(0, 7)}…` : fmtUnit(unit),
+                    color: muted,
+                    font: { size: 11 },
+                  },
+                  ticks: {
+                    color: muted,
+                    maxTicksLimit: 6,
+                    font: { size: 11 },
+                    callback: (v) => tickNum(v),
+                  },
+                },
+              },
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: surface,
+                  titleColor: cssVar("--ink"),
+                  bodyColor: ink2,
+                  footerColor: muted,
+                  borderColor: axis,
+                  borderWidth: 1,
+                  padding: 10,
+                  boxPadding: 4,
+                  usePointStyle: true,
+                  itemSort: (a, b) => (b.parsed.y ?? -Infinity) - (a.parsed.y ?? -Infinity),
+                  filter: (item) => item.parsed.y != null,
+                  callbacks: {
+                    title: (items) => {
+                      const cm = commits[idxs[items[0].dataIndex]];
+                      return `${cm.id.slice(0, 7)} · ${shortDate(cm.date)}`;
+                    },
+                    afterTitle: (items) => {
+                      const cm = commits[idxs[items[0].dataIndex]].commit;
+                      let m = cm.message.split("\n")[0];
+                      if (m.length > 70) m = m.slice(0, 67) + "…";
+                      return cm.author && cm.author.username ? `${m}\n@${cm.author.username}` : m;
+                    },
+                    label: (item) => {
+                      const ds = item.dataset;
+                      const p = ds._by.get(idxs[item.dataIndex]);
+                      const v = fmtValue(p.value, unit);
+                      return rel ? `${ds.label}: ${pct(item.parsed.y / 100)} (${v})` : `${ds.label}: ${v}`;
+                    },
+                    labelColor: (item) => ({
+                      borderColor: item.dataset.borderColor,
+                      backgroundColor: item.dataset.borderColor,
+                    }),
+                    footer: (items) => {
+                      const ds = items[0] && items[0].dataset;
+                      const p = ds && ds._by.get(idxs[items[0].dataIndex]);
+                      return p && p.extra ? p.extra.replace(/, /g, "\n") : "";
+                    },
+                  },
+                },
+              },
+              onClick: (evt, _els, chart) => {
+                const hit = chart.getElementsAtEventForMode(evt, "nearest", { intersect: true }, false);
+                if (!hit.length) return;
+                window.open(commits[idxs[hit[0].index]].commit.url, "_blank", "noopener");
+              },
+              onHover: (evt, _els, chart) => {
+                const hit = chart.getElementsAtEventForMode(evt, "nearest", { intersect: true }, false);
+                evt.native.target.style.cursor = hit.length ? "pointer" : "default";
+              },
+            },
           });
         }
 
-        init(); // Start
-        setupCommitSlider();
-        renderPage();
+        /* ── Theme ──────────────────────────────────── */
+        function readTheme() {
+          try {
+            return localStorage.getItem("breeze-bench-theme") || "auto";
+          } catch (_) {
+            return "auto";
+          }
+        }
+        function applyTheme(t) {
+          if (t === "auto") document.documentElement.removeAttribute("data-theme");
+          else document.documentElement.setAttribute("data-theme", t);
+          document.getElementById("theme-btn").textContent = `Theme: ${t}`;
+        }
+        function setupTheme() {
+          let theme = readTheme();
+          applyTheme(theme);
+          document.getElementById("theme-btn").onclick = () => {
+            theme = { auto: "light", light: "dark", dark: "auto" }[theme];
+            try {
+              localStorage.setItem("breeze-bench-theme", theme);
+            } catch (_) {}
+            applyTheme(theme);
+            update();
+          };
+          matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => update());
+        }
+
+        /* ── Render loop ────────────────────────────── */
+        function update() {
+          writeUrl();
+          syncToolbar();
+          const main = document.getElementById("main");
+          destroyCharts();
+          if (state.view === "table") renderTable(main);
+          else renderCharts(main);
+          if (pendingFocus) {
+            const el = document.getElementById(pendingFocus);
+            pendingFocus = null;
+            if (el) {
+              el.scrollIntoView({ block: "center" });
+              el.classList.add("flash");
+              setTimeout(() => el.classList.remove("flash"), 1500);
+            }
+          }
+        }
+
+        renderHeader();
+        setupToolbar();
+        setupTheme();
+        update();
+        if (location.hash) {
+          const el = document.getElementById(location.hash.slice(1));
+          if (el) el.scrollIntoView();
+        }
       })();
     </script>
   </body>
