@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793486336455,
+  "lastUpdate": 1793486338487,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -48496,6 +48496,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.802851915359497,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fa9b104d910331e3a44ab2b5a36300e725761f64",
+          "message": "Add the Supersaturation diagnostic (#979)\n\n* Add the Supersaturation diagnostic\n\nThe supersaturation 𝒮 = ℋ - 1 is the quantity that decides whether droplets grow, activate,\nor evaporate, and in a cloud it is a small residual of two much larger numbers, so it is what\none wants to output rather than the humidity itself. Supersaturation(model) returns the\noperation and SupersaturationField(model) the Field, both built on RelativeHumidity.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Test the diagnostic with reductions rather than interior arrays\n\nUse the functional forms all(isfinite, …) and all(<(0), …) on the fields themselves, which\nshort-circuit and allocate nothing, and judge the saturated case by reductions instead of a\nscalar loop over the column. Verified on an A100: 61 diagnostics tests pass.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Reduce over floats, not booleans: all(f, field) is broken on Julia 1.13\n\n and  build a Bool reduced field, and Oceananigans'\ninitarray! has no method for one on Julia 1.13, which CI now uses for the Linux jobs. The same\nassertions as float reductions: maximum(abs, 𝒮) < Inf is finiteness, maximum(𝒮) < 0 is\nsubsaturation.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-30T14:20:54-06:00",
+          "tree_id": "b4a400d4a993e544a662b3b5a8c1004ba55113dd",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/fa9b104d910331e3a44ab2b5a36300e725761f64"
+        },
+        "date": 1793486337979,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.9521385431289673,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.876389980316162,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.857129693031311,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.8017748594284058,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.7234722375869751,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.7179975509643555,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.545242428779602,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.4693955183029175,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.4071861505508423,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.3650784492492676,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.30506765842438,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.26264929771423,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 34.54430401325226,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 33.527711033821106,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 30.135557055473328,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 27.806726098060608,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 16.959208250045776,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.064541220664978,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.423306465148926,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.8019936084747314,
             "unit": "ms/step"
           }
         ]
