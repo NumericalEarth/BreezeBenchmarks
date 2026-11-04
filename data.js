@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793817584700,
+  "lastUpdate": 1793817588033,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -52808,6 +52808,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.8091431856155396,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c3662a9f230b69725470e19d02c4c4d0461e2a2f",
+          "message": "Bulk surface fluxes in light wind: fix the unstable-fit fold, use the gusty wind in the coefficient, add TKE gustiness (#1171)\n\n* Hold the Li et al. (2010) unstable Riᴮ → ζ fit at its vertex\n\nThe unstable-regime fit ζ = A Riᴮ² + B Riᴮ is a parabola that turns back\nthrough zero for Riᴮ < -B/A (about -17 at a 37 m first level over the\nocean). With the wind clamped to the 0.1 m/s minimum, light winds over a\nwarm sea give Riᴮ of order -100, so free convection was treated as\nstrongly stable and the sensible and vapor transfer coefficients\ncollapsed to ~1e-10 of their neutral values: zero surface fluxes in\nsingle-column runs and in calm regions. Hold ζ at the vertex below it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use the gusty wind in bulk coefficients and add TKE-based gustiness\n\nThe bulk fluxes used the gusty wind speed Ũ = √(U² + Uᵍ²), but the polynomial\ncoefficient evaluated its neutral value and its bulk Richardson number at the bare\nwind. In calm air the coefficient therefore described a much more unstable surface\nlayer than the flux saw, and over a warm sea it was about ten times too large\n(about 400 W/m² of latent heat flux for a 1–2 K air-sea difference at 1 m/s\ngustiness). The coefficient now sees the same Ũ, which gives 4–14 W/m² sensible and\n37–44 W/m² latent in that case.\n\nGustiness is now chosen when the model is built. Bulk fluxes default to the\nplaceholder DefaultGustiness(), and materialize_gustiness(gustiness, closure)\nreturns TKEGustiness() with a TKEBasedTurbulenceClosure and the previous constant\ndefault otherwise. A gustiness passed explicitly is kept. TKEGustiness estimates\nUᵍ = max(c √e, Uᵍ_min) from the subgrid kinetic energy next to the wall, with\nc = √(2/3) (the isotropic one-component velocity scale) and a 0.5 m/s floor.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Print DefaultGustiness() with its parentheses; rename gustiness² to gustiness_squared\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-04T12:19:51-05:00",
+          "tree_id": "d45475ab8b2830cd4c7505b5e9c999954a1a3915",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/c3662a9f230b69725470e19d02c4c4d0461e2a2f"
+        },
+        "date": 1793817587269,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.9843727350234985,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.968151330947876,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.8805304765701294,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.8394867181777954,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.7394552230834961,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.7376283407211304,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.5773186683654785,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.509139895439148,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.4351198673248291,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.36499202251434326,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.388850927352905,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.16217374801636,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 34.65080261230469,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 33.755192160606384,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 30.052149295806885,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 28.111544251441956,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 17.33238697052002,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.078619837760925,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.422895193099976,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.807024240493774,
             "unit": "ms/step"
           }
         ]
