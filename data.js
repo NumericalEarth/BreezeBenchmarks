@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793930993105,
+  "lastUpdate": 1793930995713,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -55888,6 +55888,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.812081694602966,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7fa53de48cba582da97985054a129a6348858eec",
+          "message": " Fix the upper sponge: damp total vertical momentum, not the acoustic perturbation (#877)\n\n* Fix the upper sponge to damp total vertical momentum\n\nUpperSponge damped only the acoustic perturbation (ρw)′, which is the change\nover a Runge-Kutta stage rather than the wave itself, so a quasi-steady\ngravity wave passed through the layer untouched and reflected off the rigid\nlid. The term has been inert since d602e3ed (#622).\n\nSplit the damping the way WRF does (Klemp, Dudhia & Hassiotis 2008): the\nstage-entry part -γρwᴸ now rides in the slow tendency Gˢρw, scaled by the\nsigned Δτ so backward integration stays dissipative, while -γ(ρw)′ keeps its\nCrank-Nicolson treatment in the column tridiagonal. The damped variable is\nCartesian ρw, not the contravariant ρw̃ the substep loop advances: since\nw̃ = w - slope·u, damping ρw̃ would drive ρw → slope·ρu and force the mean\nflow onto the coordinate surfaces.\n\nAdd GaussianRamp, a sponge profile with no hard base, and switch the\nmountain-wave example to it. The fix alone leaves a downstream error larger\nthan the signal it measures; that residual is a sponge-profile effect, not a\nsolver one, and UpperSponge previously shipped only clamped ramps.\n\nAdd regression tests for what the operator relaxes toward, which is where\nboth this bug and the ρw̃ trap live, and correct the docstring and terrain\ndocs, which described the perturbation-only behaviour as intended.\n\nCloses #874\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>\n\n* Precompute the upper-sponge damping profile\n\n`sponge_damping` evaluated `rate * ramp(z)` inline, twice per z-face per\nacoustic substep: once in the tridiag diagonal, inside the serial-in-k Thomas\nsweep, and once in `_build_vertical_rhs!`. The ramp is a function of the\nreference face coordinate alone, so evaluate it once per face at\n`AcousticSubstepper` construction and read the stored 1D profile instead.\n\n`UpperSponge` now follows the materialization pattern: the keyword constructor\nbuilds a gridless skeleton with `damping_profile = nothing`, and\n`materialize_sponge(grid, sponge)` fills in a `Field{Nothing, Nothing, Face}`.\nAdds `Adapt.adapt_structure` for `UpperSponge`; `convert_acoustic_parameter`\ncarries the profile through.\n\nThe precomputed profile is bit-identical to the inline evaluation at every face\nand column, which holds only because `rnode` is horizontally uniform. A\nregression test asserts it on a terrain-following grid.\n\nMeasured per `time_step!` for `GaussianRamp` vs `CubicRamp`: 14.4% -> -0.2% on\nCPU/Float64. On an H100 the transcendental was already hidden by memory traffic\n(1.0% -> 0.2%), so there the gain is not speed but that shape choice is\ndecoupled from cost, including for arbitrarily expensive user-defined ramps.\n\nSince γ now lives in device memory, host-side reads of the sponge coefficients\nneed `@allowscalar`.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Document that the sponge damps Cartesian ρw over terrain\n\nThe stage-entry half of the upper-sponge damping is built from the\nCartesian ρw on every grid, but the `UpperSponge` docstring and the\nterrain-following docs both described it as acting on the contravariant\nρw̃. Only the acoustic-perturbation half in the column tridiag sees\n(ρw̃)′ on a terrain-following grid.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Tighten the upper-sponge prose and sponge helpers\n\nCollapse `sponge_rhs` to a single method: `_build_vertical_rhs!` already\nloads ρw′ at the same face, so the `::Nothing` specialization saved no\nmemory traffic. Build `UpperSponge` through the inferred positional\nconstructor instead of respelling its type parameters at each site.\n\nTrim the sponge documentation: the runtime cost of evaluating a ramp is\nno longer quoted, the ramp-comparison numbers no longer appear in both\nthe `GaussianRamp` docstring and the mountain-wave example, and the\nCartesian-ρw argument is stated once per audience rather than five times.\n\nBuild two models instead of four in the stage-entry sponge test.\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>\n\n* Dispatch masked sponges inside materialize_sponge (avoid method ambiguity); fix test grid size\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Test sponge stability against an unsponged control at a stable acoustic setup\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Evaluate the sponge mask at node() coordinates: (λ, φ, z) on LatitudeLongitudeGrid\n\nxnode/ynode return metres on spherical grids, so a degree-valued mask (e.g. a nested\nmodel's lateral relaxation mask) saw every point outside the walls and damped the whole\ndomain. Test on a terrain-following LatitudeLongitudeGrid.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Sponge profile: drop the unneeded convert and launch over z-faces\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Docs: plain code for Relaxation (not in Breeze docs, so @ref cannot resolve)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5 <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-11-05T20:04:16-05:00",
+          "tree_id": "5a747fd0822a57b509f6af80fd0dc5774392b2e5",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/7fa53de48cba582da97985054a129a6348858eec"
+        },
+        "date": 1793930994944,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.9709467887878418,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.8095612525939941,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.8658021688461304,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.7872223854064941,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.6625086069107056,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.6275326013565063,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.5706578493118286,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.5048483610153198,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.43587982654571533,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.3502875566482544,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.73058521747589,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.373141407966614,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 31.46457076072693,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 29.03621196746826,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 28.21694016456604,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 26.56238079071045,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 17.31303334236145,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.118373155593872,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.466299295425415,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.791151523590088,
             "unit": "ms/step"
           }
         ]
