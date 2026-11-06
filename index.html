@@ -1145,10 +1145,16 @@
           return (bigger ? d > 0 : d < 0) ? "better" : "worse";
         }
 
+        // Arrow follows the sign of the change; colour (via status) says whether it is good.
+        function deltaIcon(d, st) {
+          if (st !== "better" && st !== "worse") return "";
+          return d > 0 ? "▲ " : "▼ ";
+        }
+
         function deltaHTML(d, bigger, thr, title) {
           const st = status(d, bigger, thr);
           if (st === "none") return `<span class="delta none">–</span>`;
-          const icon = st === "better" ? "▲ " : st === "worse" ? "▼ " : "";
+          const icon = deltaIcon(d, st);
           const t = title ? ` title="${esc(title)}"` : "";
           return `<span class="delta ${st}"${t}>${icon}${pct(d)}</span>`;
         }
@@ -1698,7 +1704,7 @@
             }
           }
           html += `</tbody></table></div>
-            <p class="legend-note">▲ green = faster / better, ▼ red = slower / worse; changes inside the noise band are grey.
+            <p class="legend-note">▲ / ▼ = value went up / down; green = better, red = worse; changes inside the noise band are grey.
             Drag the left history handle to move the baseline. Click a row to open its chart.</p>`;
           main.innerHTML = html;
           bindTable(main);
@@ -1946,7 +1952,7 @@
               if (p) {
                 const d = q ? p.value / q.value - 1 : null;
                 const stt = status(d, bigger, state.thr);
-                const icon = stt === "better" ? "▲ " : stt === "worse" ? "▼ " : "";
+                const icon = deltaIcon(d, stt);
                 cell = `<span class="value">${fmtNumber(p.value, unit)}</span><span class="d ${stt}">${
                   d == null ? "&nbsp;" : icon + pct(d)
                 }</span>`;
