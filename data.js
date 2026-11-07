@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794046110690,
+  "lastUpdate": 1794046112760,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -60200,6 +60200,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.77721893787384,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "68588200b93590568db965bd49b66a58f30da03b",
+          "message": "Make Float32 round-off treatment selectable: add stochastic rounding for stage updates (#1153)\n\n* Document the exact liquid-ice potential temperature\n\nFill in the empty \"Liquid-ice potential temperature\" section of the\nthermodynamics page with a top-down derivation of the new definition\nθˡⁱ = H / (ĉᵖ Π̂): the moist enthalpy and Kirchhoff latent heats, the\nvapor-equivalent properties, the closed-form inversion, the general\nprognostic equation for any state function χ(T, p, q) and its four\ncoefficients, why phase change needs no source, the expansion source on\nthe anelastic (exact) and compressible (hydrostatic estimate) cores,\nheating and boundary-flux conversions, the sedimentation content, the two\nExner-exponent choices, and what mixing and dissipation still leave\nunconserved. Relate the definition to Betts, Tripoli–Cotton and\nBryan–Fritsch and to the previous approximate definition.\n\nUpdate the governing-equation, anelastic, compressible, boundary\ncondition, radiation and microphysics developer pages for the new\nconversion factor 1 / (ĉᵖ Π̂), the expansion source, and the removed\nRᵐ/cᵖᵐ exponent; use θ₀ for the reference potential temperature on the\nanelastic page consistently with the notation appendix.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Define the liquid-ice potential temperature exactly from the enthalpy\n\nθˡⁱ = H / (ĉᵖ Π), H = cᵖᵐ T − ℒˡ₀ qˡ − ℒⁱ₀ qⁱ, with the vapor-equivalent\nheat capacity ĉᵖ = qᵈ cᵖᵈ + qᵗ cᵖᵛ and a modular Exner exponent\n(VaporEquivalentExponent, κ̂ = R̂ / ĉᵖ, the default; or DryExponent,\nκᵈ = Rᵈ / cᵖᵈ), selected by\nLiquidIcePotentialTemperatureFormulation(exponent = ...) and carried as a\ntype parameter by the formulation and by the thermodynamic states.\n\nPhase change at fixed θˡⁱ, p and qᵗ now conserves enthalpy exactly and\nreleases ℒ(T). The ρθ tendency gains the expansion-work source\nρᵈ (Rᵐ T − κ ĉᵖ Π θˡⁱ) / (ĉᵖ Π) D ln p / Dt with the hydrostatic\nD ln p / Dt = −g ρ w / p (reference state on the anelastic core, actual\nstate on the compressible core), heating converts with 1 / (ĉᵖ Π) and the\ndry-to-total density ratio, and 1 / (ĉᵖ Π) = θˡⁱ / H is read from the stored\ntemperature, so the tendency no longer evaluates the Exner function.\nBoundary-flux conversions, sedimentation content and the compressible\nthermal response, the θˡⁱ diagnostic, Kessler, instantaneous\nprecipitation and MoistAirBuoyancy follow the new definition.\n\nImplements NumericalEarth/Breeze.jl#1119.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Add ĉᵖ, R̂, κ̂, Π̂, H and Λ₀ to the notation table\n\nUpdate the Π, θˡⁱ and Jᶿ entries for the exact liquid-ice potential temperature.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Keep the θˡⁱ inversion exact in unsaturated air\n\nArrange the inversion as T = Π θ (ĉᵖ / cᵖᵐ) + Λ₀ / cᵖᵐ (and its inverse) so\nthat unsaturated air, where ĉᵖ = cᵖᵐ and Λ₀ = 0, gives T = Π θ bitwise as on\nmain; a hydrostatic rest state then stays balanced to roundoff.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Test the exact liquid-ice potential temperature and update tests for its definition\n\nNew test/liquid_ice_potential_temperature.jl covers, for both Exner exponents:\ninversion round trips (pressure- and density-closed states), enthalpy\nconservation under condensation, deposition and freezing at fixed θˡⁱ, p, qᵗ,\nθˡⁱ = T / Π in unsaturated air, the expansion source restoring\ncᵖᵐ dT / d ln p = Rᵐ T, the sedimentation content against finite differences,\nmodel construction and time steps (anelastic Float32/Float64, compressible),\nthe θˡⁱ diagnostic, boundary-condition exponent plumbing, and the compressible\nheating density ratio (#1010).\n\nExisting tests that restated the old definition θˡⁱ = (T − ℒᵣ qᶜ / cᵖᵐ) / Π\nwith Π = (p / pˢᵗ)^(Rᵐ / cᵖᵐ) now restate the exact one.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Resolve the θˡⁱ diagnostic's formulation reference and shorten the exponent docstring's first sentence\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use FixedIterations in the Reactant moisture-initialization gradient test\n\nOn Julia 1.13 GPU, XLA fuses the differentiated early-exit Newton iterations of the\nθˡⁱ → T inversion with the moisture check into a kernel that never finishes, so the\ngradient call hangs (H100) or the check's callback reads a stale false (CI L4).\nFixedIterations is the solver the docs recommend for Reactant runs; the test's\nassertions do not depend on T.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use the formulation's Exner exponent in the hydrostatically balanced column solve\n\nWith DryExponent, HydrostaticallyBalancedDensity integrated the moist column\nwith κᵐ = Rᵐ/cᵖᵐ while the model inverts θ with κᵈ, leaving a ~1e-3 relative\nhydrostatic residual. Thread the exponent through the column kernels; the\ndefault (vapor-equivalent) path is bitwise unchanged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Carry the specific energy forcing E with the total density\n\nFρE is now volumetric (W/m³) on every path, like ρE forcings and the radiative\nflux divergence: E = Ė becomes ρ Ė, and each formulation converts with ρᵈ / ρ.\nPreviously E was carried by ρᵈ and the θ tendency applied ρᵈ / ρ again, so\ncompressible moist heating ran low by 1 − qᵗ. The static-energy tendency gets\nthe same ρᵈ / ρ conversion (identity on anelastic).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply ρᵈ / ρ to wall energy fluxes on ρθ; show values in new doctests\n\nAn enthalpy flux on the compressible core now reaches ρθ = ρᵈ θ with the same\nρᵈ / ρ the interior heating takes (identity on anelastic), and the inverse\nThetaFlux conversion divides it back out. The conversion also uses the total\ndensity for moisture fractions. Docstrings use TYPEDSIGNATURES, and the\nexner_exponent and vapor_equivalent_heat_capacity doctests show values\nrather than booleans.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use the formulation's Exner exponent in set_to_mean!, apply ρᵈ / ρ to energy fluxes on ρs\n\nset_to_mean!(::ExnerReferenceState, model) integrated the mean column with the\nvapor-equivalent exponent, so with DryExponent the reset reference missed a balanced\nmean state by ~1e-3. It now uses liquid_ice_exner_exponent(model.formulation), for the\ncolumn and its surface density.\n\nA ρE flux on ρs = ρᵈ s now enters as (ρᵈ / ρ) 𝒬ᵀ through\nStaticEnergyFluxBoundaryConditionFunction, matching ρθ and interior heating (the\nidentity on anelastic dynamics).\n\nBulkSensibleHeatFlux no longer falls back to a vapor-equivalent θ flux when no\nformulation is set; the model constructor always sets one.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Make the round-off treatment of stage updates selectable; add stochastic rounding\n\nIn Float32, the SSP-RK3 and Wicker-Skamarock stage updates round away increments\nbelow half an ulp of the prognostic variable, which biases slow tendencies such\nas radiation (#1122). This adds a round-off treatment to both Breeze time\nsteppers, set with `timestepper_kwargs = (; rounding = ...)`:\n\n- `RoundToNearest()` (default): the original kernels, bitwise unchanged.\n- `StochasticRounding(seed = 0)`: increment form + TwoSum, rounding to the\n  neighbouring float with probability |e|/gap. Random numbers come from a\n  counter-based hash of (seed, iteration, stage, field, i, j, k), so there is\n  no state; runs are reproducible and restart bitwise from checkpoints.\n\nSSPRungeKutta3 applies it to every stage update; AcousticRungeKutta3 applies it\nto the third stage (acoustic state recovery and scalar updates), the only stage\nwhose rounding reaches U^{n+1}. Implicit solves stay round-to-nearest.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Thread the Exner exponent through the surface datum reduction, reject StaticEnergy on CompressibleDynamics\n\n- moist_hydrostatic_pressure and constant_moist_hydrostatic_pressure take the\n  Exner exponent, so set_to_mean! and HydrostaticallyBalancedDensity anchor a\n  raised domain on the column they integrate\n- CompressibleDynamics rejects formulation=:StaticEnergy at construction instead\n  of failing with a MethodError on the first state update\n- Model-level test of the compressible expansion-work source\n- Update the default_temperature_solver docstring to the exact θˡⁱ inversion\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Update test/stochastic_rounding.jl\n\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>\n\n* Fix docs cross-references and test isolation for stochastic rounding\n\n- Fully qualify the `StochasticRounding` @ref links in the TimeSteppers docstrings:\n  TimeSteppers does not import `StochasticRounding`, so Documenter could not\n  resolve the binding and the docs build failed.\n- Restore `Oceananigans.defaults.FloatType` after the model tests, which left\n  it at Float32 and broke the next test on the same worker process\n  (instantaneous_precipitation on the Julia 1.10 CI job).\n- Restore the intended slow-heating assertion: round to nearest loses more than\n  20% of the heating, as the testset's comment says and as the scalar emulation\n  asserts. On Apple silicon round to nearest keeps 0.0245 K of 0.0362 K.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Drop the issue link from the RoundingTreatments docstring and use ≉ in the heating test\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Round Float32 stage updates stochastically by adding random bits in Float64 and truncating\n\nFollowing @milankl's suggestion, the Float32 method of rounded_add computes the\nsum in Float64, adds 29 random bits below the Float32 significand, and truncates\ntoward zero. TwoSum is kept for other precisions, which have no wider hardware type.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Choose the stochastic summation by architecture: WidenedSum on CPUs, TwoSum on GPUs\n\nStochasticRounding now carries a summation, chosen by the time stepper from\ngrid.architecture with materialize_rounding. On GPUs Float64 arithmetic is\nslow (consumer GPUs) or unavailable (Metal), so they keep TwoSum.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Move the round-off section to its own page: it applies to both time steppers\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Align the AcousticRungeKutta3 constructor continuation\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Fable 5.1 <noreply@anthropic.com>\nCo-authored-by: Mosè Giordano <765740+giordano@users.noreply.github.com>",
+          "timestamp": "2026-11-06T11:29:17-05:00",
+          "tree_id": "dd06fcb994ea0b3b0399bbcaad79cce489d9e4a0",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/68588200b93590568db965bd49b66a58f30da03b"
+        },
+        "date": 1794046112339,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.7668694257736206,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.7014175653457642,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.7194757461547852,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.6989866495132446,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.5603820085525513,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.5206465721130371,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.4855424165725708,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.36382079124450684,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.35063326358795166,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.34897029399871826,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.14931774139404,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.88342869281769,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 29.120323061943054,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 27.780213952064514,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.585947513580322,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 26.218166947364807,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 16.696467995643616,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 7.988187670707703,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.475475430488586,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 5.78339695930481,
             "unit": "ms/step"
           }
         ]
