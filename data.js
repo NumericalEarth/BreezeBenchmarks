@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794233817181,
+  "lastUpdate": 1794233819696,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -61432,6 +61432,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
             "value": 5.787870287895203,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "eliot@aeolus.earth",
+            "name": "Eliot Quon",
+            "username": "ewquon"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b131aaec2c2827f654ea81fe3d0a727d5b1ae9fb",
+          "message": "Weight the averaged vertical transport flux by the acoustic off-centering (#1104)\n\n* Weight the averaged vertical transport flux by the acoustic off-centering\n\nEach acoustic substep updates ρ′ with the off-centered vertical flux\n(1 − ω)(ρw)′ₒ + ω(ρw)′ₙ: the old-side part in `_build_predictors!` and the\nnew-side part in `_post_solve_recovery!`. The transport average that moisture\nand tracers advect with accumulated only the new (ρw)′, so for ω < 1 the\nscalar mass flux was not the flux the continuity equation applied to ρᵈ, and a\nuniform qᵛ did not stay uniform (cause 1 of NumericalEarth/Breeze.jl#1089).\n\nAccumulate (1 − ω)(ρw)′ in `_build_predictors!`, before the tridiagonal solve\noverwrites (ρw)′, and ω(ρw)′ in `_post_solve_recovery!`. MPAS's wwAvg uses the\nsame ewm/ewp weights as its rho_pp update. The horizontal average was already\nconsistent. The top face k = Nz+1 lies outside the :xyz kernels; its averaged\nw is zero after the halo fill.\n\nReproducer from #1089 (uniform qᵛ = 0.01 through a dry bubble, 20 min,\nmax|qᵛ − q₀|/q₀), on ea63a7d5, CPU:\n\n  Δt = 1.5 s, ω = 0.65: 7.4e-3 → 6.6e-5\n  Δt = 1.5 s, ω = 1   : 4.7e-5 → 4.7e-5\n  Δt = 10 s,  ω = 0.65: 1.2e-2 → 2.8e-3\n  Δt = 10 s,  ω = 1   : 2.7e-3 → 2.7e-3\n\nThe ω = 0.65 error drops to the ω = 1 level; the remainder is cause 2 of\n#1089 (scalars advected with the previous stage's average).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Test that the transport-average mass flux matches the dry-density update\n\nEach acoustic stage must end at ρᵈ = ρᵈ⁰ − βΔt ∇·(ρᵈᴸ ū) to round-off, with\nρᵈ⁰ the outer-step start, ρᵈᴸ the stage-entry dry density and ū the\nsubstepper's time-averaged velocity. This checks cause 1 of\nNumericalEarth/Breeze.jl#1089 without the stage-lag error (cause 2) that still\naffects a free-stream qᵛ test.\n\nThe test runs stages 1 and 2 of an outer step with six substeps, so Nτ ≥ 2 in\nboth. Stage 1 starts from (ρw)′ = 0 and checks mainly the new-side share;\nstage 2 starts from a nonzero rewind (ρw)′ and checks the old-side share on\nthe first substep as well.\n\nAt ω = 0.65, residual / max|ρᵈ − ρᵈ⁰| per stage (1, 2):\n  this branch                            : 6.7e-13, 4.2e-13 (pass)\n  origin/main                            : 1.1e-1,  8.9e-2  (fail)\n  old-side share dropped                 : 5.6e-2,  9.6e-2  (fail)\n  old-side share dropped, substep 1 only : 6.7e-13, 6.6e-2  (fail)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply the off-centered (ρw)′ weighting once per stage instead of per substep\n\nAccumulating (1 − ω)(ρw)′ in `_build_predictors!` and ω(ρw)′ in\n`_post_solve_recovery!` adds a read-modify-write of the averaged w to every\nsubstep: +1.7–1.9% per step on a T4 and +2.4–3.2% on an H100 at 256³–512³,\nagainst within 0.2% of main for this version. Only `solve!` writes (ρw)′\ninside the loop, so the predictor reads the same (ρw)′ the previous recovery\naccumulated, and the sum over n = 1…Nτ telescopes:\n\n  ∑ₙ [(1 − ω)(ρw)′(n−1) + ω(ρw)′(n)] = ∑ₙ (ρw)′(n) − (1 − ω)[(ρw)′(Nτ) − (ρw)′(0)]\n\nRestore main's per-substep `avg.w += (ρw)′` and apply the correction in\n`_finalize_time_averaged_velocity!`. The rewind (ρw)′(0) is zero in stage 1\nbut not in stages 2–3, so the kernel recomputes it from Uᴸ_outer through\n`transport_ρw`, the same difference the (terrain-aware) rewind init takes.\nNo new field. A future per-substep writer of (ρw)′ would break the identity.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Wrap the transport-average comment, drop a redundant FT conversion, test S10 with the default damping\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-11-09T08:16:34-05:00",
+          "tree_id": "81b710bace6bd15d3f48689eb5bc7974d79b0ded",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/b131aaec2c2827f654ea81fe3d0a727d5b1ae9fb"
+        },
+        "date": 1794233819006,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.6747593879699707,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.666054129600525,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.6755977869033813,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.6263375282287598,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.5264729261398315,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.5035609006881714,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.4577934741973877,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.3520160913467407,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.3458946943283081,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.3273278474807739,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 53.98659110069275,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.87633574008942,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 29.12066876888275,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 27.756142616271973,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.58026421070099,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 26.10171139240265,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 16.47389531135559,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 7.962468266487122,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.466701626777649,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
+            "value": 6.1288028955459595,
             "unit": "ms/step"
           }
         ]
