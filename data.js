@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794297823281,
+  "lastUpdate": 1794297825615,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -62048,6 +62048,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
             "value": 6.1288028955459595,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "navidcy@users.noreply.github.com",
+            "name": "Navid C. Constantinou",
+            "username": "navidcy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8cc531e37bda967b50d9fe9b34232984c74fe2ac",
+          "message": "Use DocStringExtensions 0.10 functionality to print method signatures with default kwargs (#1087)\n\n* Add DocStringExtensions 0.10 compat entry + Bump patch version\n\n* temporarily enforce using DocStringExtensions v0.10\n\n* allow CloudMicrophysics 0.47\n\n* add temporary sources for packages that don't support DocStringExtensions 0.10 in a tagged release\n\n* Show default argument values in docstring signatures\n\nDefine Breeze's own `TYPEDSIGNATURES` in `Breeze.Utils` as\n`DocStringExtensions.TypedMethodSignatures(defaults = true)`, a\nDocStringExtensions v0.10 option that prints the default values of\npositional and keyword arguments. Every module and extension now imports\n`TYPEDSIGNATURES` from `Breeze.Utils`, so no docstring needs editing.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Drop the KernelDensity source override\n\nKernelDensity v0.6.13 is registered with DocStringExtensions v0.10 compat,\nso the test, docs and examples environments no longer need the\ncompathelper branch, nor the direct dependency that came with it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* drop explicit method signatures in docstrings\n\n* more drop explicit method signatures in docstrings\n\n* Rename Breeze's TYPEDSIGNATURES to TYPEDSIGNATURES_WITH_DEFAULTS\n\nBreeze's signature abbreviation differs from DocStringExtensions'\n`TYPEDSIGNATURES` by showing default argument values, so give it a name\nthat says so instead of shadowing DocStringExtensions' name.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* reorder imports\n\n* Document the two-moment constructors with TYPEDSIGNATURES_WITH_DEFAULTS_NO_RETURN\n\n`TwoMomentCloudMicrophysics` and `two_moment_cloud_microphysics_categories`\ninfer a return type that is a `Union` of deeply parametrized types,\nthousands of characters long. Add `TYPEDSIGNATURES_WITH_DEFAULTS_NO_RETURN`,\nwhich leaves the return type out, and use it in place of their\nhand-written signatures.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Use TYPEDSIGNATURES_WITH_DEFAULTS in a docstring merged from main\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Require Documenter 1.20 and drop its master source\n\nDocumenter v1.20.0 is registered with DocStringExtensions 0.10 compat, so the\ndocs and test environments no longer need Documenter's master branch.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Drop the TiffImages master source now that v0.11.10 is registered\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-10T18:18:38+11:00",
+          "tree_id": "a0039e2d18f3da46c609a686a3a0a8f7c13aee57",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/8cc531e37bda967b50d9fe9b34232984c74fe2ac"
+        },
+        "date": 1794297825074,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.6841143369674683,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.6779899597167969,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.6837248802185059,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.6313711404800415,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.5368560552597046,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.507587194442749,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.4627734422683716,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.35079121589660645,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.3483712673187256,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.3332585096359253,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.093095660209656,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.88145875930786,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 29.110702872276306,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 27.7624249458313,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.584630250930786,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 26.183101534843445,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 16.578644514083862,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 7.978039979934692,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.471484899520874,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
+            "value": 6.136628985404968,
             "unit": "ms/step"
           }
         ]
