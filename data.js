@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794502937865,
+  "lastUpdate": 1794502940478,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -64512,6 +64512,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
             "value": 6.134325265884399,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "naydex.mc+github@gmail.com",
+            "name": "Paul Berg",
+            "username": "Pangoraw"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bc1b5e150d8aa46d9904fc57c5b08f419f56276b",
+          "message": "Distributed anelastic pressure solver and BOMEX MPI test (#1157)\n\n* Use DistributedFourierTridiagonalPoissonSolver for anelastic models on distributed grids\n\nAnelasticDynamics always built the serial FourierTridiagonalPoissonSolver on the\nlocal grid, which cannot solve the global problem on a Distributed grid.\n\n- Build Oceananigans' DistributedFourierTridiagonalPoissonSolver from the\n  reconstructed global grid when the architecture is Distributed (after any\n  conversion to the pressure solver float type).\n- update_pressure_solver! for the distributed solver: recompute the partitioned\n  horizontal Poisson eigenvalues, which that solver does not store, and rebuild\n  the tridiagonal coefficients from the reference density.\n- compute_anelastic_source_term! for the distributed solver writes into\n  storage.zfield; the storage-zeroing workaround moves into the serial method.\n- The main-diagonal kernel reads face densities from column (1, 1), like the\n  lower diagonal, since (i, j) index wavenumbers and run past the local\n  reference density in the slab-x layout.\n\nAdd a small BOMEX MPI test (x, y and 2x2 partitions) comparing every prognostic\nfield with a serial run. It also exercises SubsidenceForcing's horizontal\naverages, which need CliMA/Oceananigans.jl#6385 to be correct on distributed\ngrids. MPI drivers now share a launcher in test/mpi/run_mpi_worker.jl.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* custom source for Oceananigans side fix\n\n* Use Oceananigans distributed-fix branch in test environment\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n* Use Oceananigans distributed-fix branch in examples, docs and benchmarking environments\n\nCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>\n\n* Drop the Oceananigans branch source now that 0.117 includes CliMA/Oceananigans.jl#6385\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Distributed anelastic and split-explicit MPI tests: host-side comparison, AIVA and split-explicit coverage (#1222)\n\n* Distributed anelastic tests: compare on the host, cover AIVA\n\n- test/mpi/{bomex,acoustic_wave}.jl compared a reconstructed (GPU) field with a\n  serial CPU field, which fails in GPU runs (KernelError, #1193). Compare\n  Array(interior(...)) on the host.\n- The distributed BOMEX test now runs with explicit WENO and with adaptive\n  implicit vertical advection (AIVA), whose implicit column solve and adaptive\n  split must also be partition-independent.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Distributed acoustic-wave MPI test also covers split-explicit substepping\n\nThe worker now runs ExplicitTimeStepping and SplitExplicitTimeDiscretization on\neach partition and compares the reconstructed fields with a serial run.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Greg Wagner <greg@aeolus.earth>\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Greg Wagner <greg@aeolus.earth>\nCo-authored-by: Gregory L. Wagner <gregory.leclaire.wagner@gmail.com>",
+          "timestamp": "2026-11-12T17:13:07+01:00",
+          "tree_id": "8e75c61ec3816d7e1bb232e0754039d58b1e412c",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/bc1b5e150d8aa46d9904fc57c5b08f419f56276b"
+        },
+        "date": 1794502940037,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.6794949769973755,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.6712009906768799,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.6793439388275146,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.6286203861236572,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.5375057458877563,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 0.5059301853179932,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.458526611328125,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.35065412521362305,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.3457784652709961,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 0.3301262855529785,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.073479771614075,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 36.82526648044586,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__explicit_horizontal_step_",
+            "value": 29.07954454421997,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 27.715888619422913,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.54126489162445,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__thermal_divergence_damping_",
+            "value": 26.0888934135437,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 16.458261013031006,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 7.951352000236511,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.4500391483306885,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
+            "value": 6.131917238235474,
             "unit": "ms/step"
           }
         ]
