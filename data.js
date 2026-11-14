@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794666219700,
+  "lastUpdate": 1794666222420,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -61601,6 +61601,174 @@ window.BENCHMARK_DATA = {
           {
             "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/xla",
             "value": 0.015189,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gregory.leclaire.wagner@gmail.com",
+            "name": "Gregory L. Wagner",
+            "username": "glwagner"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dc5f14de026a420713822977e062a0b72056e09d",
+          "message": "Speed up the acoustic substep loop: per-stage factorizations, fewer halo fills, fused damping, batched column solves (#1242)\n\n* Factor the per-substep implicit-advection (ρθ)′ system once per stage\n\nWith adaptive implicit vertical advection, every acoustic substep solves a\ntridiagonal system for the (ρθ)′ predictor. Its coefficients depend only on\nthe stage-frozen w and ρᵈ caches and on Δτ, but each substep re-evaluated them\n(about 80% of the overhead of implicit advection on an A100).\n\nStoredTridiagonalFactors holds the Thomas factors of a batched z-direction\nsystem: factor_tridiagonal! evaluates the implicit solver's own coefficients\nonce per stage, with the arguments implicit_step! passes, and each substep\ncalls substitute_tridiagonal!. The arithmetic follows Oceananigans' Thomas\nkernel operation for operation, so AcousticRungeKutta3 results are bitwise\nidentical.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Cut acoustic substep halo fills from 21 to 9 launches\n\nFill only the halos the substep kernels read before the next write:\n\n- ρ′ takes no fill inside the loop: no substep kernel reads it off its own\n  column, and the k = 0, Nz+1 values feed only the discarded boundary rows of\n  the vertical right-hand side.\n- The stashed (ρθ)′ˢ⁻ is filled together with the new (ρθ)′, in one launch per\n  side, and only when the damping reads it (ThermalDivergenceDamping).\n- The fill of (ρu)′, (ρv)′ and the impenetrability enforcement after the\n  divergence damping move out of the loop: inside it their next reader comes\n  after the following substep's own explicit step, fill and enforcement.\n\nAlso batch the stage-start fill of (ρ′, (ρθ)′), the fill of the linearization\nstate (θᴸ, Cᴸ) and the post-recovery fill of (ρᵈ, ρθ) as tuple fills.\n\nResults are bitwise identical. A test poisons the unfilled halos with NaN and\nchecks that the substep interior stays finite.\n\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Carry the Thomas recurrence in registers and factor the (ρw)′ solve per stage\n\nThe column (tridiagonal) kernels run one thread per column, so their run time\nis the length of the level-to-level dependency chain, which went through\nglobal memory: the previous level's solution was stored and read back.\n\n- substitute_tridiagonal! keeps the previous level's solution in a local\n  variable in both sweeps, and takes a right-hand side separate from the\n  solution.\n- The (ρw)′ system of the acoustic loop has stage-constant coefficients, so it\n  is factored once per stage (factor_vertical_solver!) and each substep only\n  substitutes, instead of re-evaluating θᴸ, Cᴸ and three divisions per level.\n- implicit_step_in_place! replaces Oceananigans' implicit_step! for the\n  per-stage scalar, momentum and thermodynamic solves of AcousticRungeKutta3:\n  the same system and arithmetic, with the pivot and the previous level's\n  solution carried in registers (solve_tridiagonal_in_place!).\n- The implicit solves take the stage interval in the float type of the grid.\n  A Float64 step on a Float32 grid made every coefficient and the sweep double\n  precision.\n\nResults are bitwise identical in Float64, and in Float32 when the step is\nalready Float32; with a Float64 step on a Float32 grid they change by the\nround-off of the single-precision solve. A test checks the sweeps against\nBatchedTridiagonalSolver bit for bit.\n\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Fuse the thermal divergence damping into the next explicit horizontal step\n\nThermalDivergenceDamping corrected (ρu)′, (ρv)′ in a kernel of its own at the\nend of each substep. Nothing reads them before the next substep's explicit\nhorizontal step, and the fields the damping reads do not change in between, so\nthat step now applies the pending damping first, in the same order of\noperations (_damped_explicit_horizontal_step!): one launch and two array\nread-modify-writes fewer per substep. The stashed (ρθ)′ˢ⁻ starts each stage\nequal to (ρθ)′, so the first substep's damping adds exactly zero, and the last\nsubstep's is applied once after the loop.\n\nResults are bitwise identical.\n\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Write periodic halo images in the substep kernels instead of filling halos\n\nInside the acoustic loop only a few halo points of the fields it writes are\nread: (ρu)′ at face Nx+1 and (ρv)′ at face Ny+1, and (ρθ)′ and its stash at\ncells i = 0 and j = 0. On a single-architecture grid that is periodic or flat\nin both horizontal directions, without terrain, the kernels that update those\nfields now store the value at its periodic image too (PeriodicHaloMirror), and\nthe loop launches no halo fills: 9 launches fewer per substep. Other grids\n(bounded, terrain-following, distributed) keep the fills.\n\nResults are bitwise identical. The docstring of PeriodicHaloMirror says what\nOceananigans would need for the fills to stay explicit.\n\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Solve several implicit-step columns per thread, with coefficient prefetch\n\nThe per-stage implicit steps of AcousticRungeKutta3 (the scalars; momentum and\nthe thermodynamic variable) now go through implicit_steps_in_place!, which\nsolves up to column_solve_batch_size[] (3) fields in each column thread\n(solve_tridiagonal_columns_in_place!): at every level the kernel loads the\ncoefficients and right-hand sides of all fields of the batch, then eliminates,\nso a thread has several independent recurrences in flight instead of waiting\non one. The loads of a level are issued one level ahead, before the stores of\nthe level before.\n\nThe arguments the fields of a batch share (closures, clock, model fields, time\nstep, density) are passed to the kernel once, so a batch adds only each\nfield's own array, scratch, scheme, velocity and boundary conditions to the\nkernel's arguments. The scratch arrays are the implicit solver's own and the\nstored factors of the acoustic loop's (ρw)′ system, free after the loop: no\nnew allocation, and a batch of at most 4. column_solve_batch_size stays\nadjustable because the size of a GPU kernel's arguments bounds the batch.\n\nThe scalars' solves now follow all of their explicit updates instead of\nalternating with them. Results are bitwise identical.\n\nCo-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>\n\n* Use Oceananigans' factorized BatchedTridiagonalSolver for the per-stage solves\n\nThe (ρw)′ and AIVA (ρθ)′ solves now use BatchedTridiagonalSolver(...; factorized = true)\nwith compute_factorization! once per stage (CliMA/Oceananigans.jl#6493), and single in-place\nsolves use Oceananigans' register-carried sweep. Only the several-fields-per-thread column\nsolve stays in Breeze (tridiagonal_column_batches.jl). Oceananigans is sourced from the\n#6493 backport branch on v0.117.2 until that PR is released.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Difference the acoustic substep perturbations with topology-aware operators instead of mirroring halos\n\nThe substep kernels call Oceananigans' topology-aware operators (δxTᶠᵃᵃ, δxTᶜᵃᵃ, δyTᵃᶠᵃ, δyTᵃᶜᵃ)\ndirectly for every horizontal difference of the fields the loop writes ((ρu)′, (ρv)′, (ρθ)′,\n(ρθ)′ˢ⁻ and the DirectDivergenceDamping divergence), as the split-explicit barotropic substepping\ndoes, so the loop fills no halos between substeps on periodic and bounded horizontal directions.\nPeriodicHaloMirror and its store helpers are removed; the kernels keep their earlier signatures.\n\nOnly the fill decision dispatches: fill_substep_halos!(fields, model) is a no-op on a\nsingle-architecture grid, a real fill on a distributed one (whose connected sides the operators\nread from halos) and for the terrain dynamics. The wall faces of (ρu)′, (ρv)′ are zeroed on every\nBounded side, as their impenetrable halo fill did, open sides included. Immersed grids difference\nδxTᶠᵃᵃ/δyTᵃᶠᵃ on the underlying grid (TODO: Oceananigans should provide these).\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Restore terrain chain-rule correction in divergence damping\n\n* Drop the Oceananigans [sources] pin: register sweeps are in 0.118.1\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Apply suggestion from @glwagner\n\n* Apply suggestion from @glwagner\n\n* Rename deferred/immediate divergence damping to fused/separate\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Replace internal docstrings with concise comments in the acoustic-substep files\n\nDocstrings on internal functions and types touched by this PR (acoustic\nsubstepping helpers, terrain reference-state builders, tridiagonal column\nbatches, the time-stepper substep helpers) are replaced by short comments\nthat keep only the non-obvious why/invariants. Docstrings of exported\nnames (AcousticSubstepper, freeze_linearization_state!, prepare_acoustic_cache!,\nacoustic_rk3_substep_loop!) are kept. The one cross-reference to a removed\ndocstring (materialize_sponge in the UpperSponge docstring) becomes plain code.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Document and test zero acoustic momentum at open boundaries\n\n* Local topology-aware δ operators with immersed-grid methods (temporary, until Oceananigans adds them)\n\nReplaces the topology_aware_* wrappers, which evaluated f on the underlying grid, and also\ncovers δxTᶜᵃᵃ/δyTᵃᶜᵃ, which read unfilled halos on periodic immersed grids.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Update src/CompressibleEquations/tridiagonal_column_batches.jl\n\n* Topology-aware terrain operators remove the substep halo fills on terrain grids\n\nThe terrain chain-rule stencils of the acoustic substep loop (horizontal\npressure gradient of both slope stencils, the slope correction of the vertical\nsolve, the post-solve recovery of ρw and the divergence-damping gradients) are\nrebuilt on topology-aware primitives, so the loop fills no halos on terrain\ngrids either; only distributed connections exchange them.\n\n- The local topology-aware shim now mirrors CliMA/Oceananigans.jl#6520\n  (differences and interpolations on every AbstractGrid), plus a Closed right\n  wall for the x-face operators, which the terrain correction evaluates at\n  i = Nx + 1, and Breeze-local vertical counterparts (δzTᵃᵃᶠ, ∂zTᶜᶜᶠ, ℑzTᵃᵃᶠ)\n  with the zero-gradient images the default no-flux fills made.\n- ∂xTᶠᶜᶜ, ∂yTᶜᶠᶜ on TerrainFollowingGrid repeat the chain rule of the\n  Oceananigans operators with those primitives: interior arithmetic unchanged.\n- The never-filled halos of the ρθ′ predictor, which the slope correction of\n  the vertical solve read at k = 0, Nz + 1 and at the lateral edges, are no\n  longer read.\n- `substep_halo_fills` forces the fills on for tests, which show the kernels\n  read no halos: the stepped state is bitwise the same with and without fills\n  on every lateral topology, both stencils and all damping types.\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>\n\n* Remove the substep_halo_fills toggle and make column_solve_batch_size a constant\n\nThe operator-level tests already show the topology-aware terrain operators match the\nhalo-reading ones bitwise, so the model-level fills-on/off comparison is dropped.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Fill the (ρu)′, (ρv)′ halos after the substep loop only on distributed grids\n\nNo reader of those halos remains on a single-architecture grid.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>\nCo-authored-by: Kai-Yuan Cheng <kaiyuanc332@gmail.com>",
+          "timestamp": "2026-11-14T08:39:52-05:00",
+          "tree_id": "472446f6e710e34a0882d93a9f1d9b7f40c45e45",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/dc5f14de026a420713822977e062a0b72056e09d"
+        },
+        "date": 1794666222069,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/tracing",
+            "value": 457.298946,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/mlir",
+            "value": 166.015501,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/xla",
+            "value": 225.522755,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/tracing",
+            "value": 4.042929,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/mlir",
+            "value": 217.602923,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/xla",
+            "value": 233.095608,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/tracing",
+            "value": 22.511867,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/mlir",
+            "value": 4.937156,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/xla",
+            "value": 3.07546,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/tracing",
+            "value": 1.137999,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/mlir",
+            "value": 2.929497,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.053714,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/tracing",
+            "value": 16.833061,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/mlir",
+            "value": 0.874512,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/xla",
+            "value": 0.92639,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/tracing",
+            "value": 5.048967,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/mlir",
+            "value": 0.419135,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.014576,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/tracing",
+            "value": 1.041511,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/mlir",
+            "value": 0.757483,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/xla",
+            "value": 1.00542,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/tracing",
+            "value": 0.661699,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/mlir",
+            "value": 0.401308,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.015756,
             "unit": "s",
             "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
           }
