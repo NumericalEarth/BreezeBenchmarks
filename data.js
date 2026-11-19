@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795121918409,
+  "lastUpdate": 1795121921787,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -64151,6 +64151,192 @@ window.BENCHMARK_DATA = {
           {
             "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/xla",
             "value": 0.014896,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e5aa624e6fa252403cbd733e6ad2f84ae3d328a",
+          "message": "Bump version from 0.15.2 to 0.15.3 (#1273)\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-19T11:38:16-08:00",
+          "tree_id": "1e9bd1b4f9e4a9919e7e6895470141aa26c3d06e",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/4e5aa624e6fa252403cbd733e6ad2f84ae3d328a"
+        },
+        "date": 1795121921250,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/tracing",
+            "value": 570.242423,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/mlir",
+            "value": 190.755321,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_2/NVIDIA L4/xla",
+            "value": 252.70297,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/tracing",
+            "value": 7.941678,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/mlir",
+            "value": 256.906665,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; AD; Advection: WENO5; Grid: 128x128x32/CBL binomial_8/NVIDIA L4/xla",
+            "value": 261.801515,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendencyAD F32 reactant raise=true/NVIDIA L4/tracing",
+            "value": 24.31191,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendencyAD F32 reactant raise=true/NVIDIA L4/mlir",
+            "value": 1.46189,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendencyAD F32 reactant raise=true/NVIDIA L4/xla",
+            "value": 2.392045,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/tracing",
+            "value": 22.191165,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/mlir",
+            "value": 4.910868,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=true/NVIDIA L4/xla",
+            "value": 3.209921,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/tracing",
+            "value": 1.175546,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/mlir",
+            "value": 2.923604,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ModelTendency F32 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.05717,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/tracing",
+            "value": 17.3099,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/mlir",
+            "value": 0.881513,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=true/NVIDIA L4/xla",
+            "value": 0.930581,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/tracing",
+            "value": 5.143438,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/mlir",
+            "value": 0.423202,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency F32 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.014644,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/tracing",
+            "value": 0.997027,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/mlir",
+            "value": 0.754897,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=true/NVIDIA L4/xla",
+            "value": 0.978556,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/tracing",
+            "value": 0.610369,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/mlir",
+            "value": 0.39981,
+            "unit": "s",
+            "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
+          },
+          {
+            "name": "Reactant compile time; Advection: WENO5; Grid: 256x256x128/ScalarTendency BF16 reactant raise=false/NVIDIA L4/xla",
+            "value": 0.015123,
             "unit": "s",
             "extra": "Oceananigans v0.118.1, CUDA v6.2.2, GPUCompiler v1.23.0, Reactant v0.2.308, Reactant_jll v0.0.443+1"
           }
