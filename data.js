@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795121921787,
+  "lastUpdate": 1795121924274,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -69548,6 +69548,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
             "value": 5.970233678817749,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "74800123+kaiyuan-cheng@users.noreply.github.com",
+            "name": "kaiyuan-cheng",
+            "username": "kaiyuan-cheng"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4e5aa624e6fa252403cbd733e6ad2f84ae3d328a",
+          "message": "Bump version from 0.15.2 to 0.15.3 (#1273)\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-19T11:38:16-08:00",
+          "tree_id": "1e9bd1b4f9e4a9919e7e6895470141aa26c3d06e",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/4e5aa624e6fa252403cbd733e6ad2f84ae3d328a"
+        },
+        "date": 1795121923762,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.6976773738861084,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 0.9781718254089355,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__damped_explicit_horizontal_step_",
+            "value": 0.7816791534423828,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.7329493761062622,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.7322221994400024,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.7163316011428833,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.6162077188491821,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.23937225341796875,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.20710229873657227,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__recover_full_state_",
+            "value": 0.19708871841430664,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.15679216384888,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__damped_explicit_horizontal_step_",
+            "value": 35.60422658920288,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 35.38058400154114,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.401462197303772,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 22.37345278263092,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 11.274483799934387,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 7.969048619270325,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 7.7883899211883545,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.399285793304443,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
+            "value": 5.93453049659729,
             "unit": "ms/step"
           }
         ]
