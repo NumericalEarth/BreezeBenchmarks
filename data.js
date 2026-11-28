@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795828589308,
+  "lastUpdate": 1795828591774,
   "repoUrl": "https://github.com/NumericalEarth/Breeze.jl",
   "entries": {
     "Breeze.jl Benchmarks": [
@@ -74112,6 +74112,130 @@ window.BENCHMARK_DATA = {
           {
             "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
             "value": 5.93569278717041,
+            "unit": "ms/step"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jatan@aeolus.earth",
+            "name": "Jatan Buch",
+            "username": "jtbuch"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e785e560f966006ee42c1eae2985abafd3b2dd99",
+          "message": "Match serial runs at open lateral boundaries on distributed grids (#1283)\n\n* Match serial runs at open lateral boundaries on distributed grids\n\nTwo parts of the acoustic loop act differently on a rank than on the\nserial grid where a seam between ranks reaches a lateral boundary:\n\n- The moisture content (`remove_moisture_content!`) and the per-substep\n  open-boundary relaxation difference the loop's integrated mass flux\n  `M` across the east and north faces of a cell. The substeps sum `M`\n  in the interior only and its halos were filled once per stage, after\n  `finalize_time_averaged_velocity!`, so across a seam both read the\n  previous stage's average. Exchange `M` before each reader\n  (`fill_substep_halos!` does nothing on serial grids). The first of\n  these is also in #1266.\n\n- `enforce_wall_impenetrability!` zeroed the wall-normal perturbations\n  only for `Bounded` dimensions. A rank whose dimension has a seam on\n  one side is `TwoSided{Closed, Connected}` or similar, so no rank\n  zeroed them, and the divergence damping's write to the west and south\n  wall faces stayed. Zero each `Closed` side.\n\n`test/distributed/open_boundary_seams.jl` compares a cloudy case with\nprescribed normal flow on every lateral side against serial on 2 and 4\nranks. It fails on main, with either fix alone, and passes with both.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Shorten the distributed open-boundary seam test\n\nRun one step on the x and xy partitions instead of three steps on x, y and xy.\nBoth partial fixes still fail it.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n* Compare with a serial run on the same device\n\nThe serial reference now runs on the ranks' own architecture, so GPU runs match it\nto roundoff and use the CPU tolerance; the looser GPU tolerance let a partial fix\npass by a factor of a few.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-11-27T17:36:45-05:00",
+          "tree_id": "744d4734086b007542912a4e7717081fc6cc2896",
+          "url": "https://github.com/NumericalEarth/Breeze.jl/commit/e785e560f966006ee42c1eae2985abafd3b2dd99"
+        },
+        "date": 1795828591417,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 1.7488718032836914,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 1.1587172746658325,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__damped_explicit_horizontal_step_",
+            "value": 0.8040547370910645,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 0.7597208023071289,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_predictors_",
+            "value": 0.735396146774292,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 0.7321864366531372,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 0.6278961896896362,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_bottom_and_top_halo_",
+            "value": 0.292891263961792,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__fill_south_and_north_halo_",
+            "value": 0.25694966316223145,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 128x128x32/NVIDIA L4/gpu__recover_full_state_",
+            "value": 0.1968175172805786,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__post_solve_recovery_",
+            "value": 54.583901166915894,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__damped_explicit_horizontal_step_",
+            "value": 35.6050968170166,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_predictors_",
+            "value": 35.27526259422302,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__build_vertical_rhs_",
+            "value": 27.464213967323303,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu_solve_batched_tridiagonal_system_kernel_",
+            "value": 22.35046923160553,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__initialize_stage_perturbations_",
+            "value": 11.276564002037048,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__fill_periodic_west_and_east_halo_",
+            "value": 9.227070212364197,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__recover_full_state_",
+            "value": 8.026167750358582,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__compute_velocities_",
+            "value": 6.409335136413574,
+            "unit": "ms/step"
+          },
+          {
+            "name": "Kernel time; CBL; Dynamics: compressible_splitexplicit; Microphysics: nothing [Float32]/Grid: 256x256x128/NVIDIA L4/gpu__finalize_time_averaged_velocity_",
+            "value": 5.964687466621399,
             "unit": "ms/step"
           }
         ]
